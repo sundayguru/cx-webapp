@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+@theme {
+  --font-serif: "Cormorant Garamond", serif;
+  --font-sans: "Inter", sans-serif;
+}
+
+.markdown-body {
+  @apply font-serif text-lg leading-relaxed text-[#1a1a1a];
+}
+
+.markdown-body h1 {
+  @apply text-4xl font-bold mb-8;
+}
+
+.markdown-body h2 {
+  @apply text-2xl font-bold mt-12 mb-6;
+}
+
+.markdown-body p {
+  @apply mb-6;
+}
+
+.markdown-body ul {
+  @apply list-disc pl-6 mb-6;
+}
+
+.markdown-body li {
+  @apply mb-2;
+}
+
+/* Navigation loading bar styles */
+.navigation-loading-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  z-index: 9999;
+  background: linear-gradient(90deg,
+      transparent,
+      rgba(139, 92, 246, 0.1),
+      transparent);
+  background-size: 200% 100%;
+  animation: loading-bar-shimmer 2s infinite;
+}
+
+.navigation-loading-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg,
+      rgba(139, 92, 246, 0.8),
+      rgba(139, 92, 246, 1),
+      rgba(139, 92, 246, 0.8));
+  box-shadow: 0 0 10px rgba(139, 92, 246, 0.5);
+  animation: loading-bar-pulse 1.5s infinite;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #9171e8 #263047;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  background: #263047;
+  border-radius: 7px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #9171e8;
+  border-radius: 7px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #a78bfa;
+}
