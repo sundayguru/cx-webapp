@@ -1,6 +1,8 @@
 import type { Route } from './+types/forgot-password';
-import { data } from 'react-router';
+import { data, Form } from 'react-router';
 import { getUserByEmail, generatePasswordResetTokenForEmail } from '~/db/auth';
+import { motion } from 'motion/react';
+import { GraduationCap, KeyRound } from 'lucide-react';
 
 export async function action({ request }: Route.ActionArgs) {
   const formData = await request.formData();
@@ -39,50 +41,70 @@ export async function action({ request }: Route.ActionArgs) {
   });
 }
 
-export default function ForgotPasswordPage() {
+export default function ForgotPasswordPage({ actionData }: Route.ComponentProps) {
+  const { success, message, error } = actionData || {};
+
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+    <div className="min-h-screen bg-[#f5f5f0] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full bg-white rounded-[32px] shadow-xl p-8 border border-black/5"
+      >
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-[#5A5A40] rounded-2xl flex items-center justify-center mb-4">
+            <GraduationCap className="text-white w-10 h-10" />
+          </div>
+          <h1 className="text-3xl font-serif text-[#1a1a1a]">CourseX</h1>
+          <p className="text-black/60 font-serif italic">
             Reset your password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your email address and we'll send you instructions to reset your password.
           </p>
         </div>
-        <form className="mt-8 space-y-6" method="post">
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-              Email address
-            </label>
-            <input
-              id="email"
-              name="email"
-              type="email"
-              autoComplete="email"
-              required
-              className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-              placeholder="Enter your email"
-            />
-          </div>
 
-          <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
+        {success ? (
+          <div className="space-y-4">
+            <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-xl">
+              <p className="text-sm">{message}</p>
+            </div>
+            <a
+              href="/auth/login"
+              className="w-full bg-[#5A5A40] text-white py-3 rounded-xl font-medium hover:bg-[#4a4a35] transition-colors flex items-center justify-center gap-2"
             >
-              Send reset instructions
-            </button>
-          </div>
-
-          <div className="text-center">
-            <a href="/auth/login" className="font-medium text-purple-600 hover:text-purple-500">
-              Back to sign in
+              Back to Sign In
             </a>
           </div>
-        </form>
-      </div>
+        ) : (
+          <Form method="post" className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-black/70 mb-1">Email Address</label>
+              <input
+                type="email"
+                name="email"
+                className="w-full px-4 py-3 rounded-xl border border-black/10 focus:ring-2 focus:ring-[#5A5A40] outline-none transition-all"
+                placeholder="you@example.com"
+                required
+              />
+            </div>
+
+            {error && <p className="text-red-500 text-sm">{error}</p>}
+
+            <button
+              type="submit"
+              className="w-full bg-[#5A5A40] text-white py-3 rounded-xl font-medium hover:bg-[#4a4a35] transition-colors flex items-center justify-center gap-2"
+            >
+              <KeyRound size={20} />
+              Send Reset Link
+            </button>
+
+            <a
+              href="/auth/login"
+              className="w-full text-sm text-black/40 hover:text-black transition-colors text-center block"
+            >
+              Back to Sign In
+            </a>
+          </Form>
+        )}
+      </motion.div>
     </div>
   );
 }

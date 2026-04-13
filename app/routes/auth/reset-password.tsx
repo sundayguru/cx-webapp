@@ -1,6 +1,8 @@
 import type { Route } from './+types/reset-password';
-import { data, redirect } from 'react-router';
+import { data, redirect, Form } from 'react-router';
 import { validatePasswordResetToken, updateUserPassword } from '~/db/auth';
+import { motion } from 'motion/react';
+import { GraduationCap, Lock } from 'lucide-react';
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -50,69 +52,68 @@ export async function action({ request }: Route.ActionArgs) {
   return redirect('/auth/login?resetSuccess=true');
 }
 
-export default function ResetPasswordPage({ loaderData }: Route.ComponentProps) {
+export default function ResetPasswordPage({ loaderData, actionData }: Route.ComponentProps) {
   const { token } = loaderData;
+  const { error } = actionData || {};
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-md w-full space-y-8">
-        <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            Set new password
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
-            Enter your new password below.
+    <div className="min-h-screen bg-[#f5f5f0] flex items-center justify-center p-4">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full bg-white rounded-[32px] shadow-xl p-8 border border-black/5"
+      >
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-[#5A5A40] rounded-2xl flex items-center justify-center mb-4">
+            <GraduationCap className="text-white w-10 h-10" />
+          </div>
+          <h1 className="text-3xl font-serif text-[#1a1a1a]">CourseX</h1>
+          <p className="text-black/60 font-serif italic">
+            Set your new password
           </p>
         </div>
-        <form className="mt-8 space-y-6" method="post">
+
+        <Form method="post" className="space-y-4">
           <input type="hidden" name="token" value={token} />
-          <div className="space-y-4">
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                New password
-              </label>
-              <input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                placeholder="New password (min. 8 characters)"
-              />
-            </div>
-            <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm new password
-              </label>
-              <input
-                id="confirmPassword"
-                name="confirmPassword"
-                type="password"
-                autoComplete="new-password"
-                required
-                className="appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-purple-500 focus:border-purple-500 sm:text-sm"
-                placeholder="Confirm new password"
-              />
-            </div>
-          </div>
-
           <div>
-            <button
-              type="submit"
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-purple-600 hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-purple-500"
-            >
-              Reset password
-            </button>
+            <label className="block text-sm font-medium text-black/70 mb-1">New Password</label>
+            <input
+              type="password"
+              name="password"
+              className="w-full px-4 py-3 rounded-xl border border-black/10 focus:ring-2 focus:ring-[#5A5A40] outline-none transition-all"
+              placeholder="••••••••"
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-black/70 mb-1">Confirm New Password</label>
+            <input
+              type="password"
+              name="confirmPassword"
+              className="w-full px-4 py-3 rounded-xl border border-black/10 focus:ring-2 focus:ring-[#5A5A40] outline-none transition-all"
+              placeholder="••••••••"
+              required
+            />
           </div>
 
-          <div className="text-center">
-            <a href="/auth/login" className="font-medium text-purple-600 hover:text-purple-500">
-              Back to sign in
-            </a>
-          </div>
-        </form>
-      </div>
+          {error && <p className="text-red-500 text-sm">{error}</p>}
+
+          <button
+            type="submit"
+            className="w-full bg-[#5A5A40] text-white py-3 rounded-xl font-medium hover:bg-[#4a4a35] transition-colors flex items-center justify-center gap-2"
+          >
+            <Lock size={20} />
+            Reset Password
+          </button>
+
+          <a
+            href="/auth/login"
+            className="w-full text-sm text-black/40 hover:text-black transition-colors text-center block"
+          >
+            Back to Sign In
+          </a>
+        </Form>
+      </motion.div>
     </div>
   );
 }
