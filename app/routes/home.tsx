@@ -1,16 +1,16 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { 
-  GraduationCap, 
-  Sparkles, 
-  BookOpen, 
-  Zap, 
-  Shield, 
+import {
+  GraduationCap,
+  Sparkles,
+  BookOpen,
+  Zap,
+  Shield,
   ChevronRight,
   ArrowRight,
   PlayCircle,
   Users,
-  Globe
+  Globe,
 } from 'lucide-react';
 import { useUser } from '~/utils/useUser';
 import { Link } from 'react-router';
@@ -23,64 +23,64 @@ export default function LandingPage() {
     visible: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.2
-      }
-    }
+        staggerChildren: 0.2,
+      },
+    },
   };
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
-    visible: { opacity: 1, y: 0 }
+    visible: { opacity: 1, y: 0 },
   };
 
   return (
-    <div className="bg-[#f5f5f0] min-h-screen overflow-x-hidden">
+    <div className='min-h-screen overflow-x-hidden bg-[#f5f5f0]'>
       {/* Hero Section */}
-      <section className="relative pt-20 pb-32 px-4">
-        <div className="max-w-7xl mx-auto">
-          <motion.div 
+      <section className='relative px-4 pt-20 pb-32'>
+        <div className='mx-auto max-w-7xl'>
+          <motion.div
             variants={containerVariants}
-            initial="hidden"
-            animate="visible"
-            className="text-center"
+            initial='hidden'
+            animate='visible'
+            className='text-center'
           >
-            <motion.div 
+            <motion.div
               variants={itemVariants}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-[#5A5A40]/10 rounded-full text-[#5A5A40] text-sm font-bold mb-8"
+              className='mb-8 inline-flex items-center gap-2 rounded-full bg-[#5A5A40]/10 px-4 py-2 text-sm font-bold text-[#5A5A40]'
             >
               <Sparkles size={16} />
               <span>AI-Powered Learning Revolution</span>
             </motion.div>
-            
-            <motion.h1 
+
+            <motion.h1
               variants={itemVariants}
-              className="text-6xl md:text-8xl font-serif text-[#1a1a1a] mb-8 leading-tight tracking-tight"
+              className='mb-8 font-serif text-6xl leading-tight tracking-tight text-[#1a1a1a] md:text-8xl'
             >
               Illuminate Your <br />
-              <span className="italic text-[#5A5A40]">Path to Knowledge</span>
+              <span className='text-[#5A5A40] italic'>Path to Knowledge</span>
             </motion.h1>
-            
-            <motion.p 
+
+            <motion.p
               variants={itemVariants}
-              className="text-xl text-black/60 max-w-2xl mx-auto mb-12 font-serif leading-relaxed"
+              className='mx-auto mb-12 max-w-2xl font-serif text-xl leading-relaxed text-black/60'
             >
-              Lumina transforms raw materials into immersive learning experiences. 
-              Upload a PDF, and watch as our AI crafts a personalized curriculum, 
-              quizzes, and narrations just for you.
+              Lumina transforms raw materials into immersive learning
+              experiences. Upload a PDF, and watch as our AI crafts a
+              personalized curriculum, quizzes, and narrations just for you.
             </motion.p>
-            
-            <motion.div 
+
+            <motion.div
               variants={itemVariants}
-              className="flex flex-col sm:flex-row items-center justify-center gap-6"
+              className='flex flex-col items-center justify-center gap-6 sm:flex-row'
             >
-              <Link 
-                to={user ? "/dashboard" : "/auth"}
-                className="bg-[#5A5A40] text-white px-10 py-5 rounded-2xl font-bold text-lg hover:bg-[#4a4a35] transition-all shadow-2xl shadow-[#5A5A40]/30 flex items-center gap-3 group"
+              <Link
+                to={user ? '/dashboard' : '/auth'}
+                className='group flex items-center gap-3 rounded-2xl bg-[#5A5A40] px-10 py-5 text-lg font-bold text-white shadow-2xl shadow-[#5A5A40]/30 transition-all hover:bg-[#4a4a35]'
               >
-                {user ? "Go to Dashboard" : "Start Learning for Free"}
-                <ArrowRight className="group-hover:translate-x-1 transition-transform" />
+                {user ? 'Go to Dashboard' : 'Start Learning for Free'}
+                <ArrowRight className='transition-transform group-hover:translate-x-1' />
               </Link>
-              <button className="flex items-center gap-3 text-[#1a1a1a] font-bold hover:text-[#5A5A40] transition-colors">
+              <button className='flex items-center gap-3 font-bold text-[#1a1a1a] transition-colors hover:text-[#5A5A40]'>
                 <PlayCircle size={24} />
                 Watch Demo
               </button>
@@ -89,56 +89,60 @@ export default function LandingPage() {
         </div>
 
         {/* Abstract Background Elements */}
-        <div className="absolute top-1/2 left-0 -translate-y-1/2 -translate-x-1/2 w-96 h-96 bg-[#5A5A40]/5 rounded-full blur-3xl" />
-        <div className="absolute bottom-0 right-0 translate-x-1/4 w-[500px] h-[500px] bg-[#5A5A40]/5 rounded-full blur-3xl" />
+        <div className='absolute top-1/2 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5A5A40]/5 blur-3xl' />
+        <div className='absolute right-0 bottom-0 h-[500px] w-[500px] translate-x-1/4 rounded-full bg-[#5A5A40]/5 blur-3xl' />
       </section>
 
       {/* Feature Grid */}
-      <section className="py-32 bg-white rounded-[64px] shadow-sm">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-20">
-            <h2 className="text-4xl md:text-5xl font-serif text-[#1a1a1a] mb-6">Crafted for Modern Learners</h2>
-            <p className="text-black/40 font-serif italic">Everything you need to master any subject.</p>
+      <section className='rounded-[64px] bg-white py-32 shadow-sm'>
+        <div className='mx-auto max-w-7xl px-4'>
+          <div className='mb-20 text-center'>
+            <h2 className='mb-6 font-serif text-4xl text-[#1a1a1a] md:text-5xl'>
+              Crafted for Modern Learners
+            </h2>
+            <p className='font-serif text-black/40 italic'>
+              Everything you need to master any subject.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          <div className='grid grid-cols-1 gap-12 md:grid-cols-3'>
             {[
               {
-                title: "Instant Curriculum",
-                desc: "Upload any PDF and get a structured course with modules and units in seconds.",
+                title: 'Instant Curriculum',
+                desc: 'Upload any PDF and get a structured course with modules and units in seconds.',
                 icon: BookOpen,
-                color: "bg-blue-50 text-blue-600"
+                color: 'bg-blue-50 text-blue-600',
               },
               {
-                title: "AI Narrations",
-                desc: "Listen to your course materials with high-quality, natural AI voices.",
+                title: 'AI Narrations',
+                desc: 'Listen to your course materials with high-quality, natural AI voices.',
                 icon: Zap,
-                color: "bg-orange-50 text-orange-600"
+                color: 'bg-orange-50 text-orange-600',
               },
               {
-                title: "Smart Quizzing",
-                desc: "Reinforce your knowledge with AI-generated quizzes tailored to your content.",
+                title: 'Smart Quizzing',
+                desc: 'Reinforce your knowledge with AI-generated quizzes tailored to your content.',
                 icon: Sparkles,
-                color: "bg-purple-50 text-purple-600"
+                color: 'bg-purple-50 text-purple-600',
               },
               {
-                title: "Community First",
-                desc: "Share your courses and join discussions in our vibrant learning community.",
+                title: 'Community First',
+                desc: 'Share your courses and join discussions in our vibrant learning community.',
                 icon: Users,
-                color: "bg-green-50 text-green-600"
+                color: 'bg-green-50 text-green-600',
               },
               {
-                title: "Global Access",
-                desc: "Learn anywhere, anytime. Your progress is synced across all your devices.",
+                title: 'Global Access',
+                desc: 'Learn anywhere, anytime. Your progress is synced across all your devices.',
                 icon: Globe,
-                color: "bg-indigo-50 text-indigo-600"
+                color: 'bg-indigo-50 text-indigo-600',
               },
               {
-                title: "Secure & Private",
-                desc: "Your data and materials are protected with enterprise-grade security.",
+                title: 'Secure & Private',
+                desc: 'Your data and materials are protected with enterprise-grade security.',
                 icon: Shield,
-                color: "bg-red-50 text-red-600"
-              }
+                color: 'bg-red-50 text-red-600',
+              },
             ].map((feature, i) => (
               <motion.div
                 key={i}
@@ -146,13 +150,21 @@ export default function LandingPage() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1 }}
-                className="p-8 rounded-[32px] border border-black/5 hover:border-[#5A5A40]/20 hover:bg-[#f5f5f0]/30 transition-all group"
+                className='group rounded-[32px] border border-black/5 p-8 transition-all hover:border-[#5A5A40]/20 hover:bg-[#f5f5f0]/30'
               >
-                <div className={feature.color + " w-14 h-14 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform"}>
+                <div
+                  className={`${
+                    feature.color
+                  } mb-6 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110`}
+                >
                   <feature.icon size={28} />
                 </div>
-                <h3 className="text-xl font-bold text-[#1a1a1a] mb-4">{feature.title}</h3>
-                <p className="text-black/50 leading-relaxed font-serif italic">{feature.desc}</p>
+                <h3 className='mb-4 text-xl font-bold text-[#1a1a1a]'>
+                  {feature.title}
+                </h3>
+                <p className='font-serif leading-relaxed text-black/50 italic'>
+                  {feature.desc}
+                </p>
               </motion.div>
             ))}
           </div>
@@ -160,29 +172,33 @@ export default function LandingPage() {
       </section>
 
       {/* Split Layout Section */}
-      <section className="py-32 px-4">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
+      <section className='px-4 py-32'>
+        <div className='mx-auto grid max-w-7xl grid-cols-1 items-center gap-20 lg:grid-cols-2'>
           <motion.div
             initial={{ opacity: 0, x: -50 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: true }}
           >
-            <h2 className="text-5xl font-serif text-[#1a1a1a] mb-8 leading-tight">
+            <h2 className='mb-8 font-serif text-5xl leading-tight text-[#1a1a1a]'>
               Transform Static PDFs into <br />
-              <span className="text-[#5A5A40] italic">Interactive Journeys</span>
+              <span className='text-[#5A5A40] italic'>
+                Interactive Journeys
+              </span>
             </h2>
-            <div className="space-y-8">
+            <div className='space-y-8'>
               {[
-                "Extract key concepts automatically",
-                "Generate summaries and takeaways",
-                "Chat with your course material",
-                "Track progress and earn certificates"
+                'Extract key concepts automatically',
+                'Generate summaries and takeaways',
+                'Chat with your course material',
+                'Track progress and earn certificates',
               ].map((item, i) => (
-                <div key={i} className="flex items-center gap-4">
-                  <div className="w-6 h-6 rounded-full bg-[#5A5A40] flex items-center justify-center flex-shrink-0">
-                    <ChevronRight size={14} className="text-white" />
+                <div key={i} className='flex items-center gap-4'>
+                  <div className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#5A5A40]'>
+                    <ChevronRight size={14} className='text-white' />
                   </div>
-                  <span className="text-lg text-black/70 font-serif italic">{item}</span>
+                  <span className='font-serif text-lg text-black/70 italic'>
+                    {item}
+                  </span>
                 </div>
               ))}
             </div>
@@ -192,66 +208,79 @@ export default function LandingPage() {
             initial={{ opacity: 0, scale: 0.9 }}
             whileInView={{ opacity: 1, scale: 1 }}
             viewport={{ once: true }}
-            className="relative"
+            className='relative'
           >
-            <div className="bg-white p-4 rounded-[40px] shadow-2xl border border-black/5">
-              <img 
-                src="https://picsum.photos/seed/learning/1200/800" 
-                className="rounded-[32px] w-full"
-                alt="App Preview"
+            <div className='rounded-[40px] border border-black/5 bg-white p-4 shadow-2xl'>
+              <img
+                src='https://picsum.photos/seed/learning/1200/800'
+                className='w-full rounded-[32px]'
+                alt='App Preview'
               />
             </div>
             {/* Floating UI Elements */}
-            <motion.div 
+            <motion.div
               animate={{ y: [0, -10, 0] }}
               transition={{ duration: 4, repeat: Infinity }}
-              className="absolute -top-10 -right-10 bg-[#5A5A40] text-white p-6 rounded-3xl shadow-xl hidden md:block"
+              className='absolute -top-10 -right-10 hidden rounded-3xl bg-[#5A5A40] p-6 text-white shadow-xl md:block'
             >
-              <Sparkles className="mb-2" />
-              <p className="font-bold">AI Analysis Complete</p>
-              <p className="text-xs text-white/60">12 Units Generated</p>
+              <Sparkles className='mb-2' />
+              <p className='font-bold'>AI Analysis Complete</p>
+              <p className='text-xs text-white/60'>12 Units Generated</p>
             </motion.div>
           </motion.div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-32 px-4">
-        <div className="max-w-5xl mx-auto bg-[#1a1a1a] rounded-[64px] p-12 md:p-24 text-center relative overflow-hidden">
-          <div className="relative z-10">
-            <h2 className="text-5xl md:text-6xl font-serif text-white mb-8">Ready to start your journey?</h2>
-            <p className="text-white/60 text-xl mb-12 max-w-2xl mx-auto font-serif italic">
-              Join thousands of learners who are already illuminating their path to knowledge with Lumina.
+      <section className='px-4 py-32'>
+        <div className='relative mx-auto max-w-5xl overflow-hidden rounded-[64px] bg-[#1a1a1a] p-12 text-center md:p-24'>
+          <div className='relative z-10'>
+            <h2 className='mb-8 font-serif text-5xl text-white md:text-6xl'>
+              Ready to start your journey?
+            </h2>
+            <p className='mx-auto mb-12 max-w-2xl font-serif text-xl text-white/60 italic'>
+              Join thousands of learners who are already illuminating their path
+              to knowledge with Lumina.
             </p>
-            <Link 
-              to="/auth/register"
-              className="inline-flex bg-white text-[#1a1a1a] px-12 py-6 rounded-2xl font-bold text-xl hover:bg-[#f5f5f0] transition-all shadow-xl flex items-center gap-3 group"
+            <Link
+              to='/auth/register'
+              className='group flex inline-flex items-center gap-3 rounded-2xl bg-white px-12 py-6 text-xl font-bold text-[#1a1a1a] shadow-xl transition-all hover:bg-[#f5f5f0]'
             >
               Get Started Now
-              <ChevronRight className="group-hover:translate-x-1 transition-transform" />
+              <ChevronRight className='transition-transform group-hover:translate-x-1' />
             </Link>
           </div>
           {/* Decorative background */}
-          <div className="absolute top-0 right-0 w-96 h-96 bg-[#5A5A40]/20 rounded-full blur-3xl" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-[#5A5A40]/10 rounded-full blur-3xl" />
+          <div className='absolute top-0 right-0 h-96 w-96 rounded-full bg-[#5A5A40]/20 blur-3xl' />
+          <div className='absolute bottom-0 left-0 h-96 w-96 rounded-full bg-[#5A5A40]/10 blur-3xl' />
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-20 border-t border-black/5">
-        <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-[#5A5A40] rounded-xl flex items-center justify-center">
-              <GraduationCap className="text-white" size={24} />
+      <footer className='border-t border-black/5 py-20'>
+        <div className='mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 px-4 md:flex-row'>
+          <div className='flex items-center gap-2'>
+            <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]'>
+              <GraduationCap className='text-white' size={24} />
             </div>
-            <span className="text-xl font-serif font-bold text-[#1a1a1a]">Lumina</span>
+            <span className='font-serif text-xl font-bold text-[#1a1a1a]'>
+              Lumina
+            </span>
           </div>
-          <div className="flex gap-12 text-sm font-bold text-black/40 uppercase tracking-widest">
-            <a href="#" className="hover:text-[#5A5A40] transition-colors">Privacy</a>
-            <a href="#" className="hover:text-[#5A5A40] transition-colors">Terms</a>
-            <a href="#" className="hover:text-[#5A5A40] transition-colors">Contact</a>
+          <div className='flex gap-12 text-sm font-bold tracking-widest text-black/40 uppercase'>
+            <a href='#' className='transition-colors hover:text-[#5A5A40]'>
+              Privacy
+            </a>
+            <a href='#' className='transition-colors hover:text-[#5A5A40]'>
+              Terms
+            </a>
+            <a href='#' className='transition-colors hover:text-[#5A5A40]'>
+              Contact
+            </a>
           </div>
-          <p className="text-black/20 text-sm">© 2026 Lumina Learning. All rights reserved.</p>
+          <p className='text-sm text-black/20'>
+            © 2026 Lumina Learning. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>

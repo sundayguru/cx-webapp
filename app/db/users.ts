@@ -34,7 +34,10 @@ export const getUserById = async (id: string) => {
 export const getAllUsers = async () => {
   try {
     const db = getDb();
-    return await db.select().from(users).innerJoin(profile, eq(users.id, profile.userId));
+    return await db
+      .select()
+      .from(users)
+      .innerJoin(profile, eq(users.id, profile.userId));
   } catch (e) {
     logError(e, 'Error getting all users');
   }

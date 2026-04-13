@@ -2,21 +2,19 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "rallyard",
   "compatibility_date": "2025-04-04",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "main": "./workers/app.ts",
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 1
+    "head_sampling_rate": 1,
   },
   "d1_databases": [
     {
       "binding": "DB", // available in your Worker on env.DB
       "database_name": "test_stage_db",
       "database_id": "0504496b-6e16-4e44-aef5-50189a9c073e",
-      "migrations_dir": "./drizzle"
-    }
+      "migrations_dir": "./drizzle",
+    },
   ],
   "env": {
     "production": {
@@ -26,8 +24,8 @@
           "binding": "DB", // available in your Worker on env.DB
           "database_name": "test_stage_db",
           "database_id": "0504496b-6e16-4e44-aef5-50189a9c073e",
-          "migrations_dir": "./drizzle"
-        }
+          "migrations_dir": "./drizzle",
+        },
       ],
     },
     "dev": {
@@ -37,9 +35,9 @@
           "binding": "DB", // available in your Worker on env.DB
           "database_name": "test_stage_db",
           "database_id": "0504496b-6e16-4e44-aef5-50189a9c073e",
-          "migrations_dir": "./drizzle"
-        }
+          "migrations_dir": "./drizzle",
+        },
       ],
-    }
-  }
+    },
+  },
 }

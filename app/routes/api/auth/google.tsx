@@ -1,27 +1,35 @@
 import type { Route } from './+types/google';
 import { redirect } from 'react-router';
-import { getUserByAccount, createUser, getUserByEmail, createAccount } from '~/db/auth';
+import {
+  getUserByAccount,
+  createUser,
+  getUserByEmail,
+  createAccount,
+} from '~/db/auth';
 import { generateSessionToken } from '~/utils/auth.server';
 import { v4 as uuidv4 } from 'uuid';
 
-const GOOGLE_CLIENT_ID = (globalThis as any).process?.env?.GOOGLE_CLIENT_ID || '';
-const GOOGLE_CLIENT_SECRET = (globalThis as any).process?.env?.GOOGLE_CLIENT_SECRET || '';
-const BASE_URL = (globalThis as any).process?.env?.BASE_URL || 'http://localhost:5173';
+const GOOGLE_CLIENT_ID =
+  (globalThis as any).process?.env?.GOOGLE_CLIENT_ID || '';
+const GOOGLE_CLIENT_SECRET =
+  (globalThis as any).process?.env?.GOOGLE_CLIENT_SECRET || '';
+const BASE_URL =
+  (globalThis as any).process?.env?.BASE_URL || 'http://localhost:5173';
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token';
 const GOOGLE_USERINFO_URL = 'https://www.googleapis.com/oauth2/v3/userinfo';
 
-interface GoogleTokens {
+type GoogleTokens = {
   access_token: string;
   refresh_token?: string;
   expires_in?: number;
   scope?: string;
   id_token?: string;
   token_type: string;
-}
+};
 
-interface GoogleUserInfo {
+type GoogleUserInfo = {
   sub: string;
   email: string;
   email_verified: boolean;
@@ -29,7 +37,7 @@ interface GoogleUserInfo {
   given_name?: string;
   family_name?: string;
   picture?: string;
-}
+};
 
 export async function loader({ request }: Route.LoaderArgs) {
   const url = new URL(request.url);
@@ -70,7 +78,10 @@ export async function loader({ request }: Route.LoaderArgs) {
   });
 
   if (!tokenResponse.ok) {
-    console.error('Failed to exchange code for tokens:', await tokenResponse.text());
+    console.error(
+      'Failed to exchange code for tokens:',
+      await tokenResponse.text(),
+    );
     return redirect('/auth/login?error=token_exchange_failed');
   }
 
@@ -90,17 +101,20 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   // Check if user exists by Google account
   const existingAccount = await getUserByAccount('google', userInfo.sub);
-  
+
   if (existingAccount) {
     // User exists, log them in
-    const sessionToken = await generateSessionToken(existingAccount.id, existingAccount.email);
+    const sessionToken = await generateSessionToken(
+      existingAccount.id,
+      existingAccount.email,
+    );
     const headers = createSessionHeaders(sessionToken);
     return redirect(callbackUrl, { headers });
   }
 
   // Check if user exists by email (link accounts)
   const existingUser = await getUserByEmail(userInfo.email);
-  
+
   if (existingUser) {
     // Link Google account to existing user
     await createAccount({
@@ -110,13 +124,18 @@ export async function loader({ request }: Route.LoaderArgs) {
       providerAccountId: userInfo.sub,
       access_token: tokens.access_token,
       refresh_token: tokens.refresh_token,
-      expires_at: tokens.expires_in ? Math.floor(Date.now() / 1000) + tokens.expires_in : undefined,
+      expires_at: tokens.expires_in
+        ? Math.floor(Date.now() / 1000) + tokens.expires_in
+        : undefined,
       token_type: 'Bearer',
       scope: tokens.scope,
       id_token: tokens.id_token,
     });
 
-    const sessionToken = await generateSessionToken(existingUser.id, existingUser.email);
+    const sessionToken = await generateSessionToken(
+      existingUser.id,
+      existingUser.email,
+    );
     const headers = createSessionHeaders(sessionToken);
     return redirect(callbackUrl, { headers });
   }
@@ -149,7 +168,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     providerAccountId: userInfo.sub,
     access_token: tokens.access_token,
     refresh_token: tokens.refresh_token,
-    expires_at: tokens.expires_in ? Math.floor(Date.now() / 1000) + tokens.expires_in : undefined,
+    expires_at: tokens.expires_in
+      ? Math.floor(Date.now() / 1000) + tokens.expires_in
+      : undefined,
     token_type: 'Bearer',
     scope: tokens.scope,
     id_token: tokens.id_token,
@@ -165,7 +186,7 @@ function createSessionHeaders(sessionToken: string): Headers {
   const headers = new Headers();
   headers.append(
     'Set-Cookie',
-    `session=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`
+    `session=${sessionToken}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=604800`,
   );
   return headers;
 }

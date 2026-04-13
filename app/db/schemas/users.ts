@@ -1,16 +1,22 @@
-import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
+import { sql } from 'drizzle-orm';
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 
 export const users = sqliteTable('users', {
   id: text('id', { length: 36 }).primaryKey(),
   firstName: text({ length: 255 }).notNull(),
   lastName: text({ length: 255 }).notNull(),
   email: text({ length: 255 }).notNull().unique(),
-  emailVerified: integer('email_verified', { mode: 'boolean' }).notNull().default(false),
+  emailVerified: integer('email_verified', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   image: text({ length: 511 }),
   passwordHash: text({ length: 511 }),
-  createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
-  updatedAt: text('updated_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 export type SelectUser = typeof users.$inferSelect;

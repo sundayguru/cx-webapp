@@ -12,7 +12,10 @@ export const insertProfile = async (data: InsertProfile) => {
   }
 };
 
-export const updateProfile = async (id: string, data: Partial<InsertProfile>) => {
+export const updateProfile = async (
+  id: string,
+  data: Partial<InsertProfile>,
+) => {
   try {
     const db = getDb();
     return await db.update(profile).set(data).where(eq(profile.id, id));

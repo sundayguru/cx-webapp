@@ -6,28 +6,38 @@ import type { User } from '~/types';
  * Extracts the session cookie from the request headers and returns the user data.
  * Returns null if no valid session is found.
  */
-export const getUserFromRequest = async (request: Request): Promise<User | null> => {
+export const getUserFromRequest = async (
+  request: Request,
+): Promise<User | null> => {
   const cookieHeader = request.headers.get('Cookie');
-  if (!cookieHeader) return null;
+  if (!cookieHeader) {
+    return null;
+  }
 
   // Parse cookies
   const cookies = Object.fromEntries(
     cookieHeader.split(';').map((c) => {
       const [name, ...rest] = c.trim().split('=');
       return [name, rest.join('=')];
-    })
+    }),
   );
 
   const sessionToken = cookies.session;
-  if (!sessionToken) return null;
+  if (!sessionToken) {
+    return null;
+  }
 
   // Verify the JWT session token
   const sessionData = await verifySessionToken(sessionToken);
-  if (!sessionData) return null;
+  if (!sessionData) {
+    return null;
+  }
 
   // Get the user from the database
   const dbUser = await getUserById(sessionData.userId);
-  if (!dbUser) return null;
+  if (!dbUser) {
+    return null;
+  }
 
   // Map DB user to User type
   const user: User = {

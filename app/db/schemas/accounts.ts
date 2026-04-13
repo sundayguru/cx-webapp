@@ -1,9 +1,11 @@
-import { sql } from "drizzle-orm";
-import { sqliteTable, text, integer } from "drizzle-orm/sqlite-core";
-import { users } from "./users";
+import { sql } from 'drizzle-orm';
+import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { users } from './users';
 
 export const accounts = sqliteTable('accounts', {
-  userId: text('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  userId: text('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
   type: text('type').notNull(),
   provider: text('provider').notNull(),
   providerAccountId: text('provider_account_id').notNull(),
@@ -14,8 +16,12 @@ export const accounts = sqliteTable('accounts', {
   scope: text({ length: 511 }),
   id_token: text({ length: 2048 }),
   session_state: text({ length: 255 }),
-  createdAt: text('created_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
-  updatedAt: text('updated_at').notNull().default(sql`(CURRENT_TIMESTAMP)`),
+  createdAt: text('created_at')
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
+  updatedAt: text('updated_at')
+    .notNull()
+    .default(sql`(CURRENT_TIMESTAMP)`),
 });
 
 export type SelectAccount = typeof accounts.$inferSelect;

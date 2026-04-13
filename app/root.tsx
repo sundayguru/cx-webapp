@@ -8,22 +8,21 @@ import {
   ScrollRestoration,
 } from 'react-router';
 
-
 import type { Route } from './+types/root';
 import './app.css';
 import { CurrentUserProvider } from './providers/CurrentUserProvider';
 import { userDataContext } from './contexts.server/userDataContext.server';
 
 export const links: Route.LinksFunction = () => [
-  { rel: "preconnect", href: "https://fonts.googleapis.com" },
+  { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
   {
-    rel: "preconnect",
-    href: "https://fonts.gstatic.com",
-    crossOrigin: "anonymous",
+    rel: 'preconnect',
+    href: 'https://fonts.gstatic.com',
+    crossOrigin: 'anonymous',
   },
   {
-    rel: "stylesheet",
-    href: "https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap",
+    rel: 'stylesheet',
+    href: 'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap',
   },
 ];
 
@@ -54,9 +53,7 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
 export default function App({ loaderData }: Route.ComponentProps) {
   return (
-    <CurrentUserProvider
-      user={loaderData.user}
-    >
+    <CurrentUserProvider user={loaderData.user}>
       <Outlet />
     </CurrentUserProvider>
   );

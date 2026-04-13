@@ -85,4 +85,11 @@ export default [
       'require-await': 'off',
     },
   },
+  {
+    files: ['app/routes/**/*.{ts,tsx}'],
+    rules: {
+      'func-style': 'off',
+      'require-await': 'off',
+    },
+  },
 ];
