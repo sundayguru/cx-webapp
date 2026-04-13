@@ -20,20 +20,23 @@
     "typecheck": "npm run cf-typegen && react-router typegen && tsc -b",
     "postinstall": "npm run cf-typegen",
     "db:generate": "drizzle-kit generate",
-    "db:migrate:local": "wrangler d1 migrations apply test_stage_db --local",
-    "db:migrate": "drizzle-kit migrate",
+    "db:migrate": "wrangler d1 migrations apply test_stage_db --local",
+    "db:migrate:prod": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
     "test": "vitest"
   },
   "dependencies": {
     "@iconify/react": "^6.0.2",
+    "bcryptjs": "^2.4.3",
     "dayjs": "^1.11.19",
     "dotenv": "^17.2.4",
     "drizzle-orm": "^0.45.1",
+    "jose": "^5.9.6",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-markdown": "^10.1.0",
-    "react-router": "^7.13.0"
+    "react-router": "^7.13.0",
+    "uuid": "^11.0.5"
   },
   "devDependencies": {
     "@cloudflare/vite-plugin": "^1.22.0",
