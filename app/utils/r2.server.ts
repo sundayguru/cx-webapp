@@ -1,4 +1,4 @@
-import { cloudflareContext } from '~/contexts.server/cloudflareContext.server';
+import { env } from 'cloudflare:workers';
 
 /**
  * Uploads a file to the R2 course content bucket.
@@ -10,9 +10,7 @@ export const uploadToR2 = async (
   contentType: string,
 ): Promise<{ key: string; size: number } | null> => {
   try {
-    const context = cloudflareContext.defaultValue;
-    const env = context?.env as Env | undefined;
-    const bucket = env?.COURSE_CONTENT;
+    const bucket = env.COURSE_CONTENT;
 
     if (!bucket) {
       console.error('R2 bucket COURSE_CONTENT is not configured');
@@ -36,9 +34,7 @@ export const uploadToR2 = async (
  */
 export const getFromR2 = async (key: string) => {
   try {
-    const context = cloudflareContext.defaultValue;
-    const env = context?.env as Env | undefined;
-    const bucket = env?.COURSE_CONTENT;
+    const bucket = env.COURSE_CONTENT;
 
     if (!bucket) {
       console.error('R2 bucket COURSE_CONTENT is not configured');
