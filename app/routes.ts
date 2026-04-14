@@ -22,10 +22,10 @@ export default [
   layout('./routes/layouts/ProtectedLayout.tsx', [
     route('dashboard', 'routes/dashboard.tsx'),
     route('courses', 'routes/courses.tsx'),
+    route('courses/:id', 'routes/courses/$id.tsx'),
     route('create', 'routes/create.tsx'),
     route('auth/logout', 'routes/auth/logout.tsx'),
     route('api/user', 'routes/api/user.ts'),
-    route('api/course/upload', 'routes/api/course/upload.ts'),
     route('api/course/serve/*', 'routes/api/course/serve.$.tsx'),
   ]),
 ] satisfies RouteConfig;

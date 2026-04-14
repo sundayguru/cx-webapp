@@ -1,7 +1,13 @@
 import { getUserFromRequest } from '~/utils/session.server';
 import { getFromR2 } from '~/utils/r2.server';
 
-export const loader = async ({ request, params }: { request: Request; params: { '*': string } }) => {
+export const loader = async ({
+  request,
+  params,
+}: {
+  request: Request;
+  params: { '*': string };
+}) => {
   const user = await getUserFromRequest(request);
   if (!user) {
     return new Response('Unauthorized', { status: 401 });

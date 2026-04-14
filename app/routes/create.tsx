@@ -2,6 +2,7 @@ import type { Route } from './+types/create';
 import { data, redirect } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
 import { createCourse } from '~/db/courses';
+import { uploadToR2, generateContentKey } from '~/utils/r2.server';
 import {
   CourseCreationForm,
   type CourseFormData,
@@ -10,6 +11,7 @@ import { motion } from 'motion/react';
 import { PlusCircle } from 'lucide-react';
 import { useState } from 'react';
 import type { ErrorResponse } from '~/types/api';
+import { v4 as uuidv4 } from 'uuid';
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const user = await getUserFromRequest(request);
@@ -21,44 +23,57 @@ export const action = async ({ request }: Route.ActionArgs) => {
   const courseData = JSON.parse(
     formData.get('courseData') as string,
   ) as CourseFormData;
+  const file = formData.get('file') as File | null;
 
   if (!courseData.title || !courseData.code || !courseData.description) {
     return data({ error: 'Missing required fields' }, { status: 400 });
   }
 
-  if (!courseData.contentKey) {
-    return data({ error: 'Course content is required' }, { status: 400 });
+  if (!file || file.type !== 'application/pdf') {
+    return data({ error: 'A valid PDF file is required' }, { status: 400 });
   }
 
+  // Upload file to R2
+  const uploadId = uuidv4();
+  const contentKey = generateContentKey(uploadId, file.name);
+  const fileBuffer = await file.arrayBuffer();
+  const uploadResult = await uploadToR2(contentKey, fileBuffer, file.type);
+
+  if (!uploadResult) {
+    return data({ error: 'Failed to upload course content' }, { status: 500 });
+  }
+
+  // Create course in database
   const course = await createCourse({
     title: courseData.title,
     code: courseData.code,
     description: courseData.description,
     status: 'pending',
     createdBy: user.id,
-    contentKey: courseData.contentKey,
-    contentType: courseData.contentType,
-    contentSize: courseData.fileSize,
+    contentKey: uploadResult.key,
+    contentType: file.type,
+    contentSize: uploadResult.size,
   });
 
   if (!course) {
     return data({ error: 'Failed to create course' }, { status: 500 });
   }
 
-  return redirect('/courses');
+  return redirect(`/courses/${course.id}`);
 };
 
 export default function CreateCoursePage({ actionData }: Route.ComponentProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
-  const handleSubmit = async (formData: CourseFormData) => {
+  const handleSubmit = async (formData: CourseFormData, file: File) => {
     setIsSubmitting(true);
     setSubmitError(null);
 
     try {
       const form = new FormData();
       form.append('courseData', JSON.stringify(formData));
+      form.append('file', file);
 
       const response = await fetch('/create', {
         method: 'POST',
@@ -70,9 +85,15 @@ export default function CreateCoursePage({ actionData }: Route.ComponentProps) {
         throw new Error(errorData.error || 'Failed to create course');
       }
 
-      window.location.href = '/courses';
+      const location = response.headers.get('Location');
+      if (location) {
+        window.location.href = location;
+      } else {
+        window.location.href = '/courses';
+      }
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Failed to create course';
+      const message =
+        err instanceof Error ? err.message : 'Failed to create course';
       setSubmitError(message);
       setIsSubmitting(false);
     }
@@ -94,7 +115,7 @@ export default function CreateCoursePage({ actionData }: Route.ComponentProps) {
               Create New Course
             </h1>
             <p className='text-sm text-black/60'>
-              Fill in the details to create your course.
+              Fill in the details and upload your course content.
             </p>
           </div>
         </div>
