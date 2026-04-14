@@ -13,14 +13,13 @@ export const ProfileMenu = ({
   userEmail,
   onClose,
 }: ProfileMenuProps) => {
-
-  const logoutFetcher = useFetcher()
+  const logoutFetcher = useFetcher();
 
   const handleLogout = () => {
     logoutFetcher.submit(null, {
-      action: href("/auth/logout")
-    })
-  }
+      action: href('/auth/logout'),
+    });
+  };
   return (
     <>
       {/* Backdrop to close menu */}

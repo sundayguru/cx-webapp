@@ -17,11 +17,15 @@ export default [
   ]),
   // OAuth callback route
   route('api/auth/google', 'routes/api/auth/google.tsx'),
-  
+
   // Protected routes
   layout('./routes/layouts/ProtectedLayout.tsx', [
     route('dashboard', 'routes/dashboard.tsx'),
+    route('courses', 'routes/courses.tsx'),
+    route('create', 'routes/create.tsx'),
     route('auth/logout', 'routes/auth/logout.tsx'),
     route('api/user', 'routes/api/user.ts'),
+    route('api/course/upload', 'routes/api/course/upload.ts'),
+    route('api/course/serve/*', 'routes/api/course/serve.$.tsx'),
   ]),
 ] satisfies RouteConfig;

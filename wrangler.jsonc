@@ -10,10 +10,16 @@
   },
   "d1_databases": [
     {
-      "binding": "DB", // available in your Worker on env.DB
+      "binding": "DB",
       "database_name": "test_stage_db",
       "database_id": "0504496b-6e16-4e44-aef5-50189a9c073e",
       "migrations_dir": "./drizzle",
+    },
+  ],
+  "r2_buckets": [
+    {
+      "binding": "COURSE_CONTENT",
+      "bucket_name": "course-content",
     },
   ],
   "env": {
@@ -21,10 +27,16 @@
       "name": "production-rallyard",
       "d1_databases": [
         {
-          "binding": "DB", // available in your Worker on env.DB
+          "binding": "DB",
           "database_name": "test_stage_db",
           "database_id": "0504496b-6e16-4e44-aef5-50189a9c073e",
           "migrations_dir": "./drizzle",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "COURSE_CONTENT",
+          "bucket_name": "course-content",
         },
       ],
     },
@@ -32,10 +44,16 @@
       "name": "dev-rallyard",
       "d1_databases": [
         {
-          "binding": "DB", // available in your Worker on env.DB
+          "binding": "DB",
           "database_name": "test_stage_db",
           "database_id": "0504496b-6e16-4e44-aef5-50189a9c073e",
           "migrations_dir": "./drizzle",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "COURSE_CONTENT",
+          "bucket_name": "course-content",
         },
       ],
     },
