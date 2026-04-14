@@ -33,6 +33,17 @@ export const getCourseById = async (id: string) => {
   }
 };
 
+export const getCourseByCode = async (code: string) => {
+  try {
+    const db = getDb();
+    const [course] = await db.select().from(courses).where(eq(courses.code, code));
+    return course;
+  } catch (e) {
+    logError(e, 'Error getting course by code');
+    return null;
+  }
+};
+
 export const getCoursesByUserId = (userId: string) => {
   try {
     const db = getDb();
