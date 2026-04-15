@@ -2,29 +2,42 @@ import type { Route } from './+types/$id';
 import { Link, type LoaderFunctionArgs } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
 import { getCourseById } from '~/db/courses';
-import { motion } from 'motion/react';
-import { ArrowLeft, FileText, Clock, School, UserCircle } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { 
+  Play, 
+  CheckCircle, 
+  Lock, 
+  ChevronRight, 
+  MessageSquare, 
+  Users, 
+  BarChart,
+  BookOpen,
+  Globe,
+  Edit3,
+  HelpCircle,
+  X,
+  FileText,
+  Clock
+} from 'lucide-react';
+import { useState } from 'react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
   if (!user) {
-    return { data: null };
+    return { data: null, user: null };
   }
 
   const courseId = (params as Record<string, string>).id;
   const data = await getCourseById(courseId);
 
-  if (!data || data.course.createdBy !== user.id) {
-    return { data: null };
-  }
-
-  return { data };
+  return { data, user };
 };
 
 export default function CourseDetailsPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { data } = loaderData;
+  const { data, user } = loaderData;
+  const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
 
   if (!data) {
     return (
@@ -34,20 +47,9 @@ export default function CourseDetailsPage({
           animate={{ opacity: 1, y: 0 }}
           className='rounded-[40px] border border-black/5 bg-white p-12 text-center shadow-2xl'
         >
-          <div className='mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-red-50 text-red-500'>
-            <FileText size={40} />
-          </div>
-          <h1 className='mb-3 font-serif text-3xl text-[#1a1a1a]'>
-            Course not found
-          </h1>
-          <p className='mb-8 text-black/60'>
-            This course doesn&apos;t exist or you don&apos;t have access to view it.
-          </p>
-          <Link
-            to='/courses'
-            className='inline-flex items-center gap-2 rounded-2xl bg-[#5A5A40] px-8 py-3.5 font-bold text-white transition-all hover:bg-[#4a4a35] active:scale-95'
-          >
-            <ArrowLeft size={18} />
+          <h1 className='mb-3 font-serif text-3xl text-[#1a1a1a]'>Course not found</h1>
+          <p className='mb-8 text-black/60'>We couldn't find the course you're looking for.</p>
+          <Link to='/courses' className='bg-[#5A5A40] text-white px-8 py-3 rounded-2xl font-bold'>
             Back to Courses
           </Link>
         </motion.div>
@@ -56,176 +58,258 @@ export default function CourseDetailsPage({
   }
 
   const { course, school, author } = data;
+  const isInstructor = user?.id === course.createdBy;
+  const isDraft = course.status === 'pending';
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      case 'approved':
-        return 'bg-green-100 text-green-800 border-green-200';
-      case 'rejected':
-        return 'bg-red-100 text-red-800 border-red-200';
-      default:
-        return 'bg-gray-100 text-gray-800 border-gray-200';
+  // Mock data for curriculum and community
+  const mockModules = [
+    {
+      id: 'm1',
+      title: 'Introduction to Core Concepts',
+      units: [
+        { id: 'u1', title: 'Course Foundation & Overview' },
+        { id: 'u2', title: 'Deep dive into Technical Stack' },
+      ]
+    },
+    {
+      id: 'm2',
+      title: 'Advanced Implementation',
+      units: [
+        { id: 'u3', title: 'Scaling and Deployment' },
+        { id: 'u4', title: 'Security Best Practices' },
+      ]
     }
-  };
+  ];
 
   return (
-    <div className='mx-auto max-w-5xl px-4 py-8'>
-      <div className='mb-8'>
-        <Link
-          to='/courses'
-          className='group inline-flex items-center gap-2 text-sm font-semibold text-black/40 transition-colors hover:text-[#5A5A40]'
-        >
-          <ArrowLeft size={16} className='transition-transform group-hover:-translate-x-1' />
-          Back to Courses
-        </Link>
-      </div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      {/* Hero Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-12">
+        <div className="lg:col-span-2">
+          <nav className="flex items-center gap-2 text-sm text-black/40 mb-6">
+            <Link to="/courses" className="hover:text-[#5A5A40] transition-colors">Courses</Link>
+            <ChevronRight size={14} />
+            <span className="text-black/60 truncate">{course.title}</span>
+            {isDraft && (
+              <span className="ml-4 px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-wider rounded">Pending Review</span>
+            )}
+          </nav>
+          
+          <h1 className="text-5xl font-serif text-[#1a1a1a] mb-6 leading-tight">{course.title}</h1>
+          <p className="text-xl text-black/60 font-serif italic mb-8 leading-relaxed">
+            {course.description}
+          </p>
 
-      <div className='grid grid-cols-1 gap-8 lg:grid-cols-3'>
-        {/* Main Content Area */}
-        <div className='lg:col-span-2 space-y-8'>
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className='overflow-hidden rounded-[40px] border border-black/5 bg-white shadow-xl'
-          >
-            {/* Thumbnail Header */}
-            {course.thumbnailKey && (
-              <div className='aspect-video w-full overflow-hidden border-b border-black/5'>
-                <img
-                  src={`/api/course/serve/${course.thumbnailKey}`}
-                  alt={course.title}
-                  className='h-full w-full object-cover'
-                />
+          <div className="flex flex-wrap gap-6 mb-8">
+            <div className="flex items-center gap-2 text-black/60">
+              <Users size={20} />
+              <span className="font-medium">24 Students</span>
+            </div>
+            <div className="flex items-center gap-2 text-black/60">
+              <BarChart size={20} />
+              <span className="font-medium">Intermediate</span>
+            </div>
+            <div className="flex items-center gap-2 text-black/60">
+              <BookOpen size={20} />
+              <span className="font-medium">{mockModules.length} Modules</span>
+            </div>
+            <button 
+              onClick={() => setIsPdfModalOpen(true)}
+              className="flex items-center gap-2 text-[#5A5A40] font-bold hover:underline underline-offset-4"
+            >
+              <FileText size={20} />
+              Read Course Content
+            </button>
+          </div>
+
+          <div className="flex items-center gap-4 border-t border-black/5 pt-8 mt-8">
+            {author && (
+              <div className="flex items-center gap-3">
+                <div className="h-10 w-10 rounded-full bg-[#5A5A40]/10 flex items-center justify-center text-[#5A5A40]">
+                  <Globe size={20} />
+                </div>
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-widest text-black/40">Created by</p>
+                  <p className="font-medium text-[#1a1a1a]">{author.name}</p>
+                </div>
               </div>
             )}
-
-            <div className='p-8 md:p-10'>
-              <div className='mb-6 flex flex-wrap items-start justify-between gap-4'>
+            {school && (
+              <div className="flex items-center gap-3 border-l border-black/5 pl-8">
+                <div className="h-10 w-10 rounded-full bg-[#5A5A40]/10 flex items-center justify-center text-[#5A5A40]">
+                  <Play size={18} />
+                </div>
                 <div>
-                  <div className='mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#5A5A40]'>
-                    <span>{course.code}</span>
-                    <span className='h-1 w-1 rounded-full bg-black/20'></span>
-                    <span>{new Date(course.createdAt).toLocaleDateString()}</span>
-                  </div>
-                  <h1 className='font-serif text-4xl leading-tight text-[#1a1a1a]'>
-                    {course.title}
-                  </h1>
+                  <p className="text-xs font-bold uppercase tracking-widest text-black/40">Institution</p>
+                  <p className="font-medium text-[#1a1a1a]">{school.name}</p>
                 </div>
-                <span
-                  className={`rounded-full border px-4 py-1.5 text-xs font-bold uppercase tracking-wider ${getStatusColor(
-                    course.status,
-                  )}`}
-                >
-                  {course.status}
-                </span>
               </div>
-
-              <div className='mb-10'>
-                <h3 className='mb-4 text-sm font-bold uppercase tracking-wider text-black/30'>
-                  About this course
-                </h3>
-                <p className='text-lg leading-relaxed text-black/70'>
-                  {course.description}
-                </p>
-              </div>
-
-              {course.contentKey && (
-                <div className='space-y-6'>
-                  <div className='flex items-center justify-between'>
-                    <h3 className='text-sm font-bold uppercase tracking-wider text-black/30'>
-                      Study Material
-                    </h3>
-                  </div>
-                  
-                  <div className='rounded-2xl border border-[#5A5A40]/20 bg-[#5A5A40]/5 p-6'>
-                    <div className='flex items-center justify-between gap-4'>
-                      <div className='flex items-center gap-4'>
-                        <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-[#5A5A40] text-white'>
-                          <FileText size={24} />
-                        </div>
-                        <div>
-                          <p className='truncate font-bold text-[#1a1a1a]'>
-                            Course Content (PDF)
-                          </p>
-                          <p className='text-xs text-black/50'>
-                            {course.contentSize
-                              ? `${(course.contentSize / 1024 / 1024).toFixed(2)} MB`
-                              : 'Unknown size'}
-                          </p>
-                        </div>
-                      </div>
-                      <a
-                        href={`/api/course/serve/${course.contentKey}`}
-                        target='_blank'
-                        rel='noreferrer'
-                        className='rounded-xl bg-white px-4 py-2 text-sm font-bold text-[#5A5A40] shadow-sm transition-all hover:shadow-md active:scale-95'
-                      >
-                        Open PDF
-                      </a>
-                    </div>
-                  </div>
-
-                  <div className='aspect-[3/4] w-full overflow-hidden rounded-[32px] border border-black/5 bg-gray-50 shadow-inner'>
-                    <iframe
-                      src={`/api/course/serve/${encodeURIComponent(course.contentKey)}`}
-                      className='h-full w-full'
-                      title='Course Content'
-                    />
-                  </div>
-                </div>
-              )}
-            </div>
-          </motion.div>
+            )}
+          </div>
         </div>
 
-        {/* Sidebar */}
-        <div className='space-y-6'>
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            animate={{ opacity: 1, x: 0 }}
-            className='space-y-6'
-          >
-            {/* School Info */}
-            {school && (
-              <div className='rounded-3xl border border-black/5 bg-white p-6 shadow-md'>
-                <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#5A5A40]/10 text-[#5A5A40]'>
-                  <School size={24} />
+        <div className="lg:col-span-1">
+          <div className="bg-white p-6 rounded-[32px] border border-black/5 shadow-xl sticky top-8 overflow-hidden">
+            <div className="relative mb-6 rounded-2xl overflow-hidden group">
+              <img 
+                src={course.thumbnailKey ? `/api/course/serve/${course.thumbnailKey}` : `https://picsum.photos/seed/${course.id}/600/400`} 
+                className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105"
+                alt={course.title}
+              />
+              <button 
+                onClick={() => setIsPdfModalOpen(true)}
+                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <div className="h-14 w-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
+                  <Play size={24} fill="currentColor" />
                 </div>
-                <h3 className='mb-1 text-sm font-bold uppercase tracking-wider text-black/30'>
-                  Institution
-                </h3>
-                <p className='text-xl font-medium text-[#1a1a1a]'>{school.name}</p>
-              </div>
-            )}
-
-            {/* Author Info */}
-            {author && (
-              <div className='rounded-3xl border border-black/5 bg-white p-6 shadow-md'>
-                <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-2xl bg-[#5A5A40]/10 text-[#5A5A40]'>
-                  <UserCircle size={24} />
-                </div>
-                <h3 className='mb-1 text-sm font-bold uppercase tracking-wider text-black/30'>
-                  Course Author
-                </h3>
-                <p className='text-xl font-medium text-[#1a1a1a]'>{author.name}</p>
-              </div>
-            )}
-
-            {/* Stats / Quick Info */}
-            <div className='rounded-3xl border border-black/5 bg-[#1a1a1a] p-8 text-white shadow-xl'>
-              <div className='flex items-center gap-3 mb-6'>
-                <Clock size={20} className='text-white/40' />
-                <span className='text-sm text-white/60'>Published {new Date(course.createdAt).toLocaleDateString()}</span>
-              </div>
-              <button className='w-full rounded-2xl bg-white py-4 font-bold text-[#1a1a1a] transition-all hover:bg-white/90 active:scale-95'>
-                Edit Course
               </button>
             </div>
-          </motion.div>
+            
+            {isInstructor ? (
+              <div className="space-y-3">
+                <button 
+                  className="w-full bg-[#5A5A40] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#4a4a35] transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-95"
+                >
+                  <Globe size={20} />
+                  Course Settings
+                </button>
+                <button className="w-full border border-black/10 text-black/60 py-4 rounded-2xl font-bold text-lg hover:bg-black/5 transition-all flex items-center justify-center gap-2 active:scale-95">
+                  <Edit3 size={20} />
+                  Edit Course
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <button 
+                  className="w-full bg-[#5A5A40] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#4a4a35] transition-all shadow-lg hover:shadow-xl active:scale-95"
+                >
+                  Go to Course
+                </button>
+                <button 
+                  onClick={() => setIsPdfModalOpen(true)}
+                  className="w-full border border-[#5A5A40] text-[#5A5A40] py-4 rounded-2xl font-bold text-lg hover:bg-[#5A5A40]/5 transition-all flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <HelpCircle size={20} />
+                  View Syllabus
+                </button>
+              </div>
+            )}
+            
+            <div className="mt-6 flex flex-col gap-3">
+              <div className="flex items-center gap-3 text-sm text-black/50">
+                <Clock size={16} />
+                <span>Full lifetime access</span>
+              </div>
+              <div className="flex items-center gap-3 text-sm text-black/50">
+                <CheckCircle size={16} />
+                <span>Certificate of completion</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
+
+      {/* Course Content */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
+        <div className="lg:col-span-2">
+          <h2 className="text-3xl font-serif text-[#1a1a1a] mb-8">Course Curriculum</h2>
+          <div className="space-y-4">
+            {mockModules.map((module, mIdx) => (
+              <div key={module.id} className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm">
+                <div className="p-6 bg-black/[0.01] border-b border-black/5 flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    <h3 className="text-lg font-bold text-[#1a1a1a]">
+                      Module {mIdx + 1}: {module.title}
+                    </h3>
+                  </div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-black/30">{module.units.length} Units</span>
+                </div>
+                <div className="divide-y divide-black/5">
+                  {module.units.map((unit, uIdx) => (
+                    <div 
+                      key={unit.id}
+                      className="p-4 flex items-center gap-4 hover:bg-black/[0.01] transition-colors group cursor-pointer"
+                    >
+                      <div className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-xs font-bold text-black/40 group-hover:bg-[#5A5A40] group-hover:text-white transition-all">
+                        {uIdx + 1}
+                      </div>
+                      <span className="flex-1 font-medium text-[#1a1a1a] group-hover:text-[#5A5A40] transition-colors">{unit.title}</span>
+                      <Play size={16} className="text-black/20 group-hover:text-[#5A5A40]" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="lg:col-span-1">
+          <h2 className="text-3xl font-serif text-[#1a1a1a] mb-8">Community</h2>
+          <div className="bg-white p-8 rounded-[24px] border border-black/5 shadow-md">
+            <div className="flex items-center gap-4 mb-6">
+              <div className="flex -space-x-2">
+                {[1, 2, 3].map(i => (
+                  <img key={i} src={`https://i.pravatar.cc/100?u=${i + 10}`} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" alt="User" />
+                ))}
+              </div>
+              <span className="text-sm text-black/60 font-medium">Join active discussions</span>
+            </div>
+            <button 
+              className="w-full flex items-center justify-center gap-2 py-4 border border-black/10 rounded-2xl font-bold hover:bg-black/5 transition-all active:scale-95"
+            >
+              <MessageSquare size={18} />
+              Open Community Space
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* PDF Modal */}
+      <AnimatePresence>
+        {isPdfModalOpen && course.contentKey && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsPdfModalOpen(false)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="relative w-full max-w-5xl h-full bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col"
+            >
+              <div className="p-6 border-b border-black/5 flex items-center justify-between bg-white">
+                <div className="flex items-center gap-4 text-[#5A5A40]">
+                  <div className="h-10 w-10 rounded-xl bg-[#5A5A40]/10 flex items-center justify-center">
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-[#1a1a1a] leading-tight">Course Content</h3>
+                    <p className="text-xs text-black/40 uppercase tracking-widest font-bold">{course.code}</p>
+                  </div>
+                </div>
+                <button 
+                  onClick={() => setIsPdfModalOpen(false)}
+                  className="h-10 w-10 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className="flex-1 bg-gray-100 p-4">
+                <iframe
+                  src={`/api/course/serve/${course.contentKey}`}
+                  className="w-full h-full rounded-2xl border border-black/5 bg-white"
+                  title={course.title}
+                />
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
