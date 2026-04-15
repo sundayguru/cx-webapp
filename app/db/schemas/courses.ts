@@ -14,6 +14,8 @@ export const courses = sqliteTable('courses', {
   authorId: text('author_id')
     .references(() => authors.id, { onDelete: 'set null' }),
   thumbnailKey: text('thumbnail_key', { length: 511 }),
+  level: text('level', { length: 50 }).notNull().default('Beginner'),
+  category: text('category', { length: 100 }).notNull().default('General'),
   status: text('status', { length: 20 }).notNull().default('pending'),
   createdBy: text('created_by')
     .notNull()

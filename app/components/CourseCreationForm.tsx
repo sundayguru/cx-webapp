@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react';
+import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Upload,
@@ -8,6 +8,8 @@ import {
   ChevronLeft,
   X,
   Image as ImageIcon,
+  Layers,
+  Tag
 } from 'lucide-react';
 import { SchoolSelect } from './SchoolSelect';
 import { AuthorSelect } from './AuthorSelect';
@@ -22,6 +24,8 @@ type CourseFormData = {
   authorId: string;
   authorName: string;
   isNewAuthor?: boolean;
+  level: string;
+  category: string;
 };
 
 type StepProps = {
@@ -33,45 +37,97 @@ export type { CourseFormData };
 
 // Step 1: Course Details
 const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
+  const categories = [
+    'General',
+    'Computer Science',
+    'Mathematics',
+    'Physics',
+    'Business',
+    'Humanities',
+  ];
+
+  const levels = ['Beginner', 'Intermediate', 'Advanced'];
+
   return (
     <div className='space-y-6'>
       <div>
         <h2 className='font-serif text-2xl text-[#1a1a1a]'>Course Details</h2>
         <p className='mt-1 text-sm text-black/60'>
-          Provide the basic information for your course.
+          Provide the basic information and classification for your course.
         </p>
       </div>
 
-      <div className='space-y-4'>
-        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
-          <div>
-            <label className='mb-1 block text-sm font-medium text-black/70'>
-              School
-            </label>
-            <SchoolSelect
-              value={formData.schoolId}
-              label={formData.schoolName}
-              onChange={(value, label, isNew) => 
-                updateFormData({ schoolId: value, schoolName: label, isNewSchool: isNew })
-              }
-            />
-          </div>
-          <div>
-            <label className='mb-1 block text-sm font-medium text-black/70'>
-              Author
-            </label>
-            <AuthorSelect
-              value={formData.authorId}
-              label={formData.authorName}
-              onChange={(value, label, isNew) => 
-                updateFormData({ authorId: value, authorName: label, isNewAuthor: isNew })
-              }
-            />
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+        <div className='space-y-4 md:col-span-2'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <div>
+              <label className='mb-1 block text-[10px] font-bold uppercase tracking-widest text-black/40'>
+                School / Institution
+              </label>
+              <SchoolSelect
+                value={formData.schoolId}
+                label={formData.schoolName}
+                onChange={(value, label, isNew) =>
+                  updateFormData({ schoolId: value, schoolName: label, isNewSchool: isNew })
+                }
+              />
+            </div>
+            <div>
+              <label className='mb-1 block text-[10px] font-bold uppercase tracking-widest text-black/40'>
+                Original Author
+              </label>
+              <AuthorSelect
+                value={formData.authorId}
+                label={formData.authorName}
+                onChange={(value, label, isNew) =>
+                  updateFormData({ authorId: value, authorName: label, isNewAuthor: isNew })
+                }
+              />
+            </div>
           </div>
         </div>
 
-        <div>
-          <label className='mb-1 block text-sm font-medium text-black/70'>
+        <div className='space-y-4 md:col-span-2'>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            <div>
+              <label className='mb-1 block text-[10px] font-bold uppercase tracking-widest text-black/40'>
+                Category
+              </label>
+              <div className='relative'>
+                <Tag size={16} className='absolute left-4 top-1/2 -translate-y-1/2 text-black/30' />
+                <select
+                  value={formData.category}
+                  onChange={(e) => updateFormData({ category: e.target.value })}
+                  className='w-full appearance-none rounded-xl border border-black/10 bg-white pl-11 pr-4 py-3 outline-none transition-all focus:ring-2 focus:ring-[#5A5A40]'
+                >
+                  {categories.map((c) => (
+                    <option key={c} value={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <div>
+              <label className='mb-1 block text-[10px] font-bold uppercase tracking-widest text-black/40'>
+                Difficulty Level
+              </label>
+              <div className='relative'>
+                <Layers size={16} className='absolute left-4 top-1/2 -translate-y-1/2 text-black/30' />
+                <select
+                  value={formData.level}
+                  onChange={(e) => updateFormData({ level: e.target.value })}
+                  className='w-full appearance-none rounded-xl border border-black/10 bg-white pl-11 pr-4 py-3 outline-none transition-all focus:ring-2 focus:ring-[#5A5A40]'
+                >
+                  {levels.map((l) => (
+                    <option key={l} value={l}>{l}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className='md:col-span-1'>
+          <label className='mb-1 block text-[10px] font-bold uppercase tracking-widest text-black/40'>
             Course Title
           </label>
           <input
@@ -79,13 +135,13 @@ const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
             value={formData.title}
             onChange={(e) => updateFormData({ title: e.target.value })}
             className='w-full rounded-xl border border-black/10 px-4 py-3 transition-all outline-none focus:ring-2 focus:ring-[#5A5A40]'
-            placeholder='Introduction to Computer Science'
+            placeholder='Introduction to Design'
             required
           />
         </div>
 
-        <div>
-          <label className='mb-1 block text-sm font-medium text-black/70'>
+        <div className='md:col-span-1'>
+          <label className='mb-1 block text-[10px] font-bold uppercase tracking-widest text-black/40'>
             Course Code
           </label>
           <input
@@ -95,21 +151,21 @@ const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
               updateFormData({ code: e.target.value.toUpperCase() })
             }
             className='w-full rounded-xl border border-black/10 px-4 py-3 transition-all outline-none focus:ring-2 focus:ring-[#5A5A40]'
-            placeholder='CS101'
+            placeholder='ART101'
             maxLength={50}
             required
           />
         </div>
 
-        <div>
-          <label className='mb-1 block text-sm font-medium text-black/70'>
-            Description
+        <div className='md:col-span-2'>
+          <label className='mb-1 block text-[10px] font-bold uppercase tracking-widest text-black/40'>
+            Detailed Description
           </label>
           <textarea
             value={formData.description}
             onChange={(e) => updateFormData({ description: e.target.value })}
             className='w-full rounded-xl border border-black/10 px-4 py-3 transition-all outline-none focus:ring-2 focus:ring-[#5A5A40]'
-            placeholder='Brief description of what students will learn...'
+            placeholder='Explain what this course covers...'
             rows={4}
             required
           />
@@ -138,7 +194,7 @@ const UploadContentStep = ({
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
@@ -189,19 +245,18 @@ const UploadContentStep = ({
           Upload Course Assets
         </h2>
         <p className='mt-1 text-sm text-black/60'>
-          Upload your course content (PDF) and an optional thumbnail image.
+          Upload your core academic material and an optional cover image.
         </p>
       </div>
 
       <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
-        {/* Course PDF Upload */}
         <div className='space-y-2'>
-          <label className='text-sm font-medium text-black/70'>Course Content (PDF)</label>
+          <label className='text-[10px] font-bold uppercase tracking-widest text-black/40'>Study Material (PDF)</label>
           {selectedFile ? (
             <div className='rounded-xl border border-[#5A5A40]/20 bg-[#5A5A40]/5 p-4'>
               <div className='flex items-center justify-between'>
-                <div className='flex items-center gap-3'>
-                  <FileText className='text-[#5A5A40]' size={24} />
+                <div className='flex items-center gap-3 overflow-hidden'>
+                  <FileText className='text-[#5A5A40] shrink-0' size={24} />
                   <div className="overflow-hidden">
                     <p className='truncate font-medium text-[#1a1a1a]'>
                       {selectedFile.name}
@@ -233,11 +288,10 @@ const UploadContentStep = ({
                   setIsDraggingFile(false);
                   handleFileChange(e.dataTransfer.files[0]);
                 }}
-                className={`rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
-                  isDraggingFile
+                className={`rounded-xl border-2 border-dashed p-6 text-center transition-colors ${isDraggingFile
                     ? 'border-[#5A5A40] bg-[#5A5A40]/5'
                     : 'border-black/20 hover:border-black/30'
-                }`}
+                  }`}
               >
                 <Upload className='mx-auto h-8 w-8 text-black/20' />
                 <p className='mt-2 text-sm font-medium text-[#1a1a1a]'>
@@ -255,11 +309,10 @@ const UploadContentStep = ({
           )}
         </div>
 
-        {/* Thumbnail Upload */}
         <div className='space-y-2'>
-          <label className='text-sm font-medium text-black/70'>Thumbnail (Optional)</label>
+          <label className='text-[10px] font-bold uppercase tracking-widest text-black/40'>Cover Image (Optional)</label>
           {thumbnailPreview ? (
-            <div className='relative aspect-video w-full overflow-hidden rounded-xl border border-black/10'>
+            <div className='relative aspect-video w-full overflow-hidden rounded-xl border border-black/10 shadow-sm'>
               <img
                 src={thumbnailPreview}
                 alt='Thumbnail preview'
@@ -268,7 +321,7 @@ const UploadContentStep = ({
               <button
                 type='button'
                 onClick={removeThumbnail}
-                className='absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/70'
+                className='absolute right-2 top-2 rounded-full bg-black/60 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/80'
               >
                 <X size={16} />
               </button>
@@ -278,7 +331,7 @@ const UploadContentStep = ({
               <div className='flex aspect-video w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-black/20 transition-colors hover:border-black/30'>
                 <ImageIcon className='h-8 w-8 text-black/20' />
                 <p className='mt-2 text-sm font-medium text-[#1a1a1a]'>
-                  Click to add thumbnail
+                  Add Thumbnail
                 </p>
                 <input
                   ref={thumbnailInputRef}
@@ -294,15 +347,15 @@ const UploadContentStep = ({
       </div>
 
       {(error || submitError) && (
-        <p className='text-sm text-red-500'>{error || submitError}</p>
+        <p className='text-sm text-red-500 bg-red-50 p-3 rounded-xl border border-red-100'>{error || submitError}</p>
       )}
 
-      <div className='flex items-center justify-between'>
+      <div className='flex items-center justify-between pt-4'>
         <button
           type='button'
           onClick={onBack}
           disabled={isSubmitting}
-          className='flex items-center gap-2 rounded-xl border border-black/10 px-6 py-3 font-medium text-black/70 transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50'
+          className='flex items-center gap-2 rounded-xl border border-black/10 px-6 py-3 font-medium text-black/70 transition-colors hover:bg-black/5'
         >
           <ChevronLeft size={18} />
           Back
@@ -312,17 +365,17 @@ const UploadContentStep = ({
           type='button'
           onClick={handleSubmit}
           disabled={!selectedFile || isSubmitting}
-          className='flex items-center gap-2 rounded-xl bg-[#5A5A40] px-6 py-3 font-medium text-white transition-colors hover:bg-[#4a4a35] disabled:cursor-not-allowed disabled:opacity-50'
+          className='flex items-center gap-2 rounded-xl bg-[#5A5A40] px-8 py-3 font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35] active:scale-95 disabled:opacity-50'
         >
           {isSubmitting ? (
             <>
               <div className='h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent'></div>
-              Creating Course...
+              Finalizing...
             </>
           ) : (
             <>
               <CheckCircle size={18} />
-              Create Course
+              Publish Course
             </>
           )}
         </button>
@@ -352,6 +405,8 @@ export const CourseCreationForm = ({
     schoolName: '',
     authorId: '',
     authorName: '',
+    level: 'Beginner',
+    category: 'General',
   });
 
   const updateFormData = (data: Partial<CourseFormData>) => {
@@ -368,10 +423,10 @@ export const CourseCreationForm = ({
 
   const canProceedToNext = () => {
     return (
-      formData.title && 
-      formData.code && 
-      formData.description && 
-      formData.schoolId && 
+      formData.title &&
+      formData.code &&
+      formData.description &&
+      formData.schoolId &&
       formData.authorId
     );
   };
@@ -382,31 +437,29 @@ export const CourseCreationForm = ({
   ];
 
   return (
-    <form className='space-y-6'>
+    <form className='space-y-8'>
       {/* Progress Indicator */}
       <div className='flex items-center justify-center gap-4'>
         {steps.map((s, index) => (
           <div key={s.number} className='flex items-center'>
             <div
-              className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium transition-colors ${
-                step === s.number
-                  ? 'bg-[#5A5A40] text-white'
+              className={`flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold transition-all ${step === s.number
+                  ? 'bg-[#5A5A40] text-white ring-4 ring-[#5A5A40]/10 shadow-lg'
                   : step > s.number
                     ? 'bg-[#5A5A40] text-white'
-                    : 'bg-black/10 text-black/40'
-              }`}
+                    : 'bg-black/[0.03] text-black/30'
+                }`}
             >
-              {step > s.number ? <CheckCircle size={20} /> : s.number}
+              {step > s.number ? <CheckCircle size={22} /> : s.number}
             </div>
             <span
-              className={`ml-2 text-sm font-medium ${
-                step === s.number ? 'text-[#1a1a1a]' : 'text-black/40'
-              }`}
+              className={`ml-3 text-sm font-bold uppercase tracking-widest ${step === s.number ? 'text-[#1a1a1a]' : 'text-black/20'
+                }`}
             >
               {s.label}
             </span>
             {index < steps.length - 1 && (
-              <div className='mx-4 h-px w-8 bg-black/10'></div>
+              <div className='mx-6 h-px w-12 bg-black/5'></div>
             )}
           </div>
         ))}
@@ -415,19 +468,17 @@ export const CourseCreationForm = ({
       {/* Step Content */}
       <motion.div
         key={step}
-        initial={{ opacity: 0, x: 20 }}
-        animate={{ opacity: 1, x: 0 }}
-        exit={{ opacity: 0, x: -20 }}
-        transition={{ duration: 0.2 }}
-        className='min-h-[300px]'
+        initial={{ opacity: 0, x: 20, scale: 0.98 }}
+        animate={{ opacity: 1, x: 0, scale: 1 }}
+        exit={{ opacity: 0, x: -20, scale: 0.98 }}
+        transition={{ duration: 0.3, ease: 'easeOut' }}
+        className='min-h-[400px]'
       >
         <AnimatePresence mode='wait'>
           {step === 1 && (
             <motion.div
               key='step1'
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              className='bg-white'
             >
               <CourseDetailsStep
                 formData={formData}
@@ -438,9 +489,7 @@ export const CourseCreationForm = ({
           {step === 2 && (
             <motion.div
               key='step2'
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
+              className='bg-white'
             >
               <UploadContentStep
                 formData={formData}
@@ -456,15 +505,15 @@ export const CourseCreationForm = ({
 
       {/* Navigation Buttons */}
       {step === 1 && (
-        <div className='flex justify-end'>
+        <div className='flex justify-end pt-6'>
           <button
             type='button'
             onClick={handleNext}
             disabled={!canProceedToNext()}
-            className='flex items-center gap-2 rounded-xl bg-[#5A5A40] px-6 py-3 font-medium text-white transition-colors hover:bg-[#4a4a35] disabled:cursor-not-allowed disabled:opacity-50'
+            className='flex items-center gap-2 rounded-2xl bg-[#5A5A40] px-8 py-3.5 font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35] hover:-translate-y-0.5 active:scale-95 disabled:opacity-50 disabled:translate-y-0 disabled:shadow-none'
           >
-            Next
-            <ChevronRight size={18} />
+            Continue to Assets
+            <ChevronRight size={20} />
           </button>
         </div>
       )}

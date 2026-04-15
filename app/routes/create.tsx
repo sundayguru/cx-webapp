@@ -10,7 +10,7 @@ import {
   type CourseFormData,
 } from '~/components/CourseCreationForm';
 import { motion } from 'motion/react';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useFetcher } from 'react-router';
 import { v4 as uuidv4 } from 'uuid';
@@ -103,6 +103,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
       schoolId: finalSchoolId,
       authorId: finalAuthorId,
       thumbnailKey: finalThumbnailKey,
+      level: courseData.level || 'Beginner',
+      category: courseData.category || 'General',
       status: 'pending',
       createdBy: user.id,
       contentKey: uploadResult.key,
@@ -154,30 +156,38 @@ export default function CreateCoursePage() {
   };
 
   return (
-    <div className='mx-auto max-w-3xl'>
+    <div className='mx-auto max-w-4xl px-4'>
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        className='rounded-[32px] border border-black/5 bg-white p-8 shadow-xl'
+        transition={{ duration: 0.5, ease: 'easeOut' }}
+        className='rounded-[48px] border border-black/5 bg-white p-10 md:p-16 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]'
       >
-        <div className='mb-8 flex items-center gap-3'>
-          <div className='flex h-12 w-12 items-center justify-center rounded-2xl bg-[#5A5A40]'>
-            <PlusCircle className='text-white' size={24} />
+        <div className='mb-12 flex flex-col md:flex-row md:items-center gap-8'>
+          <div className='flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#5A5A40] shadow-xl shadow-[#5A5A40]/30'>
+            <PlusCircle className='text-white' size={36} />
           </div>
           <div>
-            <h1 className='font-serif text-3xl text-[#1a1a1a]'>
-              Create New Course
+            <h1 className='font-serif text-5xl text-[#1a1a1a] mb-2'>
+              Submit New Course
             </h1>
-            <p className='text-sm text-black/60'>
-              Fill in the details and upload your course assets.
+            <p className='text-lg text-black/40 italic font-serif'>
+              Contribute to the collective academic knowledge base.
             </p>
           </div>
         </div>
 
         {submitError && (
-          <div className='mb-4 rounded-xl border border-red-200 bg-red-50 p-4'>
-            <p className='text-sm text-red-600'>{submitError}</p>
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className='mb-8 rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm'
+          >
+            <p className='text-sm font-bold text-red-600 flex items-center gap-2'>
+              <X size={18} />
+              {submitError}
+            </p>
+          </motion.div>
         )}
 
         <CourseCreationForm

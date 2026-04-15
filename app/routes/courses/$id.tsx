@@ -3,13 +3,12 @@ import { Link, type LoaderFunctionArgs } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
 import { getCourseById } from '~/db/courses';
 import { motion, AnimatePresence } from 'motion/react';
-import { 
-  Play, 
-  CheckCircle, 
-  Lock, 
-  ChevronRight, 
-  MessageSquare, 
-  Users, 
+import {
+  Play,
+  CheckCircle,
+  ChevronRight,
+  MessageSquare,
+  Users,
   BarChart,
   BookOpen,
   Globe,
@@ -94,7 +93,7 @@ export default function CourseDetailsPage({
               <span className="ml-4 px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-wider rounded">Pending Review</span>
             )}
           </nav>
-          
+
           <h1 className="text-5xl font-serif text-[#1a1a1a] mb-6 leading-tight">{course.title}</h1>
           <p className="text-xl text-black/60 font-serif italic mb-8 leading-relaxed">
             {course.description}
@@ -107,13 +106,13 @@ export default function CourseDetailsPage({
             </div>
             <div className="flex items-center gap-2 text-black/60">
               <BarChart size={20} />
-              <span className="font-medium">Intermediate</span>
+              <span className="font-medium">{course.level} Level</span>
             </div>
             <div className="flex items-center gap-2 text-black/60">
               <BookOpen size={20} />
               <span className="font-medium">{mockModules.length} Modules</span>
             </div>
-            <button 
+            <button
               onClick={() => setIsPdfModalOpen(true)}
               className="flex items-center gap-2 text-[#5A5A40] font-bold hover:underline underline-offset-4"
             >
@@ -151,12 +150,12 @@ export default function CourseDetailsPage({
         <div className="lg:col-span-1">
           <div className="bg-white p-6 rounded-[32px] border border-black/5 shadow-xl sticky top-8 overflow-hidden">
             <div className="relative mb-6 rounded-2xl overflow-hidden group">
-              <img 
-                src={course.thumbnailKey ? `/api/course/serve/${course.thumbnailKey}` : `https://picsum.photos/seed/${course.id}/600/400`} 
+              <img
+                src={course.thumbnailKey ? `/api/course/serve/${course.thumbnailKey}` : `https://picsum.photos/seed/${course.id}/600/400`}
                 className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105"
                 alt={course.title}
               />
-              <button 
+              <button
                 onClick={() => setIsPdfModalOpen(true)}
                 className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
               >
@@ -165,10 +164,10 @@ export default function CourseDetailsPage({
                 </div>
               </button>
             </div>
-            
+
             {isInstructor ? (
               <div className="space-y-3">
-                <button 
+                <button
                   className="w-full bg-[#5A5A40] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#4a4a35] transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-95"
                 >
                   <Globe size={20} />
@@ -181,12 +180,12 @@ export default function CourseDetailsPage({
               </div>
             ) : (
               <div className="space-y-3">
-                <button 
+                <button
                   className="w-full bg-[#5A5A40] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#4a4a35] transition-all shadow-lg hover:shadow-xl active:scale-95"
                 >
                   Go to Course
                 </button>
-                <button 
+                <button
                   onClick={() => setIsPdfModalOpen(true)}
                   className="w-full border border-[#5A5A40] text-[#5A5A40] py-4 rounded-2xl font-bold text-lg hover:bg-[#5A5A40]/5 transition-all flex items-center justify-center gap-2 active:scale-95"
                 >
@@ -195,7 +194,7 @@ export default function CourseDetailsPage({
                 </button>
               </div>
             )}
-            
+
             <div className="mt-6 flex flex-col gap-3">
               <div className="flex items-center gap-3 text-sm text-black/50">
                 <Clock size={16} />
@@ -227,7 +226,7 @@ export default function CourseDetailsPage({
                 </div>
                 <div className="divide-y divide-black/5">
                   {module.units.map((unit, uIdx) => (
-                    <div 
+                    <div
                       key={unit.id}
                       className="p-4 flex items-center gap-4 hover:bg-black/[0.01] transition-colors group cursor-pointer"
                     >
@@ -255,7 +254,7 @@ export default function CourseDetailsPage({
               </div>
               <span className="text-sm text-black/60 font-medium">Join active discussions</span>
             </div>
-            <button 
+            <button
               className="w-full flex items-center justify-center gap-2 py-4 border border-black/10 rounded-2xl font-bold hover:bg-black/5 transition-all active:scale-95"
             >
               <MessageSquare size={18} />
@@ -292,7 +291,7 @@ export default function CourseDetailsPage({
                     <p className="text-xs text-black/40 uppercase tracking-widest font-bold">{course.code}</p>
                   </div>
                 </div>
-                <button 
+                <button
                   onClick={() => setIsPdfModalOpen(false)}
                   className="h-10 w-10 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors"
                 >

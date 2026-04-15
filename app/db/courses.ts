@@ -1,4 +1,4 @@
-import { eq } from 'drizzle-orm';
+import { eq, and, like, or, SQL } from 'drizzle-orm';
 import { getDb } from './connection';
 import { courses, schools, authors, type InsertCourse } from './schemas';
 import { v4 as uuidv4 } from 'uuid';
@@ -55,10 +55,51 @@ export const getCourseByCode = async (code: string) => {
   }
 };
 
-export const getCoursesByUserId = async (userId: string) => {
+type CourseFilters = {
+  search?: string;
+  schoolId?: string;
+  authorId?: string;
+  level?: string;
+  category?: string;
+  createdBy?: string;
+};
+
+export const getCourses = async (filters?: CourseFilters) => {
   try {
     const db = getDb();
-    return db
+    const conditions: SQL[] = [];
+
+    if (filters?.createdBy) {
+      conditions.push(eq(courses.createdBy, filters.createdBy));
+    }
+
+    if (filters?.search) {
+      conditions.push(
+        or(
+          like(courses.title, `%${filters.search}%`),
+          like(courses.code, `%${filters.search}%`),
+          like(courses.description, `%${filters.search}%`),
+        )!,
+      );
+    }
+
+    if (filters?.schoolId) {
+      conditions.push(eq(courses.schoolId, filters.schoolId));
+    }
+
+    if (filters?.authorId) {
+      conditions.push(eq(courses.authorId, filters.authorId));
+    }
+
+    if (filters?.level) {
+      conditions.push(eq(courses.level, filters.level));
+    }
+
+    if (filters?.category) {
+      conditions.push(eq(courses.category, filters.category));
+    }
+
+    const query = db
       .select({
         course: courses,
         school: schools,
@@ -66,12 +107,48 @@ export const getCoursesByUserId = async (userId: string) => {
       })
       .from(courses)
       .leftJoin(schools, eq(courses.schoolId, schools.id))
-      .leftJoin(authors, eq(courses.authorId, authors.id))
-      .where(eq(courses.createdBy, userId))
-      .orderBy(courses.createdAt);
+      .leftJoin(authors, eq(courses.authorId, authors.id));
+
+    if (conditions.length > 0) {
+      query.where(and(...conditions));
+    }
+
+    return query.orderBy(courses.createdAt);
   } catch (e) {
-    logError(e, 'Error getting courses by user id');
+    logError(e, 'Error getting courses');
     return [];
+  }
+};
+
+// Kept for backward compatibility if needed, but redirects to getCourses
+export const getCoursesByUserId = (userId: string, filters?: CourseFilters) => {
+  return getCourses({ ...filters, createdBy: userId });
+};
+
+export const getAllCourseMetadata = async () => {
+  try {
+    const db = getDb();
+    
+    const allSchools = await db
+      .selectDistinct({
+        id: schools.id,
+        name: schools.name,
+      })
+      .from(courses)
+      .innerJoin(schools, eq(courses.schoolId, schools.id));
+
+    const allAuthors = await db
+      .selectDistinct({
+        id: authors.id,
+        name: authors.name,
+      })
+      .from(courses)
+      .innerJoin(authors, eq(courses.authorId, authors.id));
+
+    return { schools: allSchools, authors: allAuthors };
+  } catch (e) {
+    logError(e, 'Error getting all course metadata');
+    return { schools: [], authors: [] };
   }
 };
 
