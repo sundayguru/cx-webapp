@@ -6,3 +6,4 @@ export * from './verificationTokens';
 export * from './passwordResetTokens';
 export * from './courses';
 export * from './schools';
+export * from './authors';

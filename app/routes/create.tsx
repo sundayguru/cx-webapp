@@ -3,6 +3,7 @@ import { data } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
 import { createCourse, getCourseByCode } from '~/db/courses';
 import { createSchool } from '~/db/schools';
+import { createAuthor } from '~/db/authors';
 import { uploadToR2, generateContentKey } from '~/utils/r2.server';
 import {
   CourseCreationForm,
@@ -29,8 +30,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
     const courseData = JSON.parse(courseDataStr as string) as CourseFormData;
     const file = formData.get('file') as File | null;
+    const thumbnail = formData.get('thumbnail') as File | null;
 
-    if (!courseData.title || !courseData.code || !courseData.description || !courseData.schoolId) {
+    if (
+      !courseData.title || 
+      !courseData.code || 
+      !courseData.description || 
+      !courseData.schoolId ||
+      !courseData.authorId
+    ) {
       return data({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -50,14 +58,24 @@ export const action = async ({ request }: Route.ActionArgs) => {
     // Handle school creation if needed
     let finalSchoolId = courseData.schoolId;
     if (courseData.isNewSchool) {
-      const newSchool = await createSchool(courseData.schoolId, user.id); // In this case schoolId holds the name
+      const newSchool = await createSchool(courseData.schoolId, user.id);
       if (!newSchool) {
         return data({ error: 'Failed to create new school' }, { status: 500 });
       }
       finalSchoolId = newSchool.id;
     }
 
-    // Upload file to R2
+    // Handle author creation if needed
+    let finalAuthorId = courseData.authorId;
+    if (courseData.isNewAuthor) {
+      const newAuthor = await createAuthor(courseData.authorId, user.id);
+      if (!newAuthor) {
+        return data({ error: 'Failed to create new author' }, { status: 500 });
+      }
+      finalAuthorId = newAuthor.id;
+    }
+
+    // Upload content to R2
     const uploadId = uuidv4();
     const contentKey = generateContentKey(uploadId, file.name);
     const fileBuffer = await file.arrayBuffer();
@@ -67,11 +85,24 @@ export const action = async ({ request }: Route.ActionArgs) => {
       return data({ error: 'Failed to upload course content' }, { status: 500 });
     }
 
+    // Upload thumbnail if provided
+    let finalThumbnailKey = null;
+    if (thumbnail && thumbnail.size > 0) {
+      const thumbKey = `thumbnails/${uploadId}-${thumbnail.name}`;
+      const thumbBuffer = await thumbnail.arrayBuffer();
+      const thumbResult = await uploadToR2(thumbKey, thumbBuffer, thumbnail.type);
+      if (thumbResult) {
+        finalThumbnailKey = thumbResult.key;
+      }
+    }
+
     const course = await createCourse({
       title: courseData.title,
       code: courseData.code,
       description: courseData.description,
       schoolId: finalSchoolId,
+      authorId: finalAuthorId,
+      thumbnailKey: finalThumbnailKey,
       status: 'pending',
       createdBy: user.id,
       contentKey: uploadResult.key,
@@ -105,12 +136,19 @@ export default function CreateCoursePage() {
     }
   }, [fetcher.data]);
 
-  const handleSubmit = async (formDataBase: CourseFormData, file: File) => {
+  const handleSubmit = async (
+    formDataBase: CourseFormData, 
+    file: File, 
+    thumbnail?: File
+  ) => {
     setSubmitError(null);
 
     const form = new FormData();
     form.append('courseData', JSON.stringify(formDataBase));
     form.append('file', file);
+    if (thumbnail) {
+      form.append('thumbnail', thumbnail);
+    }
 
     fetcher.submit(form, { method: 'POST', encType: 'multipart/form-data' });
   };
@@ -131,7 +169,7 @@ export default function CreateCoursePage() {
               Create New Course
             </h1>
             <p className='text-sm text-black/60'>
-              Fill in the details and upload your course content.
+              Fill in the details and upload your course assets.
             </p>
           </div>
         </div>

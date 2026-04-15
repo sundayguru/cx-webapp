@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { users } from './users';
 import { schools } from './schools';
+import { authors } from './authors';
 
 export const courses = sqliteTable('courses', {
   id: text('id', { length: 36 }).primaryKey(),
@@ -10,6 +11,9 @@ export const courses = sqliteTable('courses', {
   description: text('description').notNull(),
   schoolId: text('school_id')
     .references(() => schools.id, { onDelete: 'set null' }),
+  authorId: text('author_id')
+    .references(() => authors.id, { onDelete: 'set null' }),
+  thumbnailKey: text('thumbnail_key', { length: 511 }),
   status: text('status', { length: 20 }).notNull().default('pending'),
   createdBy: text('created_by')
     .notNull()

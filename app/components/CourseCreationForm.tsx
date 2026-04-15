@@ -7,8 +7,10 @@ import {
   ChevronRight,
   ChevronLeft,
   X,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { SchoolSelect } from './SchoolSelect';
+import { AuthorSelect } from './AuthorSelect';
 
 type CourseFormData = {
   title: string;
@@ -17,6 +19,9 @@ type CourseFormData = {
   schoolId: string;
   schoolName: string;
   isNewSchool?: boolean;
+  authorId: string;
+  authorName: string;
+  isNewAuthor?: boolean;
 };
 
 type StepProps = {
@@ -38,17 +43,31 @@ const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
       </div>
 
       <div className='space-y-4'>
-        <div>
-          <label className='mb-1 block text-sm font-medium text-black/70'>
-            School
-          </label>
-          <SchoolSelect
-            value={formData.schoolId}
-            label={formData.schoolName}
-            onChange={(value, label, isNew) => 
-              updateFormData({ schoolId: value, schoolName: label, isNewSchool: isNew })
-            }
-          />
+        <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+          <div>
+            <label className='mb-1 block text-sm font-medium text-black/70'>
+              School
+            </label>
+            <SchoolSelect
+              value={formData.schoolId}
+              label={formData.schoolName}
+              onChange={(value, label, isNew) => 
+                updateFormData({ schoolId: value, schoolName: label, isNewSchool: isNew })
+              }
+            />
+          </div>
+          <div>
+            <label className='mb-1 block text-sm font-medium text-black/70'>
+              Author
+            </label>
+            <AuthorSelect
+              value={formData.authorId}
+              label={formData.authorName}
+              onChange={(value, label, isNew) => 
+                updateFormData({ authorId: value, authorName: label, isNewAuthor: isNew })
+              }
+            />
+          </div>
         </div>
 
         <div>
@@ -109,53 +128,57 @@ const UploadContentStep = ({
   submitError,
 }: {
   formData: CourseFormData;
-  onSubmit: (formData: CourseFormData, file: File) => void;
+  onSubmit: (formData: CourseFormData, file: File, thumbnail?: File) => void;
   onBack: () => void;
   isSubmitting: boolean;
   submitError: string | null;
 }) => {
-  const [isDragging, setIsDragging] = useState(false);
+  const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-
-    const file = e.dataTransfer.files[0];
+  const handleFileChange = (file: File | null) => {
     if (file && file.type === 'application/pdf') {
       setSelectedFile(file);
-      setUploadError(null);
-    } else {
-      setUploadError('Only PDF files are allowed');
+      setError(null);
+    } else if (file) {
+      setError('Only PDF files are allowed for course content');
     }
-  }, []);
+  };
 
-  const handleFileSelect = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const file = e.target.files?.[0];
-      if (file && file.type === 'application/pdf') {
-        setSelectedFile(file);
-        setUploadError(null);
-      } else {
-        setUploadError('Only PDF files are allowed');
-      }
-    },
-    [],
-  );
+  const handleThumbnailChange = (file: File | null) => {
+    if (file && file.type.startsWith('image/')) {
+      setSelectedThumbnail(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setThumbnailPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else if (file) {
+      setError('Only image files are allowed for thumbnails');
+    }
+  };
 
   const removeFile = () => {
     setSelectedFile(null);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
+    if (fileInputRef.current) fileInputRef.current.value = '';
+  };
+
+  const removeThumbnail = () => {
+    setSelectedThumbnail(null);
+    setThumbnailPreview(null);
+    if (thumbnailInputRef.current) thumbnailInputRef.current.value = '';
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (selectedFile) {
-      onSubmit(formData, selectedFile);
+      onSubmit(formData, selectedFile, selectedThumbnail || undefined);
     }
   };
 
@@ -163,78 +186,116 @@ const UploadContentStep = ({
     <div className='space-y-6'>
       <div>
         <h2 className='font-serif text-2xl text-[#1a1a1a]'>
-          Upload Course Content
+          Upload Course Assets
         </h2>
         <p className='mt-1 text-sm text-black/60'>
-          Upload your course content as a PDF file and submit.
+          Upload your course content (PDF) and an optional thumbnail image.
         </p>
       </div>
 
-      {selectedFile ? (
-        <div className='rounded-xl border border-[#5A5A40]/20 bg-[#5A5A40]/5 p-4'>
-          <div className='flex items-center justify-between'>
-            <div className='flex items-center gap-3'>
-              <FileText className='text-[#5A5A40]' size={24} />
-              <div>
-                <p className='font-medium text-[#1a1a1a]'>
-                  {selectedFile.name}
-                </p>
-                <p className='text-xs text-black/60'>
-                  {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
-                </p>
+      <div className='grid grid-cols-1 gap-6 md:grid-cols-2'>
+        {/* Course PDF Upload */}
+        <div className='space-y-2'>
+          <label className='text-sm font-medium text-black/70'>Course Content (PDF)</label>
+          {selectedFile ? (
+            <div className='rounded-xl border border-[#5A5A40]/20 bg-[#5A5A40]/5 p-4'>
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
+                  <FileText className='text-[#5A5A40]' size={24} />
+                  <div className="overflow-hidden">
+                    <p className='truncate font-medium text-[#1a1a1a]'>
+                      {selectedFile.name}
+                    </p>
+                    <p className='text-xs text-black/60'>
+                      {(selectedFile.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
+                <button
+                  type='button'
+                  onClick={removeFile}
+                  className='rounded-lg p-2 text-black/40 hover:bg-black/5 hover:text-black/60'
+                >
+                  <X size={20} />
+                </button>
               </div>
             </div>
-            <button
-              type='button'
-              onClick={removeFile}
-              className='rounded-lg p-2 text-black/40 hover:bg-black/5 hover:text-black/60'
-            >
-              <X size={20} />
-            </button>
-          </div>
+          ) : (
+            <label className='block cursor-pointer'>
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setIsDraggingFile(true);
+                }}
+                onDragLeave={() => setIsDraggingFile(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setIsDraggingFile(false);
+                  handleFileChange(e.dataTransfer.files[0]);
+                }}
+                className={`rounded-xl border-2 border-dashed p-6 text-center transition-colors ${
+                  isDraggingFile
+                    ? 'border-[#5A5A40] bg-[#5A5A40]/5'
+                    : 'border-black/20 hover:border-black/30'
+                }`}
+              >
+                <Upload className='mx-auto h-8 w-8 text-black/20' />
+                <p className='mt-2 text-sm font-medium text-[#1a1a1a]'>
+                  Drop PDF here or <span className='text-[#5A5A40]'>browse</span>
+                </p>
+                <input
+                  ref={fileInputRef}
+                  type='file'
+                  accept='.pdf,application/pdf'
+                  onChange={(e) => handleFileChange(e.target.files?.[0] || null)}
+                  className='hidden'
+                />
+              </div>
+            </label>
+          )}
         </div>
-      ) : (
-        <label className='block cursor-pointer'>
-          <div
-            onDragOver={(e) => {
-              e.preventDefault();
-              setIsDragging(true);
-            }}
-            onDragLeave={() => setIsDragging(false)}
-            onDrop={handleDrop}
-            className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-              isDragging
-                ? 'border-[#5A5A40] bg-[#5A5A40]/5'
-                : 'border-black/20 hover:border-black/30'
-            }`}
-          >
-            <div className='space-y-3'>
-              <Upload className='mx-auto h-12 w-12 text-black/30' />
-              <div>
-                <p className='font-medium text-[#1a1a1a]'>
-                  Drop your PDF here or{' '}
-                  <span className='text-[#5A5A40] underline-offset-2 hover:underline'>
-                    browse
-                  </span>
-                </p>
-                <p className='mt-1 text-sm text-black/50'>
-                  Only PDF files are accepted
-                </p>
-              </div>
-            </div>
-            <input
-              ref={fileInputRef}
-              type='file'
-              accept='.pdf,application/pdf'
-              onChange={handleFileSelect}
-              className='hidden'
-            />
-          </div>
-        </label>
-      )}
 
-      {uploadError && <p className='text-sm text-red-500'>{uploadError}</p>}
-      {submitError && <p className='text-sm text-red-500'>{submitError}</p>}
+        {/* Thumbnail Upload */}
+        <div className='space-y-2'>
+          <label className='text-sm font-medium text-black/70'>Thumbnail (Optional)</label>
+          {thumbnailPreview ? (
+            <div className='relative aspect-video w-full overflow-hidden rounded-xl border border-black/10'>
+              <img
+                src={thumbnailPreview}
+                alt='Thumbnail preview'
+                className='h-full w-full object-cover'
+              />
+              <button
+                type='button'
+                onClick={removeThumbnail}
+                className='absolute right-2 top-2 rounded-full bg-black/50 p-1.5 text-white backdrop-blur-md transition-colors hover:bg-black/70'
+              >
+                <X size={16} />
+              </button>
+            </div>
+          ) : (
+            <label className='block cursor-pointer'>
+              <div className='flex aspect-video w-full flex-col items-center justify-center rounded-xl border-2 border-dashed border-black/20 transition-colors hover:border-black/30'>
+                <ImageIcon className='h-8 w-8 text-black/20' />
+                <p className='mt-2 text-sm font-medium text-[#1a1a1a]'>
+                  Click to add thumbnail
+                </p>
+                <input
+                  ref={thumbnailInputRef}
+                  type='file'
+                  accept='image/*'
+                  onChange={(e) => handleThumbnailChange(e.target.files?.[0] || null)}
+                  className='hidden'
+                />
+              </div>
+            </label>
+          )}
+        </div>
+      </div>
+
+      {(error || submitError) && (
+        <p className='text-sm text-red-500'>{error || submitError}</p>
+      )}
 
       <div className='flex items-center justify-between'>
         <button
@@ -272,7 +333,7 @@ const UploadContentStep = ({
 
 // Main Component
 type CourseCreationFormProps = {
-  onSubmit: (data: CourseFormData, file: File) => void;
+  onSubmit: (data: CourseFormData, file: File, thumbnail?: File) => void;
   isSubmitting: boolean;
   submitError: string | null;
 };
@@ -289,6 +350,8 @@ export const CourseCreationForm = ({
     description: '',
     schoolId: '',
     schoolName: '',
+    authorId: '',
+    authorName: '',
   });
 
   const updateFormData = (data: Partial<CourseFormData>) => {
@@ -304,7 +367,13 @@ export const CourseCreationForm = ({
   };
 
   const canProceedToNext = () => {
-    return formData.title && formData.code && formData.description && formData.schoolId;
+    return (
+      formData.title && 
+      formData.code && 
+      formData.description && 
+      formData.schoolId && 
+      formData.authorId
+    );
   };
 
   const steps = [

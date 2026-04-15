@@ -57,6 +57,13 @@
       "when": 1776267115511,
       "tag": "0007_cold_legion",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "6",
+      "when": 1776267714774,
+      "tag": "0008_friendly_boomerang",
+      "breakpoints": true
     }
   ]
 }
