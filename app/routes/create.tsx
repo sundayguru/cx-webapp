@@ -9,8 +9,8 @@ import {
 } from '~/components/CourseCreationForm';
 import { motion } from 'motion/react';
 import { PlusCircle } from 'lucide-react';
-import { useState } from 'react';
-import type { ErrorResponse } from '~/types/api';
+import { useEffect, useState } from 'react';
+import { useFetcher } from 'react-router';
 import { v4 as uuidv4 } from 'uuid';
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -19,38 +19,53 @@ export const action = async ({ request }: Route.ActionArgs) => {
     return data({ error: 'Unauthorized' }, { status: 401 });
   }
 
- 
+
   try {
-     const formData = await request.formData();
-  const courseData = JSON.parse(
-    formData.get('courseData') as string,
-  ) as CourseFormData;
-  const file = formData.get('file') as File | null;
+    const formData = await request.formData();
+    console.log('Action: formData received');
 
-  if (!courseData.title || !courseData.code || !courseData.description) {
-    return data({ error: 'Missing required fields' }, { status: 400 });
-  }
+    const courseDataStr = formData.get('courseData');
+    if (!courseDataStr) {
+      console.error('Action: courseData missing from formData');
+      return data({ error: 'Missing course data' }, { status: 400 });
+    }
 
-  if (!file || file.type !== 'application/pdf') {
-    return data({ error: 'A valid PDF file is required' }, { status: 400 });
-  }
+    const courseData = JSON.parse(courseDataStr as string) as CourseFormData;
+    const file = formData.get('file') as File | null;
 
-  // Check if course code already exists
-  const existingCourse = await getCourseByCode(courseData.code);
-  if (existingCourse) {
-    return data({ error: 'A course with this code already exists' }, { status: 400 });
-  }
+    console.log('Action: courseData parsed:', courseData.code);
 
-  // Upload file to R2
-  const uploadId = uuidv4();
-  const contentKey = generateContentKey(uploadId, file.name);
-  const fileBuffer = await file.arrayBuffer();
-  const uploadResult = await uploadToR2(contentKey, fileBuffer, file.type);
+    if (!courseData.title || !courseData.code || !courseData.description) {
+      return data({ error: 'Missing required fields' }, { status: 400 });
+    }
 
-  if (!uploadResult) {
-    console.error('R2 upload failed for course creation');
-    return data({ error: 'Failed to upload course content' }, { status: 500 });
-  }
+    if (!file || file.type !== 'application/pdf') {
+      return data({ error: 'A valid PDF file is required' }, { status: 400 });
+    }
+
+    // Check if course code already exists
+    const existingCourse = await getCourseByCode(courseData.code);
+    if (existingCourse) {
+      return data(
+        { error: 'A course with this code already exists' },
+        { status: 400 },
+      );
+    }
+
+    // Upload file to R2
+    const uploadId = uuidv4();
+    const contentKey = generateContentKey(uploadId, file.name);
+    console.log('Action: Uploading to R2...', contentKey);
+
+    const fileBuffer = await file.arrayBuffer();
+    const uploadResult = await uploadToR2(contentKey, fileBuffer, file.type);
+
+    if (!uploadResult) {
+      console.error('R2 upload failed for course creation');
+      return data({ error: 'Failed to upload course content' }, { status: 500 });
+    }
+
+    console.log('Action: Upload successful, saving to DB');
 
     const course = await createCourse({
       title: courseData.title,
@@ -63,57 +78,44 @@ export const action = async ({ request }: Route.ActionArgs) => {
       contentSize: uploadResult.size,
     });
 
-  if (!course) {
-    return data({ error: 'Failed to create course' }, { status: 500 });
-  }
+    if (!course) {
+      console.error('Action: Database creation failed');
+      return data({ error: 'Failed to create course in database' }, { status: 500 });
+    }
 
-  return data({ courseId: course.id });
+    console.log('Action: Course created successfully:', course.id);
+    return data({ courseId: course.id });
   } catch (dbError: unknown) {
-    console.error('Database error creating course:', dbError);
-    const message = dbError instanceof Error ? dbError.message : 'Unknown database error';
+    console.error('Fatal error in course creation action:', dbError);
+    const message =
+      dbError instanceof Error ? dbError.message : 'Unknown database error';
     return data({ error: `Failed to save course: ${message}` }, { status: 500 });
   }
 
 };
 
-export default function CreateCoursePage({ actionData }: Route.ComponentProps) {
-  const [isSubmitting, setIsSubmitting] = useState(false);
+export default function CreateCoursePage() {
+  const fetcher = useFetcher<typeof action>();
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  const isSubmitting = fetcher.state !== 'idle';
+
+  useEffect(() => {
+    if (fetcher.data && 'courseId' in fetcher.data) {
+      window.location.href = `/courses/${fetcher.data.courseId}`;
+    } else if (fetcher.data && 'error' in fetcher.data) {
+      setSubmitError(fetcher.data.error);
+    }
+  }, [fetcher.data]);
+
   const handleSubmit = async (formData: CourseFormData, file: File) => {
-    setIsSubmitting(true);
     setSubmitError(null);
 
-    try {
-      const form = new FormData();
-      form.append('courseData', JSON.stringify(formData));
-      form.append('file', file);
+    const form = new FormData();
+    form.append('courseData', JSON.stringify(formData));
+    form.append('file', file);
 
-      const response = await fetch('/create', {
-        method: 'POST',
-        body: form,
-      });
-
-      const contentType = response.headers.get('content-type') || '';
-      if (!contentType.includes('application/json')) {
-        throw new Error('Server returned an unexpected response. Please try again.');
-      }
-
-      const responseData = await response.json();
-
-      if (!response.ok) {
-        const errorData = responseData as ErrorResponse;
-        throw new Error(errorData.error || 'Failed to create course');
-      }
-
-      const result = responseData as { courseId: string };
-      window.location.href = `/courses/${result.courseId}`;
-    } catch (err: unknown) {
-      const message =
-        err instanceof Error ? err.message : 'Failed to create course';
-      setSubmitError(message);
-      setIsSubmitting(false);
-    }
+    fetcher.submit(form, { method: 'POST', encType: 'multipart/form-data' });
   };
 
   return (
@@ -137,9 +139,9 @@ export default function CreateCoursePage({ actionData }: Route.ComponentProps) {
           </div>
         </div>
 
-        {actionData?.error && (
+        {submitError && (
           <div className='mb-4 rounded-xl border border-red-200 bg-red-50 p-4'>
-            <p className='text-sm text-red-600'>{actionData.error}</p>
+            <p className='text-sm text-red-600'>{submitError}</p>
           </div>
         )}
 

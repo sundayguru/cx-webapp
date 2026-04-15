@@ -5,6 +5,7 @@ import {
   FileText,
   CheckCircle,
   ChevronRight,
+  ChevronLeft,
   X,
 } from 'lucide-react';
 
@@ -86,11 +87,13 @@ const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
 const UploadContentStep = ({
   formData,
   onSubmit,
+  onBack,
   isSubmitting,
   submitError,
 }: {
   formData: CourseFormData;
   onSubmit: (formData: CourseFormData, file: File) => void;
+  onBack: () => void;
   isSubmitting: boolean;
   submitError: string | null;
 }) => {
@@ -174,47 +177,59 @@ const UploadContentStep = ({
           </div>
         </div>
       ) : (
-        <div
-          onDragOver={(e) => {
-            e.preventDefault();
-            setIsDragging(true);
-          }}
-          onDragLeave={() => setIsDragging(false)}
-          onDrop={handleDrop}
-          className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
-            isDragging
-              ? 'border-[#5A5A40] bg-[#5A5A40]/5'
-              : 'border-black/20 hover:border-black/30'
-          }`}
-        >
-          <div className='space-y-3'>
-            <Upload className='mx-auto h-12 w-12 text-black/30' />
-            <div>
-              <p className='font-medium text-[#1a1a1a]'>
-                Drop your PDF here or{' '}
-                <label className='cursor-pointer text-[#5A5A40] hover:underline'>
-                  browse
-                  <input
-                    ref={fileInputRef}
-                    type='file'
-                    accept='.pdf,application/pdf'
-                    onChange={handleFileSelect}
-                    className='hidden'
-                  />
-                </label>
-              </p>
-              <p className='mt-1 text-sm text-black/50'>
-                Only PDF files are accepted
-              </p>
+        <label className='block cursor-pointer'>
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={handleDrop}
+            className={`rounded-xl border-2 border-dashed p-8 text-center transition-colors ${
+              isDragging
+                ? 'border-[#5A5A40] bg-[#5A5A40]/5'
+                : 'border-black/20 hover:border-black/30'
+            }`}
+          >
+            <div className='space-y-3'>
+              <Upload className='mx-auto h-12 w-12 text-black/30' />
+              <div>
+                <p className='font-medium text-[#1a1a1a]'>
+                  Drop your PDF here or{' '}
+                  <span className='text-[#5A5A40] underline-offset-2 hover:underline'>
+                    browse
+                  </span>
+                </p>
+                <p className='mt-1 text-sm text-black/50'>
+                  Only PDF files are accepted
+                </p>
+              </div>
             </div>
+            <input
+              ref={fileInputRef}
+              type='file'
+              accept='.pdf,application/pdf'
+              onChange={handleFileSelect}
+              className='hidden'
+            />
           </div>
-        </div>
+        </label>
       )}
 
       {uploadError && <p className='text-sm text-red-500'>{uploadError}</p>}
       {submitError && <p className='text-sm text-red-500'>{submitError}</p>}
 
-      <div className='flex justify-end'>
+      <div className='flex items-center justify-between'>
+        <button
+          type='button'
+          onClick={onBack}
+          disabled={isSubmitting}
+          className='flex items-center gap-2 rounded-xl border border-black/10 px-6 py-3 font-medium text-black/70 transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50'
+        >
+          <ChevronLeft size={18} />
+          Back
+        </button>
+
         <button
           type='button'
           onClick={handleSubmit}
@@ -263,6 +278,10 @@ export const CourseCreationForm = ({
 
   const handleNext = () => {
     setStep((prev) => Math.min(prev + 1, 2));
+  };
+
+  const handleBack = () => {
+    setStep((prev) => Math.max(prev - 1, 1));
   };
 
   const canProceedToNext = () => {
@@ -324,6 +343,7 @@ export const CourseCreationForm = ({
           <UploadContentStep
             formData={formData}
             onSubmit={onSubmit}
+            onBack={handleBack}
             isSubmitting={isSubmitting}
             submitError={submitError}
           />
