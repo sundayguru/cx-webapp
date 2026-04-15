@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { getDb } from './connection';
-import { courses, type InsertCourse } from './schemas';
+import { courses, schools, authors, type InsertCourse } from './schemas';
 import { v4 as uuidv4 } from 'uuid';
 import { logError } from '~/utils/logger';
 
@@ -25,8 +25,19 @@ export const createCourse = async (
 export const getCourseById = async (id: string) => {
   try {
     const db = getDb();
-    const [course] = await db.select().from(courses).where(eq(courses.id, id));
-    return course;
+    const results = await db
+      .select({
+        course: courses,
+        school: schools,
+        author: authors,
+      })
+      .from(courses)
+      .leftJoin(schools, eq(courses.schoolId, schools.id))
+      .leftJoin(authors, eq(courses.authorId, authors.id))
+      .where(eq(courses.id, id))
+      .limit(1);
+    
+    return results[0] || null;
   } catch (e) {
     logError(e, 'Error getting course by id');
     return null;
@@ -44,12 +55,18 @@ export const getCourseByCode = async (code: string) => {
   }
 };
 
-export const getCoursesByUserId = (userId: string) => {
+export const getCoursesByUserId = async (userId: string) => {
   try {
     const db = getDb();
     return db
-      .select()
+      .select({
+        course: courses,
+        school: schools,
+        author: authors,
+      })
       .from(courses)
+      .leftJoin(schools, eq(courses.schoolId, schools.id))
+      .leftJoin(authors, eq(courses.authorId, authors.id))
       .where(eq(courses.createdBy, userId))
       .orderBy(courses.createdAt);
   } catch (e) {
