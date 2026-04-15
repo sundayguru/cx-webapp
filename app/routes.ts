@@ -26,6 +26,7 @@ export default [
     route('create', 'routes/create.tsx'),
     route('auth/logout', 'routes/auth/logout.tsx'),
     route('api/user', 'routes/api/user.ts'),
+    route('api/schools', 'routes/api/schools.ts'),
     route('api/course/serve/*', 'routes/api/course/serve.$.tsx'),
   ]),
 ] satisfies RouteConfig;

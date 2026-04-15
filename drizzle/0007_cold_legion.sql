@@ -1,0 +1,1 @@
+ALTER TABLE schools ADD COLUMN created_by text REFERENCES users(id) ON DELETE SET NULL;

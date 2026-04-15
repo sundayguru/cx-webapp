@@ -1,12 +1,15 @@
 import { sql } from 'drizzle-orm';
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
 import { users } from './users';
+import { schools } from './schools';
 
 export const courses = sqliteTable('courses', {
   id: text('id', { length: 36 }).primaryKey(),
   title: text('title', { length: 255 }).notNull(),
   code: text('code', { length: 50 }).notNull().unique(),
   description: text('description').notNull(),
+  schoolId: text('school_id')
+    .references(() => schools.id, { onDelete: 'set null' }),
   status: text('status', { length: 20 }).notNull().default('pending'),
   createdBy: text('created_by')
     .notNull()

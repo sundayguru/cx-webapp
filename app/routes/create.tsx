@@ -2,6 +2,7 @@ import type { Route } from './+types/create';
 import { data } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
 import { createCourse, getCourseByCode } from '~/db/courses';
+import { createSchool } from '~/db/schools';
 import { uploadToR2, generateContentKey } from '~/utils/r2.server';
 import {
   CourseCreationForm,
@@ -19,23 +20,17 @@ export const action = async ({ request }: Route.ActionArgs) => {
     return data({ error: 'Unauthorized' }, { status: 401 });
   }
 
-
   try {
     const formData = await request.formData();
-    console.log('Action: formData received');
-
     const courseDataStr = formData.get('courseData');
     if (!courseDataStr) {
-      console.error('Action: courseData missing from formData');
       return data({ error: 'Missing course data' }, { status: 400 });
     }
 
     const courseData = JSON.parse(courseDataStr as string) as CourseFormData;
     const file = formData.get('file') as File | null;
 
-    console.log('Action: courseData parsed:', courseData.code);
-
-    if (!courseData.title || !courseData.code || !courseData.description) {
+    if (!courseData.title || !courseData.code || !courseData.description || !courseData.schoolId) {
       return data({ error: 'Missing required fields' }, { status: 400 });
     }
 
@@ -52,25 +47,31 @@ export const action = async ({ request }: Route.ActionArgs) => {
       );
     }
 
+    // Handle school creation if needed
+    let finalSchoolId = courseData.schoolId;
+    if (courseData.isNewSchool) {
+      const newSchool = await createSchool(courseData.schoolId, user.id); // In this case schoolId holds the name
+      if (!newSchool) {
+        return data({ error: 'Failed to create new school' }, { status: 500 });
+      }
+      finalSchoolId = newSchool.id;
+    }
+
     // Upload file to R2
     const uploadId = uuidv4();
     const contentKey = generateContentKey(uploadId, file.name);
-    console.log('Action: Uploading to R2...', contentKey);
-
     const fileBuffer = await file.arrayBuffer();
     const uploadResult = await uploadToR2(contentKey, fileBuffer, file.type);
 
     if (!uploadResult) {
-      console.error('R2 upload failed for course creation');
       return data({ error: 'Failed to upload course content' }, { status: 500 });
     }
-
-    console.log('Action: Upload successful, saving to DB');
 
     const course = await createCourse({
       title: courseData.title,
       code: courseData.code,
       description: courseData.description,
+      schoolId: finalSchoolId,
       status: 'pending',
       createdBy: user.id,
       contentKey: uploadResult.key,
@@ -79,19 +80,15 @@ export const action = async ({ request }: Route.ActionArgs) => {
     });
 
     if (!course) {
-      console.error('Action: Database creation failed');
       return data({ error: 'Failed to create course in database' }, { status: 500 });
     }
 
-    console.log('Action: Course created successfully:', course.id);
     return data({ courseId: course.id });
   } catch (dbError: unknown) {
     console.error('Fatal error in course creation action:', dbError);
-    const message =
-      dbError instanceof Error ? dbError.message : 'Unknown database error';
+    const message = dbError instanceof Error ? dbError.message : 'Unknown database error';
     return data({ error: `Failed to save course: ${message}` }, { status: 500 });
   }
-
 };
 
 export default function CreateCoursePage() {
@@ -108,11 +105,11 @@ export default function CreateCoursePage() {
     }
   }, [fetcher.data]);
 
-  const handleSubmit = async (formData: CourseFormData, file: File) => {
+  const handleSubmit = async (formDataBase: CourseFormData, file: File) => {
     setSubmitError(null);
 
     const form = new FormData();
-    form.append('courseData', JSON.stringify(formData));
+    form.append('courseData', JSON.stringify(formDataBase));
     form.append('file', file);
 
     fetcher.submit(form, { method: 'POST', encType: 'multipart/form-data' });

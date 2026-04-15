@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from 'react';
-import { motion } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Upload,
   FileText,
@@ -8,11 +8,15 @@ import {
   ChevronLeft,
   X,
 } from 'lucide-react';
+import { SchoolSelect } from './SchoolSelect';
 
 type CourseFormData = {
   title: string;
   code: string;
   description: string;
+  schoolId: string;
+  schoolName: string;
+  isNewSchool?: boolean;
 };
 
 type StepProps = {
@@ -34,6 +38,19 @@ const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
       </div>
 
       <div className='space-y-4'>
+        <div>
+          <label className='mb-1 block text-sm font-medium text-black/70'>
+            School
+          </label>
+          <SchoolSelect
+            value={formData.schoolId}
+            label={formData.schoolName}
+            onChange={(value, label, isNew) => 
+              updateFormData({ schoolId: value, schoolName: label, isNewSchool: isNew })
+            }
+          />
+        </div>
+
         <div>
           <label className='mb-1 block text-sm font-medium text-black/70'>
             Course Title
@@ -270,6 +287,8 @@ export const CourseCreationForm = ({
     title: '',
     code: '',
     description: '',
+    schoolId: '',
+    schoolName: '',
   });
 
   const updateFormData = (data: Partial<CourseFormData>) => {
@@ -285,7 +304,7 @@ export const CourseCreationForm = ({
   };
 
   const canProceedToNext = () => {
-    return formData.title && formData.code && formData.description;
+    return formData.title && formData.code && formData.description && formData.schoolId;
   };
 
   const steps = [
@@ -333,21 +352,37 @@ export const CourseCreationForm = ({
         transition={{ duration: 0.2 }}
         className='min-h-[300px]'
       >
-        {step === 1 && (
-          <CourseDetailsStep
-            formData={formData}
-            updateFormData={updateFormData}
-          />
-        )}
-        {step === 2 && (
-          <UploadContentStep
-            formData={formData}
-            onSubmit={onSubmit}
-            onBack={handleBack}
-            isSubmitting={isSubmitting}
-            submitError={submitError}
-          />
-        )}
+        <AnimatePresence mode='wait'>
+          {step === 1 && (
+            <motion.div
+              key='step1'
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <CourseDetailsStep
+                formData={formData}
+                updateFormData={updateFormData}
+              />
+            </motion.div>
+          )}
+          {step === 2 && (
+            <motion.div
+              key='step2'
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+            >
+              <UploadContentStep
+                formData={formData}
+                onSubmit={onSubmit}
+                onBack={handleBack}
+                isSubmitting={isSubmitting}
+                submitError={submitError}
+              />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </motion.div>
 
       {/* Navigation Buttons */}
