@@ -9,6 +9,7 @@ export const modules = sqliteTable('modules', {
     .references(() => courses.id, { onDelete: 'cascade' }),
   title: text('title', { length: 255 }).notNull(),
   description: text('description'),
+  rawText: text('raw_text'),
   order: integer('order').notNull().default(0),
   createdAt: text('created_at')
     .notNull()

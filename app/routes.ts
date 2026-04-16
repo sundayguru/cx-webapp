@@ -43,5 +43,9 @@ export default [
       'api/courses/:id/update-raw-text',
       'routes/api/courses/update-raw-text.tsx',
     ),
+    route(
+      'api/courses/:id/split-raw-text-into-modules',
+      'routes/api/courses/split-raw-text-into-modules.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;

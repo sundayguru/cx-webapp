@@ -314,3 +314,37 @@ export const updateCourseRawText = async (id: string, rawText: string) => {
     return null;
   }
 };
+
+export const splitCourseRawTextIntoModules = async (
+  courseId: string,
+  rawText: string,
+) => {
+  try {
+    const parts = rawText
+      .split('--end--')
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length === 0) {
+      throw new Error('No module text segments were found');
+    }
+
+    const db = getDb();
+    await clearCourseCurriculum(courseId);
+
+    for (const [index, part] of parts.entries()) {
+      await db.insert(modules).values({
+        id: uuidv4(),
+        courseId,
+        title: `Module ${index + 1}`,
+        rawText: part,
+        order: index,
+      });
+    }
+
+    return getCourseById(courseId);
+  } catch (e) {
+    logError(e, 'Error splitting course raw text into modules');
+    return null;
+  }
+};

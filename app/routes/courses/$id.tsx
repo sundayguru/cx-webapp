@@ -49,16 +49,19 @@ export default function CourseDetailsPage({
   const curriculumFetcher = useFetcher();
   const rawTextFetcher = useFetcher();
   const rawTextUpdateFetcher = useFetcher();
+  const splitRawTextFetcher = useFetcher();
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isRawTextModalOpen, setIsRawTextModalOpen] = useState(false);
   const [isGenerateWarningOpen, setIsGenerateWarningOpen] = useState(false);
   const [isExtractWarningOpen, setIsExtractWarningOpen] = useState(false);
+  const [isSplitWarningOpen, setIsSplitWarningOpen] = useState(false);
   const [editableRawText, setEditableRawText] = useState(
     data?.course.rawText || '',
   );
   const handledCurriculumResult = useRef<string | null>(null);
   const handledRawTextExtractResult = useRef<string | null>(null);
   const handledRawTextUpdateResult = useRef<string | null>(null);
+  const handledSplitRawTextResult = useRef<string | null>(null);
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
   const [selectedModel, setSelectedModel] = useState(
@@ -67,6 +70,7 @@ export default function CourseDetailsPage({
   const isGenerating = curriculumFetcher.state !== 'idle';
   const isExtractingRawText = rawTextFetcher.state !== 'idle';
   const isUpdatingRawText = rawTextUpdateFetcher.state !== 'idle';
+  const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
 
   const triggerGenerateCurriculum = () => {
     curriculumFetcher.submit(
@@ -97,6 +101,16 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/update-raw-text`,
+      },
+    );
+  };
+
+  const handleSplitRawTextIntoModules = () => {
+    splitRawTextFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/split-raw-text-into-modules`,
       },
     );
   };
@@ -189,6 +203,36 @@ export default function CourseDetailsPage({
       }
     }
   }, [rawTextUpdateFetcher, showToast]);
+
+  useEffect(() => {
+    if (splitRawTextFetcher.state === 'idle' && splitRawTextFetcher.data) {
+      const result = splitRawTextFetcher.data as {
+        success?: boolean;
+        error?: string;
+        modulesCount?: number;
+      };
+      const resultKey = JSON.stringify(result);
+      if (result.success && handledSplitRawTextResult.current !== resultKey) {
+        handledSplitRawTextResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Created ${result.modulesCount ?? 0} modules from raw text.`,
+        });
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else if (
+        result.error &&
+        handledSplitRawTextResult.current !== resultKey
+      ) {
+        handledSplitRawTextResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, splitRawTextFetcher]);
 
   if (!data) {
     return (
@@ -354,6 +398,18 @@ export default function CourseDetailsPage({
                   >
                     <Edit3 size={20} />
                     Edit Course Text
+                  </button>
+                ) : null}
+                {course.rawText ? (
+                  <button
+                    onClick={() => setIsSplitWarningOpen(true)}
+                    disabled={isSplittingRawText}
+                    className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 active:scale-95 disabled:opacity-50'
+                  >
+                    <BookOpen size={20} />
+                    {isSplittingRawText
+                      ? 'Splitting Into Modules...'
+                      : 'Split Raw Text Into Modules'}
                   </button>
                 ) : null}
                 <div className='space-y-3 rounded-2xl border border-black/10 bg-black/[0.02] p-4'>
@@ -668,6 +724,59 @@ export default function CourseDetailsPage({
                   onClick={() => {
                     setIsExtractWarningOpen(false);
                     handleExtractRawText();
+                  }}
+                  className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35]'
+                >
+                  Continue
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isSplitWarningOpen ? (
+          <div className='fixed inset-0 z-[105] flex items-center justify-center p-4 md:p-8'>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsSplitWarningOpen(false)}
+              className='absolute inset-0 bg-black/70 backdrop-blur-sm'
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className='relative w-full max-w-xl rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6 flex items-start gap-4'>
+                <div className='flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600'>
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 className='font-serif text-2xl text-[#1a1a1a]'>
+                    Split Raw Text Into Modules?
+                  </h3>
+                  <p className='mt-2 text-sm leading-6 text-black/55'>
+                    This will replace the current module and unit structure with
+                    modules created from the course raw text. Each section
+                    between `--end--` markers becomes one module.
+                  </p>
+                </div>
+              </div>
+              <div className='flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => setIsSplitWarningOpen(false)}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5'
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setIsSplitWarningOpen(false);
+                    handleSplitRawTextIntoModules();
                   }}
                   className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35]'
                 >

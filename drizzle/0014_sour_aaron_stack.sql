@@ -1,0 +1,1 @@
+ALTER TABLE `modules` ADD `raw_text` text;
