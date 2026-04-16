@@ -9,10 +9,12 @@ export const courses = sqliteTable('courses', {
   title: text('title', { length: 255 }).notNull(),
   code: text('code', { length: 50 }).notNull().unique(),
   description: text('description').notNull(),
-  schoolId: text('school_id')
-    .references(() => schools.id, { onDelete: 'set null' }),
-  authorId: text('author_id')
-    .references(() => authors.id, { onDelete: 'set null' }),
+  schoolId: text('school_id').references(() => schools.id, {
+    onDelete: 'set null',
+  }),
+  authorId: text('author_id').references(() => authors.id, {
+    onDelete: 'set null',
+  }),
   thumbnailKey: text('thumbnail_key', { length: 511 }),
   level: text('level', { length: 50 }).notNull().default('Beginner'),
   category: text('category', { length: 100 }).notNull().default('General'),

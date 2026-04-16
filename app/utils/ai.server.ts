@@ -3,6 +3,32 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { logError } from './logger';
 import { Buffer } from 'node:buffer';
 
+type CurriculumUnit = {
+  title: string;
+  content: string;
+};
+
+type CurriculumModule = {
+  title: string;
+  description: string;
+  units: CurriculumUnit[];
+};
+
+type CurriculumResponse = {
+  modules: CurriculumModule[];
+};
+
+const DEFAULT_GEMINI_MODELS = [
+  'gemini-2.5-flash',
+  'gemini-2.0-flash',
+  'gemini-1.5-flash-latest',
+] as const;
+
+const parseCurriculumResponse = (responseText: string): CurriculumResponse => {
+  const jsonStr = responseText.replace(/```json|```/g, '').trim();
+  return JSON.parse(jsonStr) as CurriculumResponse;
+};
+
 export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
   try {
     const { text } = await extractText(buffer, { mergePages: true });
@@ -18,11 +44,13 @@ export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
 export const generateCurriculum = async (
   text: string,
   apiKey: string,
-): Promise<{ modules: any[] }> => {
+  preferredModel?: string,
+): Promise<CurriculumResponse> => {
   const genAI = new GoogleGenerativeAI(apiKey);
-  // Using gemini-1.5-flash-latest as a fallback or more stable name
-  // If the error persists, it might be an issue with the API version version in the SDK
-  const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  const modelNames = [
+    ...(preferredModel ? [preferredModel] : []),
+    ...DEFAULT_GEMINI_MODELS,
+  ].filter((modelName, index, models) => models.indexOf(modelName) === index);
 
   const prompt = `
     Analyze the following educational content and structure it into a logical course curriculum.
@@ -51,28 +79,26 @@ export const generateCurriculum = async (
     ${text.slice(0, 30000)}
   `;
 
-  try {
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const jsonStr = response.text().replace(/```json|```/g, '').trim();
-    return JSON.parse(jsonStr);
-  } catch (e: any) {
-    logError(e, `Error generating curriculum with model gemini-1.5-flash`);
-    
-    // Attempt fallback to a different model name if 404
-    if (e.message?.includes('404') || e.message?.includes('not found')) {
-       try {
-         const fallbackModel = genAI.getGenerativeModel({ model: 'gemini-1.5-flash-latest' });
-         const result = await fallbackModel.generateContent(prompt);
-         const response = await result.response;
-         const jsonStr = response.text().replace(/```json|```/g, '').trim();
-         return JSON.parse(jsonStr);
-       } catch (fallbackErr: any) {
-         logError(fallbackErr, 'Fallback model also failed');
-         throw new Error(`AI Model not found or unsupported. Please check model availability for your API key. Original error: ${e.message}`);
-       }
+  let lastError: unknown;
+
+  for (const modelName of modelNames) {
+    try {
+      const model = genAI.getGenerativeModel({ model: modelName });
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      return parseCurriculumResponse(response.text());
+    } catch (e: any) {
+      lastError = e;
+      logError(e, `Error generating curriculum with model ${modelName}`);
     }
-    
-    throw new Error(`Failed to generate curriculum structure: ${e.message}`);
   }
+
+  const errorMessage =
+    lastError instanceof Error
+      ? lastError.message
+      : 'Unknown AI generation error';
+
+  throw new Error(
+    `Failed to generate curriculum structure. Tried models: ${modelNames.join(', ')}. Last error: ${errorMessage}`,
+  );
 };

@@ -15,7 +15,12 @@ type SchoolSelectProps = {
   error?: string | null;
 };
 
-export const SchoolSelect = ({ value, label, onChange, error }: SchoolSelectProps) => {
+export const SchoolSelect = ({
+  value,
+  label,
+  onChange,
+  error,
+}: SchoolSelectProps) => {
   const [query, setQuery] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const [schools, setSchools] = useState<School[]>([]);
@@ -24,7 +29,10 @@ export const SchoolSelect = ({ value, label, onChange, error }: SchoolSelectProp
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (
+        containerRef.current &&
+        !containerRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     };
@@ -41,8 +49,10 @@ export const SchoolSelect = ({ value, label, onChange, error }: SchoolSelectProp
     const fetchSchools = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/schools?q=${encodeURIComponent(query)}`);
-        const data = await response.json() as { schools: School[] };
+        const response = await fetch(
+          `/api/schools?q=${encodeURIComponent(query)}`,
+        );
+        const data = (await response.json()) as { schools: School[] };
         setSchools(data.schools || []);
       } catch (err) {
         console.error('Failed to fetch schools:', err);
@@ -68,13 +78,15 @@ export const SchoolSelect = ({ value, label, onChange, error }: SchoolSelectProp
   };
 
   return (
-    <div ref={containerRef} className="relative w-full">
-      <div className="relative">
-        <div className={`absolute left-4 top-1/2 -translate-y-1/2 text-black/40 transition-colors ${isOpen ? 'text-[#5A5A40]' : ''}`}>
+    <div ref={containerRef} className='relative w-full'>
+      <div className='relative'>
+        <div
+          className={`absolute top-1/2 left-4 -translate-y-1/2 text-black/40 transition-colors ${isOpen ? 'text-[#5A5A40]' : ''}`}
+        >
           <Search size={18} />
         </div>
         <input
-          type="text"
+          type='text'
           value={isOpen ? query : label}
           onChange={(e) => {
             setQuery(e.target.value);
@@ -84,14 +96,14 @@ export const SchoolSelect = ({ value, label, onChange, error }: SchoolSelectProp
             setIsOpen(true);
             setQuery(''); // Reset query on focus to show search clearly
           }}
-          placeholder="Search or enter your school name..."
-          className={`w-full rounded-xl border border-black/10 pl-11 pr-4 py-3 transition-all outline-none focus:ring-2 focus:ring-[#5A5A40] ${
+          placeholder='Search or enter your school name...'
+          className={`w-full rounded-xl border border-black/10 py-3 pr-4 pl-11 transition-all outline-none focus:ring-2 focus:ring-[#5A5A40] ${
             error ? 'border-red-500 ring-red-500/20' : ''
           }`}
         />
         {isLoading && (
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 text-[#5A5A40]">
-            <Loader2 size={18} className="animate-spin" />
+          <div className='absolute top-1/2 right-4 -translate-y-1/2 text-[#5A5A40]'>
+            <Loader2 size={18} className='animate-spin' />
           </div>
         )}
       </div>
@@ -102,33 +114,46 @@ export const SchoolSelect = ({ value, label, onChange, error }: SchoolSelectProp
             initial={{ opacity: 0, y: 10, scale: 0.95 }}
             animate={{ opacity: 1, y: 4, scale: 1 }}
             exit={{ opacity: 0, y: 10, scale: 0.95 }}
-            className="absolute z-50 w-full overflow-hidden rounded-2xl border border-black/5 bg-white shadow-2xl backdrop-blur-xl"
+            className='absolute z-50 w-full overflow-hidden rounded-2xl border border-black/5 bg-white shadow-2xl backdrop-blur-xl'
           >
-            <div className="max-h-64 overflow-y-auto p-2">
+            <div className='max-h-64 overflow-y-auto p-2'>
               {schools.length > 0 ? (
-                <div className="space-y-1">
-                  <p className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-black/40">
+                <div className='space-y-1'>
+                  <p className='px-3 py-2 text-[10px] font-bold tracking-wider text-black/40 uppercase'>
                     Existing Schools
                   </p>
                   {schools.map((school) => (
                     <button
                       key={school.id}
-                      type="button"
+                      type='button'
                       onClick={() => handleSelect(school)}
                       className={`flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors ${
-                        value === school.id 
-                          ? 'bg-[#5A5A40] text-white' 
-                          : 'hover:bg-black/5 text-[#1a1a1a]'
+                        value === school.id
+                          ? 'bg-[#5A5A40] text-white'
+                          : 'text-[#1a1a1a] hover:bg-black/5'
                       }`}
                     >
-                      <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${
-                        value === school.id ? 'bg-white/20' : 'bg-[#5A5A40]/10'
-                      }`}>
-                        <School size={16} className={value === school.id ? 'text-white' : 'text-[#5A5A40]'} />
+                      <div
+                        className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                          value === school.id
+                            ? 'bg-white/20'
+                            : 'bg-[#5A5A40]/10'
+                        }`}
+                      >
+                        <School
+                          size={16}
+                          className={
+                            value === school.id
+                              ? 'text-white'
+                              : 'text-[#5A5A40]'
+                          }
+                        />
                       </div>
-                      <div className="flex-1 overflow-hidden">
-                        <p className="truncate font-medium">{school.name}</p>
-                        <p className={`truncate text-xs ${value === school.id ? 'text-white/60' : 'text-black/40'}`}>
+                      <div className='flex-1 overflow-hidden'>
+                        <p className='truncate font-medium'>{school.name}</p>
+                        <p
+                          className={`truncate text-xs ${value === school.id ? 'text-white/60' : 'text-black/40'}`}
+                        >
                           {school.slug}
                         </p>
                       </div>
@@ -136,25 +161,32 @@ export const SchoolSelect = ({ value, label, onChange, error }: SchoolSelectProp
                     </button>
                   ))}
                 </div>
-              ) : query.length >= 2 && !isLoading && (
-                <div className="px-3 py-4 text-center text-sm text-black/50">
-                  No schools found matching &quot;{query}&quot;
-                </div>
+              ) : (
+                query.length >= 2 &&
+                !isLoading && (
+                  <div className='px-3 py-4 text-center text-sm text-black/50'>
+                    No schools found matching &quot;{query}&quot;
+                  </div>
+                )
               )}
 
               {query.length > 0 && (
-                <div className="mt-2 border-t border-black/5 pt-2">
+                <div className='mt-2 border-t border-black/5 pt-2'>
                   <button
-                    type="button"
+                    type='button'
                     onClick={handleCreateNew}
-                    className="flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:bg-[#5A5A40]/10 hover:translate-x-1"
+                    className='flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-all hover:translate-x-1 hover:bg-[#5A5A40]/10'
                   >
-                    <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-[#5A5A40] text-white">
+                    <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-[#5A5A40] text-white'>
                       <Plus size={18} />
                     </div>
-                    <div className="flex-1 overflow-hidden">
-                      <p className="font-semibold text-[#1a1a1a]">Create &quot;{query}&quot;</p>
-                      <p className="text-xs text-black/40">Add this school to our database</p>
+                    <div className='flex-1 overflow-hidden'>
+                      <p className='font-semibold text-[#1a1a1a]'>
+                        Create &quot;{query}&quot;
+                      </p>
+                      <p className='text-xs text-black/40'>
+                        Add this school to our database
+                      </p>
                     </div>
                   </button>
                 </div>

@@ -29,6 +29,9 @@ export default [
     route('api/schools', 'routes/api/schools.ts'),
     route('api/authors', 'routes/api/authors.ts'),
     route('api/course/serve/*', 'routes/api/course/serve.$.tsx'),
-    route('api/courses/:id/generate-curriculum', 'routes/api/courses/generate-curriculum.tsx'),
+    route(
+      'api/courses/:id/generate-curriculum',
+      'routes/api/courses/generate-curriculum.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;

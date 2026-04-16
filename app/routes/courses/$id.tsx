@@ -17,7 +17,7 @@ import {
   X,
   FileText,
   Clock,
-  Sparkles
+  Sparkles,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -42,7 +42,8 @@ export default function CourseDetailsPage({
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleGenerateCurriculum = async () => {
-    if (!confirm('This will replace any existing modules and units. Continue?')) return;
+    if (!confirm('This will replace any existing modules and units. Continue?'))
+      return;
 
     setIsGenerating(true);
     fetcher.submit(null, {
@@ -72,9 +73,16 @@ export default function CourseDetailsPage({
           animate={{ opacity: 1, y: 0 }}
           className='rounded-[40px] border border-black/5 bg-white p-12 text-center shadow-2xl'
         >
-          <h1 className='mb-3 font-serif text-3xl text-[#1a1a1a]'>Course not found</h1>
-          <p className='mb-8 text-black/60'>We couldn't find the course you're looking for.</p>
-          <Link to='/courses' className='bg-[#5A5A40] text-white px-8 py-3 rounded-2xl font-bold'>
+          <h1 className='mb-3 font-serif text-3xl text-[#1a1a1a]'>
+            Course not found
+          </h1>
+          <p className='mb-8 text-black/60'>
+            We couldn't find the course you're looking for.
+          </p>
+          <Link
+            to='/courses'
+            className='rounded-2xl bg-[#5A5A40] px-8 py-3 font-bold text-white'
+          >
             Back to Courses
           </Link>
         </motion.div>
@@ -87,120 +95,133 @@ export default function CourseDetailsPage({
   const isDraft = course.status === 'pending';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 py-8">
+    <div className='mx-auto max-w-7xl px-4 py-8'>
       {/* Hero Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12 mb-12">
-        <div className="lg:col-span-2">
-          <nav className="flex items-center gap-2 text-sm text-black/40 mb-6">
-            <Link to="/courses" className="hover:text-[#5A5A40] transition-colors">Courses</Link>
+      <div className='mb-12 grid grid-cols-1 gap-12 lg:grid-cols-3'>
+        <div className='lg:col-span-2'>
+          <nav className='mb-6 flex items-center gap-2 text-sm text-black/40'>
+            <Link
+              to='/courses'
+              className='transition-colors hover:text-[#5A5A40]'
+            >
+              Courses
+            </Link>
             <ChevronRight size={14} />
-            <span className="text-black/60 truncate">{course.title}</span>
+            <span className='truncate text-black/60'>{course.title}</span>
             {isDraft && (
-              <span className="ml-4 px-2 py-0.5 bg-orange-100 text-orange-600 text-[10px] font-bold uppercase tracking-wider rounded">Pending Review</span>
+              <span className='ml-4 rounded bg-orange-100 px-2 py-0.5 text-[10px] font-bold tracking-wider text-orange-600 uppercase'>
+                Pending Review
+              </span>
             )}
           </nav>
 
-          <h1 className="text-5xl font-serif text-[#1a1a1a] mb-6 leading-tight">{course.title}</h1>
-          <p className="text-xl text-black/60 font-serif italic mb-8 leading-relaxed">
+          <h1 className='mb-6 font-serif text-5xl leading-tight text-[#1a1a1a]'>
+            {course.title}
+          </h1>
+          <p className='mb-8 font-serif text-xl leading-relaxed text-black/60 italic'>
             {course.description}
           </p>
 
-          <div className="flex flex-wrap gap-6 mb-8">
-            <div className="flex items-center gap-2 text-black/60">
+          <div className='mb-8 flex flex-wrap gap-6'>
+            <div className='flex items-center gap-2 text-black/60'>
               <Users size={20} />
-              <span className="font-medium">24 Students</span>
+              <span className='font-medium'>24 Students</span>
             </div>
-            <div className="flex items-center gap-2 text-black/60">
+            <div className='flex items-center gap-2 text-black/60'>
               <BarChart size={20} />
-              <span className="font-medium">{course.level} Level</span>
+              <span className='font-medium'>{course.level} Level</span>
             </div>
-            <div className="flex items-center gap-2 text-black/60">
+            <div className='flex items-center gap-2 text-black/60'>
               <BookOpen size={20} />
-              <span className="font-medium">{modules.length} Modules</span>
+              <span className='font-medium'>{modules.length} Modules</span>
             </div>
             <button
               onClick={() => setIsPdfModalOpen(true)}
-              className="flex items-center gap-2 text-[#5A5A40] font-bold hover:underline underline-offset-4"
+              className='flex items-center gap-2 font-bold text-[#5A5A40] underline-offset-4 hover:underline'
             >
               <FileText size={20} />
               Read Course Content
             </button>
           </div>
 
-          <div className="flex items-center gap-4 border-t border-black/5 pt-8 mt-8">
+          <div className='mt-8 flex items-center gap-4 border-t border-black/5 pt-8'>
             {author && (
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-[#5A5A40]/10 flex items-center justify-center text-[#5A5A40]">
+              <div className='flex items-center gap-3'>
+                <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[#5A5A40]/10 text-[#5A5A40]'>
                   <Globe size={20} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-black/40">Created by</p>
-                  <p className="font-medium text-[#1a1a1a]">{author.name}</p>
+                  <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
+                    Created by
+                  </p>
+                  <p className='font-medium text-[#1a1a1a]'>{author.name}</p>
                 </div>
               </div>
             )}
             {school && (
-              <div className="flex items-center gap-3 border-l border-black/5 pl-8">
-                <div className="h-10 w-10 rounded-full bg-[#5A5A40]/10 flex items-center justify-center text-[#5A5A40]">
+              <div className='flex items-center gap-3 border-l border-black/5 pl-8'>
+                <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[#5A5A40]/10 text-[#5A5A40]'>
                   <Play size={18} />
                 </div>
                 <div>
-                  <p className="text-xs font-bold uppercase tracking-widest text-black/40">Institution</p>
-                  <p className="font-medium text-[#1a1a1a]">{school.name}</p>
+                  <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
+                    Institution
+                  </p>
+                  <p className='font-medium text-[#1a1a1a]'>{school.name}</p>
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        <div className="lg:col-span-1">
-          <div className="bg-white p-6 rounded-[32px] border border-black/5 shadow-xl sticky top-8 overflow-hidden">
-            <div className="relative mb-6 rounded-2xl overflow-hidden group">
+        <div className='lg:col-span-1'>
+          <div className='sticky top-8 overflow-hidden rounded-[32px] border border-black/5 bg-white p-6 shadow-xl'>
+            <div className='group relative mb-6 overflow-hidden rounded-2xl'>
               <img
-                src={course.thumbnailKey ? `/api/course/serve/${course.thumbnailKey}` : `https://picsum.photos/seed/${course.id}/600/400`}
-                className="w-full aspect-video object-cover transition-transform duration-500 group-hover:scale-105"
+                src={
+                  course.thumbnailKey
+                    ? `/api/course/serve/${course.thumbnailKey}`
+                    : `https://picsum.photos/seed/${course.id}/600/400`
+                }
+                className='aspect-video w-full object-cover transition-transform duration-500 group-hover:scale-105'
                 alt={course.title}
               />
               <button
                 onClick={() => setIsPdfModalOpen(true)}
-                className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                className='absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100'
               >
-                <div className="h-14 w-14 rounded-full bg-white/20 backdrop-blur-md flex items-center justify-center text-white">
-                  <Play size={24} fill="currentColor" />
+                <div className='flex h-14 w-14 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md'>
+                  <Play size={24} fill='currentColor' />
                 </div>
               </button>
             </div>
 
             {isInstructor ? (
-              <div className="space-y-3">
-                <button
-                  className="w-full bg-[#5A5A40] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#4a4a35] transition-all flex items-center justify-center gap-2 shadow-lg hover:shadow-xl active:scale-95"
-                >
+              <div className='space-y-3'>
+                <button className='flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35] hover:shadow-xl active:scale-95'>
                   <Globe size={20} />
                   Course Settings
                 </button>
-                <button className="w-full border border-black/10 text-black/60 py-4 rounded-2xl font-bold text-lg hover:bg-black/5 transition-all flex items-center justify-center gap-2 active:scale-95">
+                <button className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 active:scale-95'>
                   <Edit3 size={20} />
                   Edit Course
                 </button>
                 <button
                   onClick={handleGenerateCurriculum}
-                  className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-4 rounded-2xl font-bold text-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-purple-200"
+                  className='flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 py-4 text-lg font-bold text-white shadow-md shadow-purple-200 transition-all hover:shadow-lg active:scale-95'
                 >
                   <Sparkles size={20} />
                   AI Generate Curriculum
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                <button
-                  className="w-full bg-[#5A5A40] text-white py-4 rounded-2xl font-bold text-lg hover:bg-[#4a4a35] transition-all shadow-lg hover:shadow-xl active:scale-95"
-                >
+              <div className='space-y-3'>
+                <button className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35] hover:shadow-xl active:scale-95'>
                   Go to Course
                 </button>
                 <button
                   onClick={() => setIsPdfModalOpen(true)}
-                  className="w-full border border-[#5A5A40] text-[#5A5A40] py-4 rounded-2xl font-bold text-lg hover:bg-[#5A5A40]/5 transition-all flex items-center justify-center gap-2 active:scale-95"
+                  className='flex w-full items-center justify-center gap-2 rounded-2xl border border-[#5A5A40] py-4 text-lg font-bold text-[#5A5A40] transition-all hover:bg-[#5A5A40]/5 active:scale-95'
                 >
                   <HelpCircle size={20} />
                   View Syllabus
@@ -208,12 +229,12 @@ export default function CourseDetailsPage({
               </div>
             )}
 
-            <div className="mt-6 flex flex-col gap-3">
-              <div className="flex items-center gap-3 text-sm text-black/50">
+            <div className='mt-6 flex flex-col gap-3'>
+              <div className='flex items-center gap-3 text-sm text-black/50'>
                 <Clock size={16} />
                 <span>Full lifetime access</span>
               </div>
-              <div className="flex items-center gap-3 text-sm text-black/50">
+              <div className='flex items-center gap-3 text-sm text-black/50'>
                 <CheckCircle size={16} />
                 <span>Certificate of completion</span>
               </div>
@@ -223,31 +244,43 @@ export default function CourseDetailsPage({
       </div>
 
       {/* Course Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-        <div className="lg:col-span-2">
-          <h2 className="text-3xl font-serif text-[#1a1a1a] mb-8">Course Curriculum</h2>
-          <div className="space-y-4">
+      <div className='grid grid-cols-1 gap-12 lg:grid-cols-3'>
+        <div className='lg:col-span-2'>
+          <h2 className='mb-8 font-serif text-3xl text-[#1a1a1a]'>
+            Course Curriculum
+          </h2>
+          <div className='space-y-4'>
             {modules.map((module: any, mIdx: number) => (
-              <div key={module.id} className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm">
-                <div className="p-6 bg-black/[0.01] border-b border-black/5 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <h3 className="text-lg font-bold text-[#1a1a1a]">
+              <div
+                key={module.id}
+                className='overflow-hidden rounded-[24px] border border-black/5 bg-white shadow-sm'
+              >
+                <div className='flex items-center justify-between border-b border-black/5 bg-black/[0.01] p-6'>
+                  <div className='flex items-center gap-4'>
+                    <h3 className='text-lg font-bold text-[#1a1a1a]'>
                       Module {mIdx + 1}: {module.title}
                     </h3>
                   </div>
-                  <span className="text-xs font-bold uppercase tracking-wider text-black/30">{module.units.length} Units</span>
+                  <span className='text-xs font-bold tracking-wider text-black/30 uppercase'>
+                    {module.units.length} Units
+                  </span>
                 </div>
-                <div className="divide-y divide-black/5">
+                <div className='divide-y divide-black/5'>
                   {module.units.map((unit: any, uIdx: number) => (
                     <div
                       key={unit.id}
-                      className="p-4 flex items-center gap-4 hover:bg-black/[0.01] transition-colors group cursor-pointer"
+                      className='group flex cursor-pointer items-center gap-4 p-4 transition-colors hover:bg-black/[0.01]'
                     >
-                      <div className="w-8 h-8 rounded-full bg-black/5 flex items-center justify-center text-xs font-bold text-black/40 group-hover:bg-[#5A5A40] group-hover:text-white transition-all">
+                      <div className='flex h-8 w-8 items-center justify-center rounded-full bg-black/5 text-xs font-bold text-black/40 transition-all group-hover:bg-[#5A5A40] group-hover:text-white'>
                         {uIdx + 1}
                       </div>
-                      <span className="flex-1 font-medium text-[#1a1a1a] group-hover:text-[#5A5A40] transition-colors">{unit.title}</span>
-                      <Play size={16} className="text-black/20 group-hover:text-[#5A5A40]" />
+                      <span className='flex-1 font-medium text-[#1a1a1a] transition-colors group-hover:text-[#5A5A40]'>
+                        {unit.title}
+                      </span>
+                      <Play
+                        size={16}
+                        className='text-black/20 group-hover:text-[#5A5A40]'
+                      />
                     </div>
                   ))}
                 </div>
@@ -256,20 +289,25 @@ export default function CourseDetailsPage({
           </div>
         </div>
 
-        <div className="lg:col-span-1">
-          <h2 className="text-3xl font-serif text-[#1a1a1a] mb-8">Community</h2>
-          <div className="bg-white p-8 rounded-[24px] border border-black/5 shadow-md">
-            <div className="flex items-center gap-4 mb-6">
-              <div className="flex -space-x-2">
-                {[1, 2, 3].map(i => (
-                  <img key={i} src={`https://i.pravatar.cc/100?u=${i + 10}`} className="w-10 h-10 rounded-full border-2 border-white shadow-sm" alt="User" />
+        <div className='lg:col-span-1'>
+          <h2 className='mb-8 font-serif text-3xl text-[#1a1a1a]'>Community</h2>
+          <div className='rounded-[24px] border border-black/5 bg-white p-8 shadow-md'>
+            <div className='mb-6 flex items-center gap-4'>
+              <div className='flex -space-x-2'>
+                {[1, 2, 3].map((i) => (
+                  <img
+                    key={i}
+                    src={`https://i.pravatar.cc/100?u=${i + 10}`}
+                    className='h-10 w-10 rounded-full border-2 border-white shadow-sm'
+                    alt='User'
+                  />
                 ))}
               </div>
-              <span className="text-sm text-black/60 font-medium">Join active discussions</span>
+              <span className='text-sm font-medium text-black/60'>
+                Join active discussions
+              </span>
             </div>
-            <button
-              className="w-full flex items-center justify-center gap-2 py-4 border border-black/10 rounded-2xl font-bold hover:bg-black/5 transition-all active:scale-95"
-            >
+            <button className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 font-bold transition-all hover:bg-black/5 active:scale-95'>
               <MessageSquare size={18} />
               Open Community Space
             </button>
@@ -280,41 +318,45 @@ export default function CourseDetailsPage({
       {/* PDF Modal */}
       <AnimatePresence>
         {isPdfModalOpen && course.contentKey && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+          <div className='fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8'>
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setIsPdfModalOpen(false)}
-              className="absolute inset-0 bg-black/80 backdrop-blur-sm"
+              className='absolute inset-0 bg-black/80 backdrop-blur-sm'
             />
             <motion.div
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className="relative w-full max-w-5xl h-full bg-white rounded-[40px] shadow-2xl overflow-hidden flex flex-col"
+              className='relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-[40px] bg-white shadow-2xl'
             >
-              <div className="p-6 border-b border-black/5 flex items-center justify-between bg-white">
-                <div className="flex items-center gap-4 text-[#5A5A40]">
-                  <div className="h-10 w-10 rounded-xl bg-[#5A5A40]/10 flex items-center justify-center">
+              <div className='flex items-center justify-between border-b border-black/5 bg-white p-6'>
+                <div className='flex items-center gap-4 text-[#5A5A40]'>
+                  <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]/10'>
                     <FileText size={20} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-[#1a1a1a] leading-tight">Course Content</h3>
-                    <p className="text-xs text-black/40 uppercase tracking-widest font-bold">{course.code}</p>
+                    <h3 className='leading-tight font-bold text-[#1a1a1a]'>
+                      Course Content
+                    </h3>
+                    <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
+                      {course.code}
+                    </p>
                   </div>
                 </div>
                 <button
                   onClick={() => setIsPdfModalOpen(false)}
-                  className="h-10 w-10 rounded-full bg-black/5 flex items-center justify-center hover:bg-black/10 transition-colors"
+                  className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10'
                 >
                   <X size={20} />
                 </button>
               </div>
-              <div className="flex-1 bg-gray-100 p-4">
+              <div className='flex-1 bg-gray-100 p-4'>
                 <iframe
                   src={`/api/course/serve/${course.contentKey}`}
-                  className="w-full h-full rounded-2xl border border-black/5 bg-white"
+                  className='h-full w-full rounded-2xl border border-black/5 bg-white'
                   title={course.title}
                 />
               </div>

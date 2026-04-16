@@ -33,9 +33,9 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const thumbnail = formData.get('thumbnail') as File | null;
 
     if (
-      !courseData.title || 
-      !courseData.code || 
-      !courseData.description || 
+      !courseData.title ||
+      !courseData.code ||
+      !courseData.description ||
       !courseData.schoolId ||
       !courseData.authorId
     ) {
@@ -82,7 +82,10 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const uploadResult = await uploadToR2(contentKey, fileBuffer, file.type);
 
     if (!uploadResult) {
-      return data({ error: 'Failed to upload course content' }, { status: 500 });
+      return data(
+        { error: 'Failed to upload course content' },
+        { status: 500 },
+      );
     }
 
     // Upload thumbnail if provided
@@ -90,7 +93,11 @@ export const action = async ({ request }: Route.ActionArgs) => {
     if (thumbnail && thumbnail.size > 0) {
       const thumbKey = `thumbnails/${uploadId}-${thumbnail.name}`;
       const thumbBuffer = await thumbnail.arrayBuffer();
-      const thumbResult = await uploadToR2(thumbKey, thumbBuffer, thumbnail.type);
+      const thumbResult = await uploadToR2(
+        thumbKey,
+        thumbBuffer,
+        thumbnail.type,
+      );
       if (thumbResult) {
         finalThumbnailKey = thumbResult.key;
       }
@@ -113,14 +120,21 @@ export const action = async ({ request }: Route.ActionArgs) => {
     });
 
     if (!course) {
-      return data({ error: 'Failed to create course in database' }, { status: 500 });
+      return data(
+        { error: 'Failed to create course in database' },
+        { status: 500 },
+      );
     }
 
     return data({ courseId: course.id });
   } catch (dbError: unknown) {
     console.error('Fatal error in course creation action:', dbError);
-    const message = dbError instanceof Error ? dbError.message : 'Unknown database error';
-    return data({ error: `Failed to save course: ${message}` }, { status: 500 });
+    const message =
+      dbError instanceof Error ? dbError.message : 'Unknown database error';
+    return data(
+      { error: `Failed to save course: ${message}` },
+      { status: 500 },
+    );
   }
 };
 
@@ -139,9 +153,9 @@ export default function CreateCoursePage() {
   }, [fetcher.data]);
 
   const handleSubmit = async (
-    formDataBase: CourseFormData, 
-    file: File, 
-    thumbnail?: File
+    formDataBase: CourseFormData,
+    file: File,
+    thumbnail?: File,
   ) => {
     setSubmitError(null);
 
@@ -161,29 +175,29 @@ export default function CreateCoursePage() {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: 'easeOut' }}
-        className='rounded-[48px] border border-black/5 bg-white p-10 md:p-16 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]'
+        className='rounded-[48px] border border-black/5 bg-white p-10 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] md:p-16'
       >
-        <div className='mb-12 flex flex-col md:flex-row md:items-center gap-8'>
+        <div className='mb-12 flex flex-col gap-8 md:flex-row md:items-center'>
           <div className='flex h-20 w-20 items-center justify-center rounded-[28px] bg-[#5A5A40] shadow-xl shadow-[#5A5A40]/30'>
             <PlusCircle className='text-white' size={36} />
           </div>
           <div>
-            <h1 className='font-serif text-5xl text-[#1a1a1a] mb-2'>
+            <h1 className='mb-2 font-serif text-5xl text-[#1a1a1a]'>
               Submit New Course
             </h1>
-            <p className='text-lg text-black/40 italic font-serif'>
+            <p className='font-serif text-lg text-black/40 italic'>
               Contribute to the collective academic knowledge base.
             </p>
           </div>
         </div>
 
         {submitError && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             className='mb-8 rounded-2xl border border-red-200 bg-red-50 p-6 shadow-sm'
           >
-            <p className='text-sm font-bold text-red-600 flex items-center gap-2'>
+            <p className='flex items-center gap-2 text-sm font-bold text-red-600'>
               <X size={18} />
               {submitError}
             </p>

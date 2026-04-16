@@ -1,6 +1,10 @@
 import { type ActionFunctionArgs, data } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
-import { getCourseById, clearCourseCurriculum, addCurriculum } from '~/db/courses';
+import {
+  getCourseById,
+  clearCourseCurriculum,
+  addCurriculum,
+} from '~/db/courses';
 import { getFromR2 } from '~/utils/r2.server';
 import { extractTextFromPdf, generateCurriculum } from '~/utils/ai.server';
 import { env } from 'cloudflare:workers';
@@ -23,18 +27,27 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   if (courseData.course.createdBy !== user.id) {
-    return data({ error: 'Only the creator can generate curriculum' }, { status: 403 });
+    return data(
+      { error: 'Only the creator can generate curriculum' },
+      { status: 403 },
+    );
   }
 
   if (!courseData.course.contentKey) {
-    return data({ error: 'No PDF content found for this course' }, { status: 400 });
+    return data(
+      { error: 'No PDF content found for this course' },
+      { status: 400 },
+    );
   }
 
   try {
     // 1. Get PDF from R2
     const pdfObject = await getFromR2(courseData.course.contentKey);
     if (!pdfObject) {
-      return data({ error: 'Failed to retrieve PDF from storage' }, { status: 500 });
+      return data(
+        { error: 'Failed to retrieve PDF from storage' },
+        { status: 500 },
+      );
     }
 
     const arrayBuffer = await pdfObject.arrayBuffer();
@@ -43,16 +56,23 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     // 2. Extract text
     const text = await extractTextFromPdf(buffer);
     if (!text || text.trim().length === 0) {
-      return data({ error: 'Could not extract text from the PDF' }, { status: 400 });
+      return data(
+        { error: 'Could not extract text from the PDF' },
+        { status: 400 },
+      );
     }
 
     // 3. AI Generate Structure
     const apiKey = (env as any).GEMINI_API_KEY;
     if (!apiKey) {
-      return data({ error: 'AI processing is currently disabled (API Key missing)' }, { status: 503 });
+      return data(
+        { error: 'AI processing is currently disabled (API Key missing)' },
+        { status: 503 },
+      );
     }
 
-    const { modules } = await generateCurriculum(text, apiKey);
+    const preferredModel = (env as any).GEMINI_MODEL;
+    const { modules } = await generateCurriculum(text, apiKey, preferredModel);
 
     // 4. Save to DB (Clear old first)
     await clearCourseCurriculum(id);
