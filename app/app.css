@@ -29,6 +29,116 @@
   @apply mb-2;
 }
 
+.lesson-markdown {
+  @apply font-serif text-[1.08rem] leading-8 text-[#1f1d1a];
+}
+
+.lesson-markdown > *:first-child {
+  margin-top: 0;
+}
+
+.lesson-markdown > *:last-child {
+  margin-bottom: 0;
+}
+
+.lesson-markdown h1,
+.lesson-markdown h2,
+.lesson-markdown h3,
+.lesson-markdown h4 {
+  @apply font-serif font-semibold tracking-tight text-[#171512];
+}
+
+.lesson-markdown h1 {
+  @apply mt-0 mb-8 text-4xl leading-tight md:text-5xl;
+}
+
+.lesson-markdown h2 {
+  @apply mt-12 mb-5 border-t border-black/5 pt-8 text-3xl leading-tight;
+}
+
+.lesson-markdown h3 {
+  @apply mt-10 mb-4 text-2xl leading-snug;
+}
+
+.lesson-markdown h4 {
+  @apply mt-8 mb-3 text-xl leading-snug;
+}
+
+.lesson-markdown p {
+  @apply mb-6 text-[1.08rem] leading-8 text-[#2b2824];
+}
+
+.lesson-markdown strong {
+  @apply font-semibold text-[#171512];
+}
+
+.lesson-markdown em {
+  @apply text-[#514b43];
+}
+
+.lesson-markdown a {
+  @apply font-medium text-[#5A5A40] underline decoration-[#5A5A40]/30 underline-offset-4 transition-colors;
+}
+
+.lesson-markdown a:hover {
+  @apply text-[#3f402c] decoration-[#3f402c]/50;
+}
+
+.lesson-markdown ul,
+.lesson-markdown ol {
+  @apply my-6 space-y-3 pl-6 text-[#2b2824];
+}
+
+.lesson-markdown ul {
+  @apply list-disc marker:text-[#5A5A40];
+}
+
+.lesson-markdown ol {
+  @apply list-decimal marker:font-semibold marker:text-[#5A5A40];
+}
+
+.lesson-markdown li {
+  @apply pl-1 leading-8;
+}
+
+.lesson-markdown blockquote {
+  @apply my-8 rounded-l-[20px] rounded-r-[28px] border-l-4 border-[#5A5A40] bg-[#f6f2e8] px-6 py-5 text-[1.02rem] leading-8 text-[#3c372f] shadow-sm;
+}
+
+.lesson-markdown hr {
+  @apply my-10 border-0 border-t border-black/10;
+}
+
+.lesson-markdown code {
+  @apply rounded-md bg-[#f3efe3] px-2 py-1 font-mono text-[0.95rem] text-[#7a3e1d];
+}
+
+.lesson-markdown pre {
+  @apply my-8 overflow-x-auto rounded-[24px] border border-black/5 bg-[#191919] p-5 shadow-inner;
+}
+
+.lesson-markdown pre code {
+  @apply bg-transparent p-0 text-[0.92rem] leading-7 text-[#f7f3ea];
+}
+
+.lesson-markdown table {
+  @apply my-8 w-full overflow-hidden rounded-[24px] border border-black/10 bg-white text-left text-base shadow-sm;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.lesson-markdown thead {
+  @apply bg-[#f4f0e6];
+}
+
+.lesson-markdown th {
+  @apply px-4 py-3 text-sm font-semibold tracking-wide text-[#171512];
+}
+
+.lesson-markdown td {
+  @apply border-t border-black/5 px-4 py-3 align-top text-[#2b2824];
+}
+
 /* Navigation loading bar styles */
 .navigation-loading-bar {
   position: fixed;

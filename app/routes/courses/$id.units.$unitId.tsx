@@ -30,11 +30,6 @@ type FlattenedUnit = SelectUnit & {
   unitIndex: number;
 };
 
-type SummaryState = {
-  summary: string;
-  takeaways: string[];
-};
-
 type ChatMessage = {
   role: 'user' | 'assistant';
   text: string;
@@ -62,39 +57,6 @@ const splitIntoParagraphs = (content: string) =>
     .split(/\n\s*\n/g)
     .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
     .filter(Boolean);
-
-const stripMarkdown = (content: string) =>
-  content
-    .replace(/```[\s\S]*?```/g, ' ')
-    .replace(/`([^`]+)`/g, '$1')
-    .replace(/!\[[^\]]*\]\([^)]+\)/g, ' ')
-    .replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
-    .replace(/[#>*_~-]/g, ' ')
-    .replace(/\s+/g, ' ')
-    .trim();
-
-const buildSummary = (content: string): SummaryState => {
-  const paragraphs = splitIntoParagraphs(content);
-  const cleanText = stripMarkdown(content);
-  const sentences = cleanText
-    .split(/(?<=[.!?])\s+/)
-    .map((sentence) => sentence.trim())
-    .filter((sentence) => sentence.length > 30);
-
-  return {
-    summary:
-      sentences.slice(0, 2).join(' ') ||
-      paragraphs[0] ||
-      'This unit introduces the central ideas for the topic.',
-    takeaways: paragraphs
-      .slice(0, 3)
-      .map((paragraph) => paragraph.replace(/^[-\d.\s]+/, '').trim())
-      .filter(Boolean)
-      .map((paragraph) =>
-        paragraph.length > 140 ? `${paragraph.slice(0, 137)}...` : paragraph,
-      ) || ['Review the main ideas, examples, and terminology in this unit.'],
-  };
-};
 
 const buildQuiz = (content: string): QuizQuestion[] => {
   const paragraphs = splitIntoParagraphs(content);
@@ -206,10 +168,6 @@ const UnitPageContent = ({
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
 
-  const summary = useMemo(
-    () => buildSummary(currentUnit.content ?? ''),
-    [currentUnit.content],
-  );
   const quizQuestions = useMemo(
     () => buildQuiz(currentUnit.content ?? ''),
     [currentUnit.content],
@@ -470,8 +428,6 @@ const UnitPageContent = ({
                       {currentUnit.title}
                     </h1>
                   </div>
-
-                  
                 </div>
 
                 <AnimatePresence mode='wait'>
@@ -483,7 +439,7 @@ const UnitPageContent = ({
                       exit={{ opacity: 0, y: -18 }}
                       className='rounded-[32px] border border-black/5 bg-white p-8 shadow-sm'
                     >
-                      <div className='prose prose-slate max-w-none'>
+                      <div className='lesson-markdown'>
                         <Markdown>
                           {currentUnit.content ?? 'No content yet.'}
                         </Markdown>
@@ -558,28 +514,27 @@ const UnitPageContent = ({
                       )}
                     </motion.div>
                   ) : null}
-                  
                 </AnimatePresence>
-                <div className='flex items-center gap-3 mt-4'>
-                    {previousUnit ? (
-                      <Link
-                        to={`/courses/${course?.course.id}/units/${previousUnit.id}`}
-                        className='inline-flex items-center gap-2 rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
-                      >
-                        <ChevronLeft size={16} />
-                        Previous
-                      </Link>
-                    ) : null}
-                    {nextUnit ? (
-                      <Link
-                        to={`/courses/${course?.course.id}/units/${nextUnit.id}`}
-                        className='inline-flex items-center gap-2 rounded-2xl bg-[#5A5A40] px-4 py-3 text-sm font-bold text-white transition-all hover:bg-[#4a4a35]'
-                      >
-                        Next Unit
-                        <ChevronRight size={16} />
-                      </Link>
-                    ) : null}
-                  </div>
+                <div className='mt-4 flex items-center gap-3'>
+                  {previousUnit ? (
+                    <Link
+                      to={`/courses/${course?.course.id}/units/${previousUnit.id}`}
+                      className='inline-flex items-center gap-2 rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
+                    >
+                      <ChevronLeft size={16} />
+                      Previous
+                    </Link>
+                  ) : null}
+                  {nextUnit ? (
+                    <Link
+                      to={`/courses/${course?.course.id}/units/${nextUnit.id}`}
+                      className='inline-flex items-center gap-2 rounded-2xl bg-[#5A5A40] px-4 py-3 text-sm font-bold text-white transition-all hover:bg-[#4a4a35]'
+                    >
+                      Next Unit
+                      <ChevronRight size={16} />
+                    </Link>
+                  ) : null}
+                </div>
               </div>
             </div>
 

@@ -64,7 +64,16 @@ export const buildModuleUnitsPrompt = (text: string) => `
   - units: an array of objects with:
     - title: string
     - summary: string
-    - content: string (the structured learning content in markdown)
+    - content: string
+
+  Important rules for each unit:
+  - Do NOT summarize or compress the unit content into a short overview.
+  - Extract the full context for that unit from the raw text that belongs to it.
+  - Preserve important explanations, concepts, examples, steps, definitions, and supporting details.
+  - Write the content as well-structured markdown using headings, subheadings, short paragraphs, lists, and emphasis where useful.
+  - The markdown should feel like a complete lesson section, not a note or abstract.
+  - Only reorganize for clarity; do not invent facts that are not supported by the raw text.
+  - Do not include the unit title in the content
 
   Format:
   {
@@ -74,7 +83,7 @@ export const buildModuleUnitsPrompt = (text: string) => `
       {
         "title": "Unit Title",
         "summary": "Short summary",
-        "content": "Markdown learning content"
+        "content": "# Unit heading\\n## Subtitle\\nDetailed markdown lesson content extracted from the raw text"
       }
     ]
   }
