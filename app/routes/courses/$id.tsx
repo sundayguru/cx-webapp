@@ -335,9 +335,10 @@ export default function CourseDetailsPage({
                 </div>
                 <div className='divide-y divide-black/5'>
                   {module.units.map((unit: any, uIdx: number) => (
-                    <div
+                    <Link
                       key={unit.id}
-                      className='group flex cursor-pointer items-center gap-4 p-4 transition-colors hover:bg-black/[0.01]'
+                      to={`/courses/${course.id}/units/${unit.id}`}
+                      className='group flex items-center gap-4 p-4 transition-colors hover:bg-black/[0.01]'
                     >
                       <div className='flex h-8 w-8 items-center justify-center rounded-full bg-black/5 text-xs font-bold text-black/40 transition-all group-hover:bg-[#5A5A40] group-hover:text-white'>
                         {uIdx + 1}
@@ -349,7 +350,7 @@ export default function CourseDetailsPage({
                         size={16}
                         className='text-black/20 group-hover:text-[#5A5A40]'
                       />
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
