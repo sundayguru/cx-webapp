@@ -1,5 +1,5 @@
 import type { Route } from './+types/$id';
-import { Link, type LoaderFunctionArgs } from 'react-router';
+import { Link, type LoaderFunctionArgs, useFetcher } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
 import { getCourseById } from '~/db/courses';
 import { motion, AnimatePresence } from 'motion/react';
@@ -16,9 +16,10 @@ import {
   HelpCircle,
   X,
   FileText,
-  Clock
+  Clock,
+  Sparkles
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -36,7 +37,32 @@ export default function CourseDetailsPage({
   loaderData,
 }: Route.ComponentProps) {
   const { data, user } = loaderData;
+  const fetcher = useFetcher();
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const handleGenerateCurriculum = async () => {
+    if (!confirm('This will replace any existing modules and units. Continue?')) return;
+
+    setIsGenerating(true);
+    fetcher.submit(null, {
+      method: 'post',
+      action: `/api/courses/${data?.course.id}/generate-curriculum`,
+    });
+  };
+
+  useEffect(() => {
+    if (fetcher.state === 'idle' && fetcher.data) {
+      setIsGenerating(false);
+      const result = fetcher.data as { success?: boolean; error?: string };
+      if (result.success) {
+        alert('Curriculum generated successfully!');
+        window.location.reload();
+      } else if (result.error) {
+        alert(`Error: ${result.error}`);
+      }
+    }
+  }, [fetcher]);
 
   if (!data) {
     return (
@@ -156,6 +182,13 @@ export default function CourseDetailsPage({
                 <button className="w-full border border-black/10 text-black/60 py-4 rounded-2xl font-bold text-lg hover:bg-black/5 transition-all flex items-center justify-center gap-2 active:scale-95">
                   <Edit3 size={20} />
                   Edit Course
+                </button>
+                <button
+                  onClick={handleGenerateCurriculum}
+                  className="w-full bg-gradient-to-r from-purple-500 to-blue-500 text-white py-4 rounded-2xl font-bold text-lg hover:shadow-lg transition-all flex items-center justify-center gap-2 active:scale-95 shadow-md shadow-purple-200"
+                >
+                  <Sparkles size={20} />
+                  AI Generate Curriculum
                 </button>
               </div>
             ) : (

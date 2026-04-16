@@ -1,6 +1,6 @@
 import { eq, and, like, or, SQL, asc } from 'drizzle-orm';
 import { getDb } from './connection';
-import { courses, schools, authors, modules, units, type InsertCourse } from './schemas';
+import { courses, schools, authors, modules, units, type InsertCourse, type InsertModule, type InsertUnit } from './schemas';
 import { v4 as uuidv4 } from 'uuid';
 import { logError } from '~/utils/logger';
 
@@ -184,6 +184,60 @@ export const getAllCourseMetadata = async () => {
   } catch (e) {
     logError(e, 'Error getting all course metadata');
     return { schools: [], authors: [] };
+  }
+};
+
+export const clearCourseCurriculum = async (courseId: string) => {
+  try {
+    const db = getDb();
+    const courseModules = await db.select().from(modules).where(eq(modules.courseId, courseId));
+    const moduleIds = courseModules.map(m => m.id);
+    
+    if (moduleIds.length > 0) {
+      await db.delete(units).where(or(...moduleIds.map(mid => eq(units.moduleId, mid))));
+      await db.delete(modules).where(eq(modules.courseId, courseId));
+    }
+    return true;
+  } catch (e) {
+    logError(e, 'Error clearing course curriculum');
+    return false;
+  }
+};
+
+export const addCurriculum = async (
+  courseId: string, 
+  curriculum: { title: string; description: string; units: { title: string; content: string }[] }[]
+) => {
+  try {
+    const db = getDb();
+    
+    for (let i = 0; i < curriculum.length; i++) {
+      const m = curriculum[i];
+      const moduleId = uuidv4();
+      
+      await db.insert(modules).values({
+        id: moduleId,
+        courseId,
+        title: m.title,
+        description: m.description,
+        order: i,
+      });
+      
+      for (let j = 0; j < m.units.length; j++) {
+        const u = m.units[j];
+        await db.insert(units).values({
+          id: uuidv4(),
+          moduleId,
+          title: u.title,
+          content: u.content,
+          order: j,
+        });
+      }
+    }
+    return true;
+  } catch (e) {
+    logError(e, 'Error adding course curriculum');
+    return false;
   }
 };
 
