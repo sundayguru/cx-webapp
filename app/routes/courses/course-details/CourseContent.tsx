@@ -5,9 +5,18 @@ import type { CourseModuleWithUnits } from './types';
 type CourseContentProps = {
   courseId: string;
   modules: CourseModuleWithUnits[];
+  isInstructor: boolean;
+  isSplittingModuleRawText: boolean;
+  onSplitModuleRawText: (moduleId: string) => void;
 };
 
-export const CourseContent = ({ courseId, modules }: CourseContentProps) => {
+export const CourseContent = ({
+  courseId,
+  modules,
+  isInstructor,
+  isSplittingModuleRawText,
+  onSplitModuleRawText,
+}: CourseContentProps) => {
   return (
     <div className='grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_320px]'>
       <section className='rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_25px_70px_-35px_rgba(0,0,0,0.18)]'>
@@ -45,9 +54,22 @@ export const CourseContent = ({ courseId, modules }: CourseContentProps) => {
                     </p>
                   ) : null}
                 </div>
-                <span className='rounded-full bg-black/5 px-3 py-1 text-xs font-bold tracking-wider text-black/45 uppercase'>
-                  {module.units.length} Units
-                </span>
+                <div className='flex items-center gap-3'>
+                  {isInstructor && module.rawText?.trim() ? (
+                    <button
+                      onClick={() => onSplitModuleRawText(module.id)}
+                      disabled={isSplittingModuleRawText}
+                      className='rounded-xl border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                    >
+                      {isSplittingModuleRawText
+                        ? 'Splitting...'
+                        : 'Split into Units'}
+                    </button>
+                  ) : null}
+                  <span className='rounded-full bg-black/5 px-3 py-1 text-xs font-bold tracking-wider text-black/45 uppercase'>
+                    {module.units.length} Units
+                  </span>
+                </div>
               </div>
 
               <div className='divide-y divide-black/5'>

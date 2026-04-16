@@ -1,4 +1,4 @@
-import { GROQ_MODELS } from "./constants";
+import { GROQ_MODELS } from './constants';
 
 export type CurriculumAiProvider = 'google' | 'groq';
 

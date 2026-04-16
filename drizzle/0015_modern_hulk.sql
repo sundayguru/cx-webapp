@@ -1,0 +1,1 @@
+ALTER TABLE `units` ADD `raw_text` text;

@@ -51,5 +51,9 @@ export default [
       'api/courses/:id/split-raw-text-into-modules',
       'routes/api/courses/split-raw-text-into-modules.tsx',
     ),
+    route(
+      'api/courses/:id/split-module-raw-text-into-units',
+      'routes/api/courses/split-module-raw-text-into-units.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;

@@ -31,6 +31,7 @@ export type SidebarProps = {
   isGeneratingUnits: boolean;
   isExtractingRawText: boolean;
   isSplittingRawText: boolean;
+  isSplittingModuleRawText: boolean;
   hasRawText: boolean;
   rawTextLength: number;
   modulesWithRawText: CourseModuleWithUnits[];
@@ -45,4 +46,12 @@ export type SidebarProps = {
   onOpenSplitWarning: () => void;
   onOpenGenerateWarning: () => void;
   onOpenGenerateUnitsModal: () => void;
+};
+
+export type CourseContentProps = {
+  courseId: string;
+  modules: CourseModuleWithUnits[];
+  isInstructor: boolean;
+  isSplittingModuleRawText: boolean;
+  onSplitModuleRawText: (moduleId: string) => void;
 };

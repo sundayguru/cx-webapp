@@ -100,56 +100,6 @@ export const CourseSidebar = ({
               </button>
             ) : null}
 
-            <div className='rounded-[26px] border border-black/10 bg-black/[0.02] p-4'>
-              <p className='mb-3 text-xs font-bold tracking-widest text-black/50 uppercase'>
-                AI Setup
-              </p>
-              <div className='space-y-3'>
-                <div>
-                  <label
-                    htmlFor='curriculum-provider'
-                    className='mb-2 block text-xs font-bold tracking-widest text-black/40 uppercase'
-                  >
-                    Provider
-                  </label>
-                  <select
-                    id='curriculum-provider'
-                    value={selectedProvider}
-                    onChange={(event) =>
-                      onProviderChange(
-                        event.target.value as typeof selectedProvider,
-                      )
-                    }
-                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
-                  >
-                    <option value='google'>Google</option>
-                    <option value='groq'>Groq</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor='curriculum-model'
-                    className='mb-2 block text-xs font-bold tracking-widest text-black/40 uppercase'
-                  >
-                    Model
-                  </label>
-                  <select
-                    id='curriculum-model'
-                    value={selectedModel}
-                    onChange={(event) => onModelChange(event.target.value)}
-                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
-                  >
-                    {modelOptions.map((modelOption) => (
-                      <option key={modelOption.value} value={modelOption.value}>
-                        {modelOption.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-            </div>
-
             <button
               onClick={onOpenGenerateWarning}
               disabled={isGenerating}

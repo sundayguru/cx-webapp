@@ -388,3 +388,56 @@ export const replaceModuleUnits = async (
     return false;
   }
 };
+
+export const splitModuleRawTextIntoUnits = async (moduleId: string) => {
+  try {
+    const db = getDb();
+
+    const [module] = await db
+      .select()
+      .from(modules)
+      .where(eq(modules.id, moduleId))
+      .limit(1);
+
+    if (!module) {
+      throw new Error('Module not found');
+    }
+
+    const rawText = module.rawText?.trim() || '';
+    if (!rawText) {
+      throw new Error('Module raw text is empty');
+    }
+
+    if (!rawText.includes('--end--')) {
+      throw new Error(
+        'Module raw text must include "--end--" separators before splitting into units',
+      );
+    }
+
+    const parts = rawText
+      .split('--end--')
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    if (parts.length === 0) {
+      throw new Error('No unit text segments were found');
+    }
+
+    await db.delete(units).where(eq(units.moduleId, moduleId));
+
+    for (const [index, part] of parts.entries()) {
+      await db.insert(units).values({
+        id: uuidv4(),
+        moduleId,
+        title: `Unit ${index + 1}`,
+        rawText: part,
+        order: index,
+      });
+    }
+
+    return { unitsCount: parts.length };
+  } catch (e) {
+    logError(e, 'Error splitting module raw text into units');
+    return null;
+  }
+};

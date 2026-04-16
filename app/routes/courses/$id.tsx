@@ -38,9 +38,12 @@ export default function CourseDetailsPage({
   const rawTextFetcher = useFetcher();
   const rawTextUpdateFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
+  const splitModuleRawTextFetcher = useFetcher();
 
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isRawTextModalOpen, setIsRawTextModalOpen] = useState(false);
+  const [isGenerateCurriculumModalOpen, setIsGenerateCurriculumModalOpen] =
+    useState(false);
   const [isGenerateWarningOpen, setIsGenerateWarningOpen] = useState(false);
   const [isGenerateUnitsModalOpen, setIsGenerateUnitsModalOpen] =
     useState(false);
@@ -76,6 +79,7 @@ export default function CourseDetailsPage({
   const isExtractingRawText = rawTextFetcher.state !== 'idle';
   const isUpdatingRawText = rawTextUpdateFetcher.state !== 'idle';
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
+  const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
     setSelectedProvider(provider);
@@ -135,6 +139,16 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/split-raw-text-into-modules`,
+      },
+    );
+  };
+
+  const handleSplitModuleRawTextIntoUnits = (moduleId: string) => {
+    splitModuleRawTextFetcher.submit(
+      { moduleId },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/split-module-raw-text-into-units`,
       },
     );
   };
@@ -284,6 +298,43 @@ export default function CourseDetailsPage({
     }
   }, [showToast, splitRawTextFetcher]);
 
+  const handledSplitModuleRawTextResult = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      splitModuleRawTextFetcher.state === 'idle' &&
+      splitModuleRawTextFetcher.data
+    ) {
+      const result = splitModuleRawTextFetcher.data as {
+        success?: boolean;
+        error?: string;
+        unitsCount?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (
+        result.success &&
+        handledSplitModuleRawTextResult.current !== resultKey
+      ) {
+        handledSplitModuleRawTextResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Created ${result.unitsCount ?? 0} units from module raw text.`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledSplitModuleRawTextResult.current !== resultKey
+      ) {
+        handledSplitModuleRawTextResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, splitModuleRawTextFetcher]);
+
   if (!data) {
     return (
       <div className='mx-auto max-w-4xl px-4 py-12'>
@@ -332,6 +383,7 @@ export default function CourseDetailsPage({
           isGeneratingUnits={isGeneratingUnits}
           isExtractingRawText={isExtractingRawText}
           isSplittingRawText={isSplittingRawText}
+          isSplittingModuleRawText={isSplittingModuleRawText}
           hasRawText={Boolean(course.rawText)}
           rawTextLength={course.rawText?.length || 0}
           modulesWithRawText={modulesWithRawText}
@@ -347,13 +399,19 @@ export default function CourseDetailsPage({
             setIsRawTextModalOpen(true);
           }}
           onOpenSplitWarning={() => setIsSplitWarningOpen(true)}
-          onOpenGenerateWarning={() => setIsGenerateWarningOpen(true)}
+          onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
         />
       </div>
 
       <div className='mt-8'>
-        <CourseContent courseId={course.id} modules={modules} />
+        <CourseContent
+          courseId={course.id}
+          modules={modules}
+          isInstructor={isInstructor}
+          isSplittingModuleRawText={isSplittingModuleRawText}
+          onSplitModuleRawText={handleSplitModuleRawTextIntoUnits}
+        />
       </div>
 
       <CourseModals
@@ -361,12 +419,14 @@ export default function CourseDetailsPage({
         courseTitle={course.title}
         contentKey={course.contentKey}
         isPdfModalOpen={isPdfModalOpen}
+        isGenerateCurriculumModalOpen={isGenerateCurriculumModalOpen}
         isGenerateWarningOpen={isGenerateWarningOpen}
         isGenerateUnitsModalOpen={isGenerateUnitsModalOpen}
         isExtractWarningOpen={isExtractWarningOpen}
         isSplitWarningOpen={isSplitWarningOpen}
         isRawTextModalOpen={isRawTextModalOpen}
         isGeneratingUnits={isGeneratingUnits}
+        isGenerating={isGenerating}
         isUpdatingRawText={isUpdatingRawText}
         selectedProvider={selectedProvider}
         selectedModel={selectedModel}
@@ -374,14 +434,21 @@ export default function CourseDetailsPage({
         modulesWithRawText={modulesWithRawText}
         editableRawText={editableRawText}
         onClosePdf={() => setIsPdfModalOpen(false)}
+        onCloseGenerateCurriculumModal={() =>
+          setIsGenerateCurriculumModalOpen(false)
+        }
+        onConfirmGenerateCurriculumSelection={() => {
+          setIsGenerateCurriculumModalOpen(false);
+          setIsGenerateWarningOpen(true);
+        }}
+        onProviderChange={handleProviderChange}
+        onModelChange={setSelectedModel}
         onCloseGenerateWarning={() => setIsGenerateWarningOpen(false)}
         onConfirmGenerateCurriculum={() => {
           setIsGenerateWarningOpen(false);
           triggerGenerateCurriculum();
         }}
         onCloseGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(false)}
-        onProviderChange={handleProviderChange}
-        onModelChange={setSelectedModel}
         onModuleChange={setSelectedModuleId}
         onGenerateUnits={handleGenerateUnits}
         onCloseExtractWarning={() => setIsExtractWarningOpen(false)}
