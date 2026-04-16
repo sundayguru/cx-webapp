@@ -7,11 +7,6 @@ import {
   parseCurriculumResponse,
   type CurriculumResponse,
 } from './curriculum-generation.server';
-import { GOOGLE_CURRICULUM_MODEL_OPTIONS } from './curriculum-options';
-
-const DEFAULT_GEMINI_MODELS = GOOGLE_CURRICULUM_MODEL_OPTIONS.map(
-  (modelOption) => modelOption.value,
-);
 
 export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
   try {
@@ -30,35 +25,28 @@ export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
 export const generateCurriculum = async (
   text: string,
   apiKey: string,
-  preferredModel?: string,
+  preferredModel: string,
 ): Promise<CurriculumResponse> => {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const modelNames = [
-    ...(preferredModel ? [preferredModel] : []),
-    ...DEFAULT_GEMINI_MODELS,
-  ].filter((modelName, index, models) => models.indexOf(modelName) === index);
   const prompt = buildCurriculumPrompt(text);
 
   let lastError: unknown;
 
-  for (const modelName of modelNames) {
-    try {
-      const model = genAI.getGenerativeModel({ model: modelName });
+   try {
+      const model = genAI.getGenerativeModel({ model: preferredModel });
       const result = await model.generateContent(prompt);
       const response = await result.response;
       return parseCurriculumResponse(response.text());
     } catch (e: unknown) {
       lastError = e;
-      logError(e, `Error generating curriculum with model ${modelName}`);
+      logError(e, `Error generating curriculum with model ${preferredModel}`);
     }
-  }
-
   const errorMessage =
     lastError instanceof Error
       ? lastError.message
       : 'Unknown AI generation error';
 
   throw new Error(
-    `Failed to generate curriculum structure. Tried models: ${modelNames.join(', ')}. Last error: ${errorMessage}`,
+    `Failed to generate curriculum structure. Last error: ${errorMessage}`,
   );
 };

@@ -9,6 +9,7 @@ export const units = sqliteTable('units', {
     .references(() => modules.id, { onDelete: 'cascade' }),
   title: text('title', { length: 255 }).notNull(),
   content: text('content'), // This could be text, markdown, or a key to R2 for non-PDF content
+  summary: text('summary'), // This could be text, markdown, or a key to R2 for non-PDF content
   order: integer('order').notNull().default(0),
   audioUrl: text('audio_url'),
   videoUrl: text('video_url'),

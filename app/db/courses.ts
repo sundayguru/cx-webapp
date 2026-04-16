@@ -248,6 +248,7 @@ export const addCurriculum = async (
           id: uuidv4(),
           moduleId,
           title: u.title,
+          summary: u.summary,
           content: u.content,
           order: j,
         });

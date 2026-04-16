@@ -1,5 +1,6 @@
 export type CurriculumUnit = {
   title: string;
+  summary: string;
   content: string;
 };
 
@@ -21,7 +22,8 @@ export const buildCurriculumPrompt = (text: string) => `
   - description: string
   - units: an array of objects with:
     - title: string
-    - content: string (a short summary or key points for this unit)
+    - content: string (the extract or the course content exactly as presented in text formated with a markdown)
+    - summary: string (a short summary or key points for this unit)
 
   Format:
   {
@@ -30,7 +32,7 @@ export const buildCurriculumPrompt = (text: string) => `
         "title": "Module Title",
         "description": "Short description",
         "units": [
-          { "title": "Unit Title", "content": "Summary" }
+          { "title": "Unit Title", "summary": "Summary", "content": "Content extract" }
         ]
       }
     ]
