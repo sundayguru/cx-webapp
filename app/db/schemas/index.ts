@@ -7,3 +7,5 @@ export * from './passwordResetTokens';
 export * from './courses';
 export * from './schools';
 export * from './authors';
+export * from './modules';
+export * from './units';

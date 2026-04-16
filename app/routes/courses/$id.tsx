@@ -56,29 +56,9 @@ export default function CourseDetailsPage({
     );
   }
 
-  const { course, school, author } = data;
+  const { course, school, author, modules } = data;
   const isInstructor = user?.id === course.createdBy;
   const isDraft = course.status === 'pending';
-
-  // Mock data for curriculum and community
-  const mockModules = [
-    {
-      id: 'm1',
-      title: 'Introduction to Core Concepts',
-      units: [
-        { id: 'u1', title: 'Course Foundation & Overview' },
-        { id: 'u2', title: 'Deep dive into Technical Stack' },
-      ]
-    },
-    {
-      id: 'm2',
-      title: 'Advanced Implementation',
-      units: [
-        { id: 'u3', title: 'Scaling and Deployment' },
-        { id: 'u4', title: 'Security Best Practices' },
-      ]
-    }
-  ];
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-8">
@@ -110,7 +90,7 @@ export default function CourseDetailsPage({
             </div>
             <div className="flex items-center gap-2 text-black/60">
               <BookOpen size={20} />
-              <span className="font-medium">{mockModules.length} Modules</span>
+              <span className="font-medium">{modules.length} Modules</span>
             </div>
             <button
               onClick={() => setIsPdfModalOpen(true)}
@@ -214,7 +194,7 @@ export default function CourseDetailsPage({
         <div className="lg:col-span-2">
           <h2 className="text-3xl font-serif text-[#1a1a1a] mb-8">Course Curriculum</h2>
           <div className="space-y-4">
-            {mockModules.map((module, mIdx) => (
+            {modules.map((module: any, mIdx: number) => (
               <div key={module.id} className="bg-white rounded-[24px] border border-black/5 overflow-hidden shadow-sm">
                 <div className="p-6 bg-black/[0.01] border-b border-black/5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
@@ -225,7 +205,7 @@ export default function CourseDetailsPage({
                   <span className="text-xs font-bold uppercase tracking-wider text-black/30">{module.units.length} Units</span>
                 </div>
                 <div className="divide-y divide-black/5">
-                  {module.units.map((unit, uIdx) => (
+                  {module.units.map((unit: any, uIdx: number) => (
                     <div
                       key={unit.id}
                       className="p-4 flex items-center gap-4 hover:bg-black/[0.01] transition-colors group cursor-pointer"

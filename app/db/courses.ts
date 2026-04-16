@@ -1,6 +1,6 @@
-import { eq, and, like, or, SQL } from 'drizzle-orm';
+import { eq, and, like, or, SQL, asc } from 'drizzle-orm';
 import { getDb } from './connection';
-import { courses, schools, authors, type InsertCourse } from './schemas';
+import { courses, schools, authors, modules, units, type InsertCourse } from './schemas';
 import { v4 as uuidv4 } from 'uuid';
 import { logError } from '~/utils/logger';
 
@@ -25,6 +25,8 @@ export const createCourse = async (
 export const getCourseById = async (id: string) => {
   try {
     const db = getDb();
+    
+    // Get course, school and author
     const results = await db
       .select({
         course: courses,
@@ -37,7 +39,40 @@ export const getCourseById = async (id: string) => {
       .where(eq(courses.id, id))
       .limit(1);
     
-    return results[0] || null;
+    if (results.length === 0) return null;
+    
+    const courseData = results[0];
+
+    // Get modules for the course
+    const courseModules = await db
+      .select()
+      .from(modules)
+      .where(eq(modules.courseId, id))
+      .orderBy(asc(modules.order));
+
+    // Get units for all modules in this course
+    const moduleIds = courseModules.map(m => m.id);
+    let courseUnits: any[] = [];
+    if (moduleIds.length > 0) {
+      courseUnits = await db
+        .select()
+        .from(units)
+        .where(
+          or(...moduleIds.map(mid => eq(units.moduleId, mid)))
+        )
+        .orderBy(asc(units.order));
+    }
+
+    // Organize into hierarchy
+    const modulesWithUnits = courseModules.map(m => ({
+      ...m,
+      units: courseUnits.filter(u => u.moduleId === m.id)
+    }));
+
+    return {
+      ...courseData,
+      modules: modulesWithUnits
+    };
   } catch (e) {
     logError(e, 'Error getting course by id');
     return null;
