@@ -39,5 +39,9 @@ export default [
       'api/courses/:id/extract-raw-text',
       'routes/api/courses/extract-raw-text.tsx',
     ),
+    route(
+      'api/courses/:id/update-raw-text',
+      'routes/api/courses/update-raw-text.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;

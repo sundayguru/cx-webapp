@@ -12,6 +12,7 @@ import type { Route } from './+types/root';
 import './app.css';
 import { CurrentUserProvider } from './providers/CurrentUserProvider';
 import { userDataContext } from './contexts.server/userDataContext.server';
+import { ToastProvider } from './components/ToastViewport';
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -53,9 +54,11 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 
 export default function App({ loaderData }: Route.ComponentProps) {
   return (
-    <CurrentUserProvider user={loaderData.user}>
-      <Outlet />
-    </CurrentUserProvider>
+    <ToastProvider>
+      <CurrentUserProvider user={loaderData.user}>
+        <Outlet />
+      </CurrentUserProvider>
+    </ToastProvider>
   );
 }
 

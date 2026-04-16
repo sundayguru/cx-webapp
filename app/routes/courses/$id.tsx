@@ -7,6 +7,7 @@ import {
   Play,
   CheckCircle,
   ChevronRight,
+  AlertTriangle,
   MessageSquare,
   Users,
   BarChart,
@@ -19,13 +20,14 @@ import {
   Clock,
   Sparkles,
 } from 'lucide-react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   CURRICULUM_MODEL_OPTIONS,
   DEFAULT_CURRICULUM_MODELS,
   DEFAULT_CURRICULUM_PROVIDER,
   type CurriculumAiProvider,
 } from '~/utils/curriculum-options';
+import { useToast } from '~/utils/useToast';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -43,9 +45,20 @@ export default function CourseDetailsPage({
   loaderData,
 }: Route.ComponentProps) {
   const { data, user } = loaderData;
+  const { showToast } = useToast();
   const curriculumFetcher = useFetcher();
   const rawTextFetcher = useFetcher();
+  const rawTextUpdateFetcher = useFetcher();
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [isRawTextModalOpen, setIsRawTextModalOpen] = useState(false);
+  const [isGenerateWarningOpen, setIsGenerateWarningOpen] = useState(false);
+  const [isExtractWarningOpen, setIsExtractWarningOpen] = useState(false);
+  const [editableRawText, setEditableRawText] = useState(
+    data?.course.rawText || '',
+  );
+  const handledCurriculumResult = useRef<string | null>(null);
+  const handledRawTextExtractResult = useRef<string | null>(null);
+  const handledRawTextUpdateResult = useRef<string | null>(null);
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
   const [selectedModel, setSelectedModel] = useState(
@@ -53,14 +66,9 @@ export default function CourseDetailsPage({
   );
   const isGenerating = curriculumFetcher.state !== 'idle';
   const isExtractingRawText = rawTextFetcher.state !== 'idle';
+  const isUpdatingRawText = rawTextUpdateFetcher.state !== 'idle';
 
-  const handleGenerateCurriculum = async () => {
-    if (
-      !confirm('This will replace any existing modules and units. Continue?')
-    ) {
-      return;
-    }
-
+  const triggerGenerateCurriculum = () => {
     curriculumFetcher.submit(
       {
         provider: selectedProvider,
@@ -83,20 +91,44 @@ export default function CourseDetailsPage({
     );
   };
 
+  const handleUpdateRawText = () => {
+    rawTextUpdateFetcher.submit(
+      { rawText: editableRawText },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/update-raw-text`,
+      },
+    );
+  };
+
   useEffect(() => {
     if (curriculumFetcher.state === 'idle' && curriculumFetcher.data) {
       const result = curriculumFetcher.data as {
         success?: boolean;
         error?: string;
       };
-      if (result.success) {
-        alert('Curriculum generated successfully!');
-        window.location.reload();
-      } else if (result.error) {
-        alert(`Error: ${result.error}`);
+      const resultKey = JSON.stringify(result);
+      if (result.success && handledCurriculumResult.current !== resultKey) {
+        handledCurriculumResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: 'Curriculum generated successfully.',
+        });
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else if (
+        result.error &&
+        handledCurriculumResult.current !== resultKey
+      ) {
+        handledCurriculumResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
       }
     }
-  }, [curriculumFetcher]);
+  }, [curriculumFetcher, showToast]);
 
   useEffect(() => {
     if (rawTextFetcher.state === 'idle' && rawTextFetcher.data) {
@@ -105,16 +137,58 @@ export default function CourseDetailsPage({
         error?: string;
         characters?: number;
       };
-      if (result.success) {
-        alert(
-          `PDF text extracted successfully${result.characters ? ` (${result.characters} characters)` : ''}.`,
-        );
-        window.location.reload();
-      } else if (result.error) {
-        alert(`Error: ${result.error}`);
+      const resultKey = JSON.stringify(result);
+      if (result.success && handledRawTextExtractResult.current !== resultKey) {
+        handledRawTextExtractResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `PDF text extracted successfully${result.characters ? ` (${result.characters} characters)` : ''}.`,
+        });
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else if (
+        result.error &&
+        handledRawTextExtractResult.current !== resultKey
+      ) {
+        handledRawTextExtractResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
       }
     }
-  }, [rawTextFetcher]);
+  }, [rawTextFetcher, showToast]);
+
+  useEffect(() => {
+    if (rawTextUpdateFetcher.state === 'idle' && rawTextUpdateFetcher.data) {
+      const result = rawTextUpdateFetcher.data as {
+        success?: boolean;
+        error?: string;
+        characters?: number;
+      };
+      const resultKey = JSON.stringify(result);
+      if (result.success && handledRawTextUpdateResult.current !== resultKey) {
+        handledRawTextUpdateResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Raw text updated successfully${result.characters !== undefined ? ` (${result.characters} characters)` : ''}.`,
+        });
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else if (
+        result.error &&
+        handledRawTextUpdateResult.current !== resultKey
+      ) {
+        handledRawTextUpdateResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [rawTextUpdateFetcher, showToast]);
 
   if (!data) {
     return (
@@ -261,7 +335,7 @@ export default function CourseDetailsPage({
                   Edit Course
                 </Link>
                 <button
-                  onClick={handleExtractRawText}
+                  onClick={() => setIsExtractWarningOpen(true)}
                   disabled={isExtractingRawText}
                   className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 active:scale-95 disabled:opacity-50'
                 >
@@ -270,6 +344,18 @@ export default function CourseDetailsPage({
                     ? 'Extracting PDF Text...'
                     : 'Extract PDF Text'}
                 </button>
+                {course.rawText ? (
+                  <button
+                    onClick={() => {
+                      setEditableRawText(course.rawText || '');
+                      setIsRawTextModalOpen(true);
+                    }}
+                    className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 active:scale-95'
+                  >
+                    <Edit3 size={20} />
+                    Edit Course Text
+                  </button>
+                ) : null}
                 <div className='space-y-3 rounded-2xl border border-black/10 bg-black/[0.02] p-4'>
                   <div>
                     <label
@@ -320,7 +406,7 @@ export default function CourseDetailsPage({
                   </div>
                 </div>
                 <button
-                  onClick={handleGenerateCurriculum}
+                  onClick={() => setIsGenerateWarningOpen(true)}
                   disabled={isGenerating}
                   className='flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 py-4 text-lg font-bold text-white shadow-md shadow-purple-200 transition-all hover:shadow-lg active:scale-95'
                 >
@@ -486,6 +572,191 @@ export default function CourseDetailsPage({
             </motion.div>
           </div>
         )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isGenerateWarningOpen ? (
+          <div className='fixed inset-0 z-[105] flex items-center justify-center p-4 md:p-8'>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsGenerateWarningOpen(false)}
+              className='absolute inset-0 bg-black/70 backdrop-blur-sm'
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className='relative w-full max-w-xl rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6 flex items-start gap-4'>
+                <div className='flex h-12 w-12 items-center justify-center rounded-2xl bg-orange-100 text-orange-600'>
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 className='font-serif text-2xl text-[#1a1a1a]'>
+                    Replace Existing Curriculum?
+                  </h3>
+                  <p className='mt-2 text-sm leading-6 text-black/55'>
+                    Generating curriculum again will replace the current modules
+                    and units for this course.
+                  </p>
+                </div>
+              </div>
+              <div className='flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => setIsGenerateWarningOpen(false)}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5'
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setIsGenerateWarningOpen(false);
+                    triggerGenerateCurriculum();
+                  }}
+                  className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35]'
+                >
+                  Continue
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isExtractWarningOpen ? (
+          <div className='fixed inset-0 z-[105] flex items-center justify-center p-4 md:p-8'>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setIsExtractWarningOpen(false)}
+              className='absolute inset-0 bg-black/70 backdrop-blur-sm'
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className='relative w-full max-w-xl rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6 flex items-start gap-4'>
+                <div className='flex h-24 w-24 items-center justify-center rounded-2xl bg-orange-100 text-orange-600'>
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <h3 className='font-serif text-2xl text-[#1a1a1a]'>
+                    Extract PDF Text?
+                  </h3>
+                  <p className='mt-2 text-sm leading-6 text-black/55'>
+                    This will extract text from the uploaded PDF and save it to
+                    the course raw text field. If raw text already exists, it
+                    will be replaced.
+                  </p>
+                </div>
+              </div>
+              <div className='flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => setIsExtractWarningOpen(false)}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5'
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setIsExtractWarningOpen(false);
+                    handleExtractRawText();
+                  }}
+                  className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35]'
+                >
+                  Continue
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isRawTextModalOpen ? (
+          <div className='fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8'>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isUpdatingRawText) {
+                  setIsRawTextModalOpen(false);
+                }
+              }}
+              className='absolute inset-0 bg-black/80 backdrop-blur-sm'
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 20 }}
+              className='relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-[40px] bg-white shadow-2xl'
+            >
+              <div className='flex items-center justify-between border-b border-black/5 bg-white p-6'>
+                <div className='flex items-center gap-4 text-[#5A5A40]'>
+                  <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]/10'>
+                    <Edit3 size={20} />
+                  </div>
+                  <div>
+                    <h3 className='leading-tight font-bold text-[#1a1a1a]'>
+                      Edit Course Text
+                    </h3>
+                    <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
+                      Raw extracted text
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    if (!isUpdatingRawText) {
+                      setIsRawTextModalOpen(false);
+                    }
+                  }}
+                  disabled={isUpdatingRawText}
+                  className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10 disabled:opacity-50'
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className='flex-1 bg-[#f7f6ef] p-4'>
+                <textarea
+                  value={editableRawText}
+                  onChange={(event) => setEditableRawText(event.target.value)}
+                  className='h-full min-h-[24rem] w-full rounded-2xl border border-black/5 bg-white p-6 font-mono text-sm leading-6 text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  placeholder='Course raw text will appear here.'
+                />
+              </div>
+              <div className='flex items-center justify-between border-t border-black/5 bg-white p-6'>
+                <p className='text-sm text-black/45'>
+                  {editableRawText.length} characters
+                </p>
+                <div className='flex items-center gap-3'>
+                  <button
+                    onClick={() => setIsRawTextModalOpen(false)}
+                    disabled={isUpdatingRawText}
+                    className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleUpdateRawText}
+                    disabled={isUpdatingRawText}
+                    className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+                  >
+                    {isUpdatingRawText ? 'Saving...' : 'Save Raw Text'}
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
       </AnimatePresence>
     </div>
   );
