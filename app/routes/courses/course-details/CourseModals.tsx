@@ -527,6 +527,102 @@ const RawTextModal = ({
   );
 };
 
+type ModuleRawTextModalProps = {
+  isOpen: boolean;
+  isUpdating: boolean;
+  editableRawText: string;
+  onClose: () => void;
+  onRawTextChange: (value: string) => void;
+  onSave: () => void;
+};
+
+const ModuleRawTextModal = ({
+  isOpen,
+  isUpdating,
+  editableRawText,
+  onClose,
+  onRawTextChange,
+  onSave,
+}: ModuleRawTextModalProps) => {
+  return (
+    <AnimatePresence>
+      {isOpen ? (
+        <div className='fixed inset-0 z-[110] flex items-center justify-center p-4 md:p-8'>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              if (!isUpdating) {
+                onClose();
+              }
+            }}
+            className='absolute inset-0 bg-black/80 backdrop-blur-sm'
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 20 }}
+            className='relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-[40px] bg-white shadow-2xl'
+          >
+            <div className='flex items-center justify-between border-b border-black/5 bg-white p-6'>
+              <div className='flex items-center gap-4 text-[#5A5A40]'>
+                <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]/10'>
+                  <Edit3 size={20} />
+                </div>
+                <div>
+                  <h3 className='leading-tight font-bold text-[#1a1a1a]'>
+                    Edit Module Text
+                  </h3>
+                  <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
+                    Raw extracted text
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={onClose}
+                disabled={isUpdating}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10 disabled:opacity-50'
+              >
+                <X size={20} />
+              </button>
+            </div>
+            <div className='flex-1 bg-[#f7f6ef] p-4'>
+              <textarea
+                value={editableRawText}
+                onChange={(event) => onRawTextChange(event.target.value)}
+                className='h-full min-h-[24rem] w-full rounded-2xl border border-black/5 bg-white p-6 font-mono text-sm leading-6 text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                placeholder='Module raw text will appear here.'
+              />
+            </div>
+            <div className='flex items-center justify-between border-t border-black/5 bg-white p-6'>
+              <p className='text-sm text-black/45'>
+                {editableRawText.length} characters
+              </p>
+              <div className='flex items-center gap-3'>
+                <button
+                  onClick={onClose}
+                  disabled={isUpdating}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={onSave}
+                  disabled={isUpdating}
+                  className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+                >
+                  {isUpdating ? 'Saving...' : 'Save Raw Text'}
+                </button>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      ) : null}
+    </AnimatePresence>
+  );
+};
+
 type CourseModalsProps = {
   courseCode: string;
   courseTitle: string;
@@ -538,14 +634,17 @@ type CourseModalsProps = {
   isExtractWarningOpen: boolean;
   isSplitWarningOpen: boolean;
   isRawTextModalOpen: boolean;
+  isModuleRawTextModalOpen: boolean;
   isGeneratingUnits: boolean;
   isGenerating: boolean;
   isUpdatingRawText: boolean;
+  isUpdatingModuleRawText: boolean;
   selectedProvider: CurriculumAiProvider;
   selectedModel: string;
   selectedModuleId: string;
   modulesWithRawText: CourseModuleWithUnits[];
   editableRawText: string;
+  editableModuleRawText: string;
   onClosePdf: () => void;
   onCloseGenerateCurriculumModal: () => void;
   onConfirmGenerateCurriculumSelection: () => void;
@@ -563,6 +662,9 @@ type CourseModalsProps = {
   onCloseRawTextModal: () => void;
   onRawTextChange: (value: string) => void;
   onSaveRawText: () => void;
+  onCloseModuleRawTextModal: () => void;
+  onModuleRawTextChange: (value: string) => void;
+  onSaveModuleRawText: () => void;
 };
 
 export const CourseModals = ({
@@ -576,14 +678,17 @@ export const CourseModals = ({
   isExtractWarningOpen,
   isSplitWarningOpen,
   isRawTextModalOpen,
+  isModuleRawTextModalOpen,
   isGeneratingUnits,
   isGenerating,
   isUpdatingRawText,
+  isUpdatingModuleRawText,
   selectedProvider,
   selectedModel,
   selectedModuleId,
   modulesWithRawText,
   editableRawText,
+  editableModuleRawText,
   onClosePdf,
   onCloseGenerateCurriculumModal,
   onConfirmGenerateCurriculumSelection,
@@ -601,6 +706,9 @@ export const CourseModals = ({
   onCloseRawTextModal,
   onRawTextChange,
   onSaveRawText,
+  onCloseModuleRawTextModal,
+  onModuleRawTextChange,
+  onSaveModuleRawText,
 }: CourseModalsProps) => {
   return (
     <>
@@ -668,6 +776,15 @@ export const CourseModals = ({
         onClose={onCloseRawTextModal}
         onRawTextChange={onRawTextChange}
         onSave={onSaveRawText}
+      />
+
+      <ModuleRawTextModal
+        isOpen={isModuleRawTextModalOpen}
+        isUpdating={isUpdatingModuleRawText}
+        editableRawText={editableModuleRawText}
+        onClose={onCloseModuleRawTextModal}
+        onRawTextChange={onModuleRawTextChange}
+        onSave={onSaveModuleRawText}
       />
     </>
   );

@@ -54,4 +54,5 @@ export type CourseContentProps = {
   isInstructor: boolean;
   isSplittingModuleRawText: boolean;
   onSplitModuleRawText: (moduleId: string) => void;
+  onOpenModuleRawTextModal: (moduleId: string, rawText: string) => void;
 };

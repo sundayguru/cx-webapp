@@ -39,6 +39,7 @@ export default function CourseDetailsPage({
   const rawTextUpdateFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
+  const moduleRawTextUpdateFetcher = useFetcher();
 
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isRawTextModalOpen, setIsRawTextModalOpen] = useState(false);
@@ -49,9 +50,13 @@ export default function CourseDetailsPage({
     useState(false);
   const [isExtractWarningOpen, setIsExtractWarningOpen] = useState(false);
   const [isSplitWarningOpen, setIsSplitWarningOpen] = useState(false);
+  const [isModuleRawTextModalOpen, setIsModuleRawTextModalOpen] =
+    useState(false);
+  const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [editableRawText, setEditableRawText] = useState(
     data?.course.rawText || '',
   );
+  const [editableModuleRawText, setEditableModuleRawText] = useState('');
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
   const [selectedModel, setSelectedModel] = useState(
@@ -80,6 +85,7 @@ export default function CourseDetailsPage({
   const isUpdatingRawText = rawTextUpdateFetcher.state !== 'idle';
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
+  const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
     setSelectedProvider(provider);
@@ -151,6 +157,23 @@ export default function CourseDetailsPage({
         action: `/api/courses/${data?.course.id}/split-module-raw-text-into-units`,
       },
     );
+  };
+
+  const handleUpdateModuleRawText = () => {
+    if (!editingModuleId) return;
+    moduleRawTextUpdateFetcher.submit(
+      { moduleId: editingModuleId, rawText: editableModuleRawText },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/update-module-raw-text`,
+      },
+    );
+  };
+
+  const openModuleRawTextModal = (moduleId: string, rawText: string) => {
+    setEditingModuleId(moduleId);
+    setEditableModuleRawText(rawText || '');
+    setIsModuleRawTextModalOpen(true);
   };
 
   useEffect(() => {
@@ -335,6 +358,43 @@ export default function CourseDetailsPage({
     }
   }, [showToast, splitModuleRawTextFetcher]);
 
+  const handledModuleRawTextUpdateResult = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      moduleRawTextUpdateFetcher.state === 'idle' &&
+      moduleRawTextUpdateFetcher.data
+    ) {
+      const result = moduleRawTextUpdateFetcher.data as {
+        success?: boolean;
+        error?: string;
+        characters?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (
+        result.success &&
+        handledModuleRawTextUpdateResult.current !== resultKey
+      ) {
+        handledModuleRawTextUpdateResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Module raw text updated successfully${result.characters !== undefined ? ` (${result.characters} characters)` : ''}.`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledModuleRawTextUpdateResult.current !== resultKey
+      ) {
+        handledModuleRawTextUpdateResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, moduleRawTextUpdateFetcher]);
+
   if (!data) {
     return (
       <div className='mx-auto max-w-4xl px-4 py-12'>
@@ -411,6 +471,7 @@ export default function CourseDetailsPage({
           isInstructor={isInstructor}
           isSplittingModuleRawText={isSplittingModuleRawText}
           onSplitModuleRawText={handleSplitModuleRawTextIntoUnits}
+          onOpenModuleRawTextModal={openModuleRawTextModal}
         />
       </div>
 
@@ -425,9 +486,11 @@ export default function CourseDetailsPage({
         isExtractWarningOpen={isExtractWarningOpen}
         isSplitWarningOpen={isSplitWarningOpen}
         isRawTextModalOpen={isRawTextModalOpen}
+        isModuleRawTextModalOpen={isModuleRawTextModalOpen}
         isGeneratingUnits={isGeneratingUnits}
         isGenerating={isGenerating}
         isUpdatingRawText={isUpdatingRawText}
+        isUpdatingModuleRawText={isUpdatingModuleRawText}
         selectedProvider={selectedProvider}
         selectedModel={selectedModel}
         selectedModuleId={effectiveSelectedModuleId}
@@ -464,6 +527,10 @@ export default function CourseDetailsPage({
         onCloseRawTextModal={() => setIsRawTextModalOpen(false)}
         onRawTextChange={setEditableRawText}
         onSaveRawText={handleUpdateRawText}
+        editableModuleRawText={editableModuleRawText}
+        onCloseModuleRawTextModal={() => setIsModuleRawTextModalOpen(false)}
+        onModuleRawTextChange={setEditableModuleRawText}
+        onSaveModuleRawText={handleUpdateModuleRawText}
       />
     </div>
   );

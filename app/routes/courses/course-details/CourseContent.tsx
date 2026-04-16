@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { MessageSquare, Play } from 'lucide-react';
+import { Edit3, MessageSquare, Play } from 'lucide-react';
 import type { CourseModuleWithUnits } from './types';
 
 type CourseContentProps = {
@@ -8,6 +8,7 @@ type CourseContentProps = {
   isInstructor: boolean;
   isSplittingModuleRawText: boolean;
   onSplitModuleRawText: (moduleId: string) => void;
+  onOpenModuleRawTextModal: (moduleId: string, rawText: string) => void;
 };
 
 export const CourseContent = ({
@@ -16,6 +17,7 @@ export const CourseContent = ({
   isInstructor,
   isSplittingModuleRawText,
   onSplitModuleRawText,
+  onOpenModuleRawTextModal,
 }: CourseContentProps) => {
   return (
     <div className='grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_320px]'>
@@ -56,15 +58,28 @@ export const CourseContent = ({
                 </div>
                 <div className='flex items-center gap-3'>
                   {isInstructor && module.rawText?.trim() ? (
-                    <button
-                      onClick={() => onSplitModuleRawText(module.id)}
-                      disabled={isSplittingModuleRawText}
-                      className='rounded-xl border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
-                    >
-                      {isSplittingModuleRawText
-                        ? 'Splitting...'
-                        : 'Split into Units'}
-                    </button>
+                    <>
+                      <button
+                        onClick={() =>
+                          onOpenModuleRawTextModal(
+                            module.id,
+                            module.rawText || '',
+                          )
+                        }
+                        className='rounded-xl border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-all hover:bg-black/5'
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => onSplitModuleRawText(module.id)}
+                        disabled={isSplittingModuleRawText}
+                        className='rounded-xl border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                      >
+                        {isSplittingModuleRawText
+                          ? 'Splitting...'
+                          : 'Split into Units'}
+                      </button>
+                    </>
                   ) : null}
                   <span className='rounded-full bg-black/5 px-3 py-1 text-xs font-bold tracking-wider text-black/45 uppercase'>
                     {module.units.length} Units

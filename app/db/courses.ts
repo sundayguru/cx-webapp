@@ -441,3 +441,23 @@ export const splitModuleRawTextIntoUnits = async (moduleId: string) => {
     return null;
   }
 };
+
+export const updateModuleRawText = async (
+  moduleId: string,
+  rawText: string,
+) => {
+  try {
+    const db = getDb();
+    await db
+      .update(modules)
+      .set({
+        rawText,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(modules.id, moduleId));
+    return true;
+  } catch (e) {
+    logError(e, 'Error updating module raw text');
+    return false;
+  }
+};
