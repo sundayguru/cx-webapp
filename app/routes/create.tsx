@@ -1,5 +1,5 @@
 import type { Route } from './+types/create';
-import { data } from 'react-router';
+import { data, useFetcher } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
 import { createCourse, getCourseByCode } from '~/db/courses';
 import { createSchool } from '~/db/schools';
@@ -11,8 +11,7 @@ import {
 } from '~/components/CourseCreationForm';
 import { motion } from 'motion/react';
 import { PlusCircle, X } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { useFetcher } from 'react-router';
+import { useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 export const action = async ({ request }: Route.ActionArgs) => {
@@ -140,24 +139,24 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
 export default function CreateCoursePage() {
   const fetcher = useFetcher<typeof action>();
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
   const isSubmitting = fetcher.state !== 'idle';
+  const submitError =
+    fetcher.data && 'error' in fetcher.data ? fetcher.data.error : null;
 
   useEffect(() => {
     if (fetcher.data && 'courseId' in fetcher.data) {
       window.location.href = `/courses/${fetcher.data.courseId}`;
-    } else if (fetcher.data && 'error' in fetcher.data) {
-      setSubmitError(fetcher.data.error);
     }
   }, [fetcher.data]);
 
   const handleSubmit = async (
     formDataBase: CourseFormData,
-    file: File,
+    file?: File,
     thumbnail?: File,
   ) => {
-    setSubmitError(null);
+    if (!file) {
+      return;
+    }
 
     const form = new FormData();
     form.append('courseData', JSON.stringify(formDataBase));

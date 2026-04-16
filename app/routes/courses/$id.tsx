@@ -220,10 +220,13 @@ export default function CourseDetailsPage({
                   <Globe size={20} />
                   Course Settings
                 </button>
-                <button className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 active:scale-95'>
+                <Link
+                  to={`/courses/${course.id}/edit`}
+                  className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 active:scale-95'
+                >
                   <Edit3 size={20} />
                   Edit Course
-                </button>
+                </Link>
                 <div className='space-y-3 rounded-2xl border border-black/10 bg-black/[0.02] p-4'>
                   <div>
                     <label

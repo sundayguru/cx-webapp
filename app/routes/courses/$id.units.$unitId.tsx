@@ -689,27 +689,8 @@ const UnitPageContent = ({
                 <div className='rounded-2xl border border-black/5 bg-[#f5f5f0] p-6'>
                   <h3 className='mb-3 font-bold text-[#1a1a1a]'>Overview</h3>
                   <p className='text-sm leading-7 text-black/70'>
-                    {summary.summary}
+                    {currentUnit.summary}
                   </p>
-                </div>
-
-                <div>
-                  <h3 className='mb-4 font-bold text-[#1a1a1a]'>
-                    Key Takeaways
-                  </h3>
-                  <div className='space-y-3'>
-                    {summary.takeaways.map((takeaway, index) => (
-                      <div
-                        key={`${takeaway}-${index}`}
-                        className='flex items-start gap-3'
-                      >
-                        <div className='mt-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-[#5A5A40]/10 text-[#5A5A40]'>
-                          <CheckCircle size={14} />
-                        </div>
-                        <p className='text-sm text-black/70'>{takeaway}</p>
-                      </div>
-                    ))}
-                  </div>
                 </div>
               </div>
 

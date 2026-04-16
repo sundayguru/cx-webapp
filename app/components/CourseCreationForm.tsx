@@ -35,6 +35,8 @@ type StepProps = {
 
 export type { CourseFormData };
 
+type CourseFormMode = 'create' | 'edit';
+
 // Step 1: Course Details
 const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
   const categories = [
@@ -200,17 +202,25 @@ const UploadContentStep = ({
   onBack,
   isSubmitting,
   submitError,
+  mode,
+  existingContentLabel,
+  existingThumbnailUrl,
 }: {
   formData: CourseFormData;
-  onSubmit: (formData: CourseFormData, file: File, thumbnail?: File) => void;
+  onSubmit: (formData: CourseFormData, file?: File, thumbnail?: File) => void;
   onBack: () => void;
   isSubmitting: boolean;
   submitError: string | null;
+  mode: CourseFormMode;
+  existingContentLabel?: string;
+  existingThumbnailUrl?: string | null;
 }) => {
   const [isDraggingFile, setIsDraggingFile] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
-  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(
+    existingThumbnailUrl || null,
+  );
   const [error, setError] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -240,20 +250,31 @@ const UploadContentStep = ({
 
   const removeFile = () => {
     setSelectedFile(null);
-    if (fileInputRef.current) fileInputRef.current.value = '';
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   const removeThumbnail = () => {
     setSelectedThumbnail(null);
     setThumbnailPreview(null);
-    if (thumbnailInputRef.current) thumbnailInputRef.current.value = '';
+    if (thumbnailInputRef.current) {
+      thumbnailInputRef.current.value = '';
+    }
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (selectedFile) {
-      onSubmit(formData, selectedFile, selectedThumbnail || undefined);
+    if (mode === 'create' && !selectedFile) {
+      setError('A PDF file is required for new courses');
+      return;
     }
+
+    onSubmit(
+      formData,
+      selectedFile || undefined,
+      selectedThumbnail || undefined,
+    );
   };
 
   return (
@@ -272,6 +293,16 @@ const UploadContentStep = ({
           <label className='text-[10px] font-bold tracking-widest text-black/40 uppercase'>
             Study Material (PDF)
           </label>
+          {mode === 'edit' && existingContentLabel && !selectedFile ? (
+            <div className='rounded-xl border border-black/10 bg-black/[0.02] p-4 text-sm text-black/60'>
+              <p className='font-medium text-[#1a1a1a]'>Current file</p>
+              <p className='mt-1'>{existingContentLabel}</p>
+              <p className='mt-2 text-xs text-black/45'>
+                Upload a new PDF only if you want to replace the existing course
+                content.
+              </p>
+            </div>
+          ) : null}
           {selectedFile ? (
             <div className='rounded-xl border border-[#5A5A40]/20 bg-[#5A5A40]/5 p-4'>
               <div className='flex items-center justify-between'>
@@ -335,7 +366,7 @@ const UploadContentStep = ({
 
         <div className='space-y-2'>
           <label className='text-[10px] font-bold tracking-widest text-black/40 uppercase'>
-            Cover Image (Optional)
+            Cover Image {mode === 'edit' ? '(Replace Optional)' : '(Optional)'}
           </label>
           {thumbnailPreview ? (
             <div className='relative aspect-video w-full overflow-hidden rounded-xl border border-black/10 shadow-sm'>
@@ -394,7 +425,7 @@ const UploadContentStep = ({
         <button
           type='button'
           onClick={handleSubmit}
-          disabled={!selectedFile || isSubmitting}
+          disabled={(mode === 'create' && !selectedFile) || isSubmitting}
           className='flex items-center gap-2 rounded-xl bg-[#5A5A40] px-8 py-3 font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35] active:scale-95 disabled:opacity-50'
         >
           {isSubmitting ? (
@@ -405,7 +436,7 @@ const UploadContentStep = ({
           ) : (
             <>
               <CheckCircle size={18} />
-              Publish Course
+              {mode === 'edit' ? 'Save Changes' : 'Publish Course'}
             </>
           )}
         </button>
@@ -416,27 +447,35 @@ const UploadContentStep = ({
 
 // Main Component
 type CourseCreationFormProps = {
-  onSubmit: (data: CourseFormData, file: File, thumbnail?: File) => void;
+  onSubmit: (data: CourseFormData, file?: File, thumbnail?: File) => void;
   isSubmitting: boolean;
   submitError: string | null;
+  initialData?: CourseFormData;
+  mode?: CourseFormMode;
+  existingContentLabel?: string;
+  existingThumbnailUrl?: string | null;
 };
 
 export const CourseCreationForm = ({
   onSubmit,
   isSubmitting,
   submitError,
+  initialData,
+  mode = 'create',
+  existingContentLabel,
+  existingThumbnailUrl,
 }: CourseCreationFormProps) => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState<CourseFormData>({
-    title: '',
-    code: '',
-    description: '',
-    schoolId: '',
-    schoolName: '',
-    authorId: '',
-    authorName: '',
-    level: 'Beginner',
-    category: 'General',
+    title: initialData?.title || '',
+    code: initialData?.code || '',
+    description: initialData?.description || '',
+    schoolId: initialData?.schoolId || '',
+    schoolName: initialData?.schoolName || '',
+    authorId: initialData?.authorId || '',
+    authorName: initialData?.authorName || '',
+    level: initialData?.level || 'Beginner',
+    category: initialData?.category || 'General',
   });
 
   const updateFormData = (data: Partial<CourseFormData>) => {
@@ -523,6 +562,9 @@ export const CourseCreationForm = ({
                 onBack={handleBack}
                 isSubmitting={isSubmitting}
                 submitError={submitError}
+                mode={mode}
+                existingContentLabel={existingContentLabel}
+                existingThumbnailUrl={existingThumbnailUrl}
               />
             </motion.div>
           )}
