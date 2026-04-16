@@ -2,32 +2,16 @@ import { extractText } from 'unpdf';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { logError } from './logger';
 import { Buffer } from 'node:buffer';
+import {
+  buildCurriculumPrompt,
+  parseCurriculumResponse,
+  type CurriculumResponse,
+} from './curriculum-generation.server';
+import { GOOGLE_CURRICULUM_MODEL_OPTIONS } from './curriculum-options';
 
-type CurriculumUnit = {
-  title: string;
-  content: string;
-};
-
-type CurriculumModule = {
-  title: string;
-  description: string;
-  units: CurriculumUnit[];
-};
-
-type CurriculumResponse = {
-  modules: CurriculumModule[];
-};
-
-const DEFAULT_GEMINI_MODELS = [
-  'gemini-2.5-flash',
-  'gemini-2.0-flash',
-  'gemini-1.5-flash-latest',
-] as const;
-
-const parseCurriculumResponse = (responseText: string): CurriculumResponse => {
-  const jsonStr = responseText.replace(/```json|```/g, '').trim();
-  return JSON.parse(jsonStr) as CurriculumResponse;
-};
+const DEFAULT_GEMINI_MODELS = GOOGLE_CURRICULUM_MODEL_OPTIONS.map(
+  (modelOption) => modelOption.value,
+);
 
 export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
   try {
@@ -35,9 +19,11 @@ export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
     // text is a string when mergePages is true
     console.log('EXTRACTED TEXT LENGTH:', text?.length || 0);
     return (text as string) || '';
-  } catch (e: any) {
+  } catch (e: unknown) {
+    const message =
+      e instanceof Error ? e.message : 'Unknown PDF parsing error';
     logError(e, 'Error parsing PDF with unpdf');
-    throw new Error(`Failed to extract text from PDF: ${e.message}`);
+    throw new Error(`Failed to extract text from PDF: ${message}`);
   }
 };
 
@@ -51,33 +37,7 @@ export const generateCurriculum = async (
     ...(preferredModel ? [preferredModel] : []),
     ...DEFAULT_GEMINI_MODELS,
   ].filter((modelName, index, models) => models.indexOf(modelName) === index);
-
-  const prompt = `
-    Analyze the following educational content and structure it into a logical course curriculum.
-    Respond ONLY with a JSON object containing an array of modules.
-    Each module should have:
-    - title: string
-    - description: string
-    - units: an array of objects with:
-      - title: string
-      - content: string (a short summary or key points for this unit)
-
-    Format:
-    {
-      "modules": [
-        {
-          "title": "Module Title",
-          "description": "Short description",
-          "units": [
-            { "title": "Unit Title", "content": "Summary" }
-          ]
-        }
-      ]
-    }
-
-    TEXT TO ANALYZE:
-    ${text.slice(0, 30000)}
-  `;
+  const prompt = buildCurriculumPrompt(text);
 
   let lastError: unknown;
 
@@ -87,7 +47,7 @@ export const generateCurriculum = async (
       const result = await model.generateContent(prompt);
       const response = await result.response;
       return parseCurriculumResponse(response.text());
-    } catch (e: any) {
+    } catch (e: unknown) {
       lastError = e;
       logError(e, `Error generating curriculum with model ${modelName}`);
     }

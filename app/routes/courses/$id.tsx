@@ -20,6 +20,12 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import {
+  CURRICULUM_MODEL_OPTIONS,
+  DEFAULT_CURRICULUM_MODELS,
+  DEFAULT_CURRICULUM_PROVIDER,
+  type CurriculumAiProvider,
+} from '~/utils/curriculum-options';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -39,22 +45,34 @@ export default function CourseDetailsPage({
   const { data, user } = loaderData;
   const fetcher = useFetcher();
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
+  const [selectedProvider, setSelectedProvider] =
+    useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
+  const [selectedModel, setSelectedModel] = useState(
+    DEFAULT_CURRICULUM_MODELS[DEFAULT_CURRICULUM_PROVIDER],
+  );
+  const isGenerating = fetcher.state !== 'idle';
 
   const handleGenerateCurriculum = async () => {
-    if (!confirm('This will replace any existing modules and units. Continue?'))
+    if (
+      !confirm('This will replace any existing modules and units. Continue?')
+    ) {
       return;
+    }
 
-    setIsGenerating(true);
-    fetcher.submit(null, {
-      method: 'post',
-      action: `/api/courses/${data?.course.id}/generate-curriculum`,
-    });
+    fetcher.submit(
+      {
+        provider: selectedProvider,
+        model: selectedModel,
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/generate-curriculum`,
+      },
+    );
   };
 
   useEffect(() => {
     if (fetcher.state === 'idle' && fetcher.data) {
-      setIsGenerating(false);
       const result = fetcher.data as { success?: boolean; error?: string };
       if (result.success) {
         alert('Curriculum generated successfully!');
@@ -206,12 +224,62 @@ export default function CourseDetailsPage({
                   <Edit3 size={20} />
                   Edit Course
                 </button>
+                <div className='space-y-3 rounded-2xl border border-black/10 bg-black/[0.02] p-4'>
+                  <div>
+                    <label
+                      htmlFor='curriculum-provider'
+                      className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                    >
+                      AI Provider
+                    </label>
+                    <select
+                      id='curriculum-provider'
+                      value={selectedProvider}
+                      onChange={(event) => {
+                        const provider = event.target
+                          .value as CurriculumAiProvider;
+                        setSelectedProvider(provider);
+                        setSelectedModel(DEFAULT_CURRICULUM_MODELS[provider]);
+                      }}
+                      className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                    >
+                      <option value='google'>Google</option>
+                      <option value='groq'>Groq</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label
+                      htmlFor='curriculum-model'
+                      className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                    >
+                      Model
+                    </label>
+                    <select
+                      id='curriculum-model'
+                      value={selectedModel}
+                      onChange={(event) => setSelectedModel(event.target.value)}
+                      className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                    >
+                      {CURRICULUM_MODEL_OPTIONS[selectedProvider].map(
+                        (modelOption) => (
+                          <option
+                            key={modelOption.value}
+                            value={modelOption.value}
+                          >
+                            {modelOption.label}
+                          </option>
+                        ),
+                      )}
+                    </select>
+                  </div>
+                </div>
                 <button
                   onClick={handleGenerateCurriculum}
+                  disabled={isGenerating}
                   className='flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-purple-500 to-blue-500 py-4 text-lg font-bold text-white shadow-md shadow-purple-200 transition-all hover:shadow-lg active:scale-95'
                 >
                   <Sparkles size={20} />
-                  AI Generate Curriculum
+                  {isGenerating ? 'Generating...' : 'AI Generate Curriculum'}
                 </button>
               </div>
             ) : (

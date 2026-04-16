@@ -7,8 +7,16 @@ import {
 } from '~/db/courses';
 import { getFromR2 } from '~/utils/r2.server';
 import { extractTextFromPdf, generateCurriculum } from '~/utils/ai.server';
+import { generateCurriculumWithGroq } from '~/utils/groq.server';
 import { env } from 'cloudflare:workers';
 import { Buffer } from 'node:buffer';
+import {
+  CURRICULUM_MODEL_OPTIONS,
+  DEFAULT_CURRICULUM_MODELS,
+  DEFAULT_CURRICULUM_PROVIDER,
+  isCurriculumAiProvider,
+  isSupportedCurriculumModel,
+} from '~/utils/curriculum-options';
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -41,6 +49,19 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   try {
+    const formData = await request.formData();
+    const providerValue = formData.get('provider');
+    const modelValue = formData.get('model');
+    const provider =
+      typeof providerValue === 'string' && isCurriculumAiProvider(providerValue)
+        ? providerValue
+        : DEFAULT_CURRICULUM_PROVIDER;
+    const model =
+      typeof modelValue === 'string' &&
+      isSupportedCurriculumModel(provider, modelValue)
+        ? modelValue
+        : DEFAULT_CURRICULUM_MODELS[provider];
+
     // 1. Get PDF from R2
     const pdfObject = await getFromR2(courseData.course.contentKey);
     if (!pdfObject) {
@@ -63,24 +84,37 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     }
 
     // 3. AI Generate Structure
-    const apiKey = (env as any).GEMINI_API_KEY;
+    const apiKey =
+      provider === 'google' ? env.GEMINI_API_KEY : env.GROQ_API_KEY;
     if (!apiKey) {
       return data(
-        { error: 'AI processing is currently disabled (API Key missing)' },
+        {
+          error: `AI processing is currently disabled (${provider} API key missing)`,
+          provider,
+          availableModels: CURRICULUM_MODEL_OPTIONS[provider],
+        },
         { status: 503 },
       );
     }
 
-    const preferredModel = (env as any).GEMINI_MODEL;
-    const { modules } = await generateCurriculum(text, apiKey, preferredModel);
+    const { modules } =
+      provider === 'google'
+        ? await generateCurriculum(text, apiKey, model)
+        : await generateCurriculumWithGroq(text, apiKey, model);
 
     // 4. Save to DB (Clear old first)
     await clearCourseCurriculum(id);
     await addCurriculum(id, modules);
 
-    return data({ success: true, modulesCount: modules.length });
-  } catch (err: any) {
+    return data({
+      success: true,
+      modulesCount: modules.length,
+      provider,
+      model,
+    });
+  } catch (err: unknown) {
     console.error('Curriculum generation failed:', err);
-    return data({ error: err.message || 'Generation failed' }, { status: 500 });
+    const message = err instanceof Error ? err.message : 'Generation failed';
+    return data({ error: message }, { status: 500 });
   }
 };
