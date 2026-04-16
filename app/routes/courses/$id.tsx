@@ -43,14 +43,16 @@ export default function CourseDetailsPage({
   loaderData,
 }: Route.ComponentProps) {
   const { data, user } = loaderData;
-  const fetcher = useFetcher();
+  const curriculumFetcher = useFetcher();
+  const rawTextFetcher = useFetcher();
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
   const [selectedModel, setSelectedModel] = useState(
     DEFAULT_CURRICULUM_MODELS[DEFAULT_CURRICULUM_PROVIDER],
   );
-  const isGenerating = fetcher.state !== 'idle';
+  const isGenerating = curriculumFetcher.state !== 'idle';
+  const isExtractingRawText = rawTextFetcher.state !== 'idle';
 
   const handleGenerateCurriculum = async () => {
     if (
@@ -59,7 +61,7 @@ export default function CourseDetailsPage({
       return;
     }
 
-    fetcher.submit(
+    curriculumFetcher.submit(
       {
         provider: selectedProvider,
         model: selectedModel,
@@ -71,9 +73,22 @@ export default function CourseDetailsPage({
     );
   };
 
+  const handleExtractRawText = () => {
+    rawTextFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/extract-raw-text`,
+      },
+    );
+  };
+
   useEffect(() => {
-    if (fetcher.state === 'idle' && fetcher.data) {
-      const result = fetcher.data as { success?: boolean; error?: string };
+    if (curriculumFetcher.state === 'idle' && curriculumFetcher.data) {
+      const result = curriculumFetcher.data as {
+        success?: boolean;
+        error?: string;
+      };
       if (result.success) {
         alert('Curriculum generated successfully!');
         window.location.reload();
@@ -81,7 +96,25 @@ export default function CourseDetailsPage({
         alert(`Error: ${result.error}`);
       }
     }
-  }, [fetcher]);
+  }, [curriculumFetcher]);
+
+  useEffect(() => {
+    if (rawTextFetcher.state === 'idle' && rawTextFetcher.data) {
+      const result = rawTextFetcher.data as {
+        success?: boolean;
+        error?: string;
+        characters?: number;
+      };
+      if (result.success) {
+        alert(
+          `PDF text extracted successfully${result.characters ? ` (${result.characters} characters)` : ''}.`,
+        );
+        window.location.reload();
+      } else if (result.error) {
+        alert(`Error: ${result.error}`);
+      }
+    }
+  }, [rawTextFetcher]);
 
   if (!data) {
     return (
@@ -227,6 +260,16 @@ export default function CourseDetailsPage({
                   <Edit3 size={20} />
                   Edit Course
                 </Link>
+                <button
+                  onClick={handleExtractRawText}
+                  disabled={isExtractingRawText}
+                  className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 active:scale-95 disabled:opacity-50'
+                >
+                  <FileText size={20} />
+                  {isExtractingRawText
+                    ? 'Extracting PDF Text...'
+                    : 'Extract PDF Text'}
+                </button>
                 <div className='space-y-3 rounded-2xl border border-black/10 bg-black/[0.02] p-4'>
                   <div>
                     <label
@@ -308,6 +351,14 @@ export default function CourseDetailsPage({
               <div className='flex items-center gap-3 text-sm text-black/50'>
                 <CheckCircle size={16} />
                 <span>Certificate of completion</span>
+              </div>
+              <div className='flex items-center gap-3 text-sm text-black/50'>
+                <FileText size={16} />
+                <span>
+                  {course.rawText
+                    ? `Raw text stored (${course.rawText.length} chars)`
+                    : 'Raw text not extracted yet'}
+                </span>
               </div>
             </div>
           </div>

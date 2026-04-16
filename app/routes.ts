@@ -35,5 +35,9 @@ export default [
       'api/courses/:id/generate-curriculum',
       'routes/api/courses/generate-curriculum.tsx',
     ),
+    route(
+      'api/courses/:id/extract-raw-text',
+      'routes/api/courses/extract-raw-text.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;

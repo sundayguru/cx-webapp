@@ -25,6 +25,7 @@ export const courses = sqliteTable('courses', {
   contentKey: text('content_key', { length: 511 }),
   contentType: text('content_type', { length: 100 }),
   contentSize: integer('content_size'),
+  rawText: text('raw_text'),
   createdAt: text('created_at')
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),

@@ -297,3 +297,20 @@ export const updateCourseContent = async (
     return null;
   }
 };
+
+export const updateCourseRawText = async (id: string, rawText: string) => {
+  try {
+    const db = getDb();
+    await db
+      .update(courses)
+      .set({
+        rawText,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(courses.id, id));
+    return getCourseById(id);
+  } catch (e) {
+    logError(e, 'Error updating course raw text');
+    return null;
+  }
+};
