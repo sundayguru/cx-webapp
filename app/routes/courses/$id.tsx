@@ -47,18 +47,22 @@ export default function CourseDetailsPage({
   const { data, user } = loaderData;
   const { showToast } = useToast();
   const curriculumFetcher = useFetcher();
+  const unitGenerationFetcher = useFetcher();
   const rawTextFetcher = useFetcher();
   const rawTextUpdateFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isRawTextModalOpen, setIsRawTextModalOpen] = useState(false);
   const [isGenerateWarningOpen, setIsGenerateWarningOpen] = useState(false);
+  const [isGenerateUnitsModalOpen, setIsGenerateUnitsModalOpen] =
+    useState(false);
   const [isExtractWarningOpen, setIsExtractWarningOpen] = useState(false);
   const [isSplitWarningOpen, setIsSplitWarningOpen] = useState(false);
   const [editableRawText, setEditableRawText] = useState(
     data?.course.rawText || '',
   );
   const handledCurriculumResult = useRef<string | null>(null);
+  const handledGenerateUnitsResult = useRef<string | null>(null);
   const handledRawTextExtractResult = useRef<string | null>(null);
   const handledRawTextUpdateResult = useRef<string | null>(null);
   const handledSplitRawTextResult = useRef<string | null>(null);
@@ -67,7 +71,13 @@ export default function CourseDetailsPage({
   const [selectedModel, setSelectedModel] = useState(
     DEFAULT_CURRICULUM_MODELS[DEFAULT_CURRICULUM_PROVIDER],
   );
+  const modulesWithRawText =
+    data?.modules.filter((module) => module.rawText?.trim()) || [];
+  const [selectedModuleId, setSelectedModuleId] = useState(
+    modulesWithRawText[0]?.id || '',
+  );
   const isGenerating = curriculumFetcher.state !== 'idle';
+  const isGeneratingUnits = unitGenerationFetcher.state !== 'idle';
   const isExtractingRawText = rawTextFetcher.state !== 'idle';
   const isUpdatingRawText = rawTextUpdateFetcher.state !== 'idle';
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
@@ -81,6 +91,20 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/generate-curriculum`,
+      },
+    );
+  };
+
+  const handleGenerateUnits = () => {
+    unitGenerationFetcher.submit(
+      {
+        provider: selectedProvider,
+        model: selectedModel,
+        moduleId: selectedModuleId,
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/generate-units`,
       },
     );
   };
@@ -143,6 +167,37 @@ export default function CourseDetailsPage({
       }
     }
   }, [curriculumFetcher, showToast]);
+
+  useEffect(() => {
+    if (unitGenerationFetcher.state === 'idle' && unitGenerationFetcher.data) {
+      const result = unitGenerationFetcher.data as {
+        success?: boolean;
+        error?: string;
+        unitsCount?: number;
+        moduleTitle?: string;
+      };
+      const resultKey = JSON.stringify(result);
+      if (result.success && handledGenerateUnitsResult.current !== resultKey) {
+        handledGenerateUnitsResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Generated ${result.unitsCount ?? 0} units for ${result.moduleTitle || 'the selected module'}.`,
+        });
+        window.setTimeout(() => {
+          window.location.reload();
+        }, 1200);
+      } else if (
+        result.error &&
+        handledGenerateUnitsResult.current !== resultKey
+      ) {
+        handledGenerateUnitsResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, unitGenerationFetcher]);
 
   useEffect(() => {
     if (rawTextFetcher.state === 'idle' && rawTextFetcher.data) {
@@ -469,6 +524,16 @@ export default function CourseDetailsPage({
                   <Sparkles size={20} />
                   {isGenerating ? 'Generating...' : 'AI Generate Curriculum'}
                 </button>
+                <button
+                  onClick={() => setIsGenerateUnitsModalOpen(true)}
+                  disabled={
+                    isGeneratingUnits || modulesWithRawText.length === 0
+                  }
+                  className='flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1f4a57] py-4 text-lg font-bold text-white shadow-md shadow-[#1f4a57]/20 transition-all hover:bg-[#173944] active:scale-95 disabled:opacity-50'
+                >
+                  <Sparkles size={20} />
+                  {isGeneratingUnits ? 'Generating Units...' : 'Generate Units'}
+                </button>
               </div>
             ) : (
               <div className='space-y-3'>
@@ -675,6 +740,145 @@ export default function CourseDetailsPage({
                   className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35]'
                 >
                   Continue
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isGenerateUnitsModalOpen ? (
+          <div className='fixed inset-0 z-[106] flex items-center justify-center p-4 md:p-8'>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                if (!isGeneratingUnits) {
+                  setIsGenerateUnitsModalOpen(false);
+                }
+              }}
+              className='absolute inset-0 bg-black/70 backdrop-blur-sm'
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 16 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 16 }}
+              className='relative w-full max-w-2xl rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6 flex items-center justify-between'>
+                <div>
+                  <h3 className='font-serif text-2xl text-[#1a1a1a]'>
+                    Generate Units
+                  </h3>
+                  <p className='mt-2 text-sm text-black/55'>
+                    Choose an AI provider, model, and module to generate
+                    structured unit content from that module&apos;s raw text.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIsGenerateUnitsModalOpen(false)}
+                  disabled={isGeneratingUnits}
+                  className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10 disabled:opacity-50'
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className='space-y-5'>
+                <div>
+                  <label
+                    htmlFor='generate-units-provider'
+                    className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                  >
+                    AI Provider
+                  </label>
+                  <select
+                    id='generate-units-provider'
+                    value={selectedProvider}
+                    onChange={(event) => {
+                      const provider = event.target
+                        .value as CurriculumAiProvider;
+                      setSelectedProvider(provider);
+                      setSelectedModel(DEFAULT_CURRICULUM_MODELS[provider]);
+                    }}
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    <option value='google'>Google</option>
+                    <option value='groq'>Groq</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor='generate-units-model'
+                    className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                  >
+                    Model
+                  </label>
+                  <select
+                    id='generate-units-model'
+                    value={selectedModel}
+                    onChange={(event) => setSelectedModel(event.target.value)}
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    {CURRICULUM_MODEL_OPTIONS[selectedProvider].map(
+                      (modelOption) => (
+                        <option
+                          key={modelOption.value}
+                          value={modelOption.value}
+                        >
+                          {modelOption.label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+
+                <div>
+                  <label
+                    htmlFor='generate-units-module'
+                    className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                  >
+                    Module
+                  </label>
+                  <select
+                    id='generate-units-module'
+                    value={selectedModuleId}
+                    onChange={(event) =>
+                      setSelectedModuleId(event.target.value)
+                    }
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    {modulesWithRawText.map((module, index) => (
+                      <option key={module.id} value={module.id}>
+                        {module.title || `Module ${index + 1}`}
+                      </option>
+                    ))}
+                  </select>
+                  {modulesWithRawText.length === 0 ? (
+                    <p className='mt-2 text-sm text-red-600'>
+                      No modules with raw text are available yet.
+                    </p>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className='mt-8 flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => setIsGenerateUnitsModalOpen(false)}
+                  disabled={isGeneratingUnits}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleGenerateUnits}
+                  disabled={isGeneratingUnits || !selectedModuleId}
+                  className='rounded-2xl bg-[#1f4a57] px-5 py-3 font-bold text-white transition-all hover:bg-[#173944] disabled:opacity-50'
+                >
+                  {isGeneratingUnits ? 'Generating...' : 'Generate Units'}
                 </button>
               </div>
             </motion.div>

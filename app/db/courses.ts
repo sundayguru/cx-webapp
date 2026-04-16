@@ -348,3 +348,43 @@ export const splitCourseRawTextIntoModules = async (
     return null;
   }
 };
+
+export const replaceModuleUnits = async (
+  moduleId: string,
+  moduleData: {
+    title: string;
+    description: string;
+    units: { title: string; summary: string; content: string }[];
+  },
+) => {
+  try {
+    const db = getDb();
+
+    await db.delete(units).where(eq(units.moduleId, moduleId));
+
+    await db
+      .update(modules)
+      .set({
+        title: moduleData.title,
+        description: moduleData.description,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(modules.id, moduleId));
+
+    for (const [index, unit] of moduleData.units.entries()) {
+      await db.insert(units).values({
+        id: uuidv4(),
+        moduleId,
+        title: unit.title,
+        summary: unit.summary,
+        content: unit.content,
+        order: index,
+      });
+    }
+
+    return true;
+  } catch (e) {
+    logError(e, 'Error replacing module units');
+    return false;
+  }
+};

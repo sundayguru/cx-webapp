@@ -36,6 +36,10 @@ export default [
       'routes/api/courses/generate-curriculum.tsx',
     ),
     route(
+      'api/courses/:id/generate-units',
+      'routes/api/courses/generate-units.tsx',
+    ),
+    route(
       'api/courses/:id/extract-raw-text',
       'routes/api/courses/extract-raw-text.tsx',
     ),

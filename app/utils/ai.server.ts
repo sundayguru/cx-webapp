@@ -4,8 +4,11 @@ import { logError } from './logger';
 import { Buffer } from 'node:buffer';
 import {
   buildCurriculumPrompt,
+  buildModuleUnitsPrompt,
+  parseModuleUnitsResponse,
   parseCurriculumResponse,
   type CurriculumResponse,
+  type GeneratedModuleResponse,
 } from './curriculum-generation.server';
 
 export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
@@ -32,15 +35,15 @@ export const generateCurriculum = async (
 
   let lastError: unknown;
 
-   try {
-      const model = genAI.getGenerativeModel({ model: preferredModel });
-      const result = await model.generateContent(prompt);
-      const response = await result.response;
-      return parseCurriculumResponse(response.text());
-    } catch (e: unknown) {
-      lastError = e;
-      logError(e, `Error generating curriculum with model ${preferredModel}`);
-    }
+  try {
+    const model = genAI.getGenerativeModel({ model: preferredModel });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseCurriculumResponse(response.text());
+  } catch (e: unknown) {
+    lastError = e;
+    logError(e, `Error generating curriculum with model ${preferredModel}`);
+  }
   const errorMessage =
     lastError instanceof Error
       ? lastError.message
@@ -48,5 +51,35 @@ export const generateCurriculum = async (
 
   throw new Error(
     `Failed to generate curriculum structure. Last error: ${errorMessage}`,
+  );
+};
+
+export const generateModuleUnits = async (
+  text: string,
+  apiKey: string,
+  preferredModel: string,
+): Promise<GeneratedModuleResponse> => {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const prompt = buildModuleUnitsPrompt(text);
+
+  let lastError: unknown;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: preferredModel });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseModuleUnitsResponse(response.text());
+  } catch (e: unknown) {
+    lastError = e;
+    logError(e, `Error generating module units with model ${preferredModel}`);
+  }
+
+  const errorMessage =
+    lastError instanceof Error
+      ? lastError.message
+      : 'Unknown AI generation error';
+
+  throw new Error(
+    `Failed to generate module units. Last error: ${errorMessage}`,
   );
 };

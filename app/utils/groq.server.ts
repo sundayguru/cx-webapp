@@ -1,8 +1,11 @@
 import { Groq } from 'groq-sdk';
 import {
   buildCurriculumPrompt,
+  buildModuleUnitsPrompt,
+  parseModuleUnitsResponse,
   parseCurriculumResponse,
   type CurriculumResponse,
+  type GeneratedModuleResponse,
 } from './curriculum-generation.server';
 import { GROQ_MODELS } from './constants';
 
@@ -109,6 +112,23 @@ export const generateCurriculumWithGroq = async (
   });
 
   return parseCurriculumResponse(response.text);
+};
+
+export const generateModuleUnitsWithGroq = async (
+  text: string,
+  apiKey: string,
+  model: string,
+): Promise<GeneratedModuleResponse> => {
+  const response = await GroqService.generate({
+    apiKey,
+    model,
+    systemPrompt:
+      'You are an instructional designer. Return valid JSON only, with no markdown fences or commentary.',
+    userPrompt: buildModuleUnitsPrompt(text),
+    temperature: 0.2,
+  });
+
+  return parseModuleUnitsResponse(response.text);
 };
 
 // Transcribe audio using Groq Whisper from a remote URL
