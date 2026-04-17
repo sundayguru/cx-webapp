@@ -15,6 +15,9 @@ import {
   buildGenerateQuizPrompt,
   parseQuizResponse,
   type QuizResponse,
+  buildUnitAudioScriptPrompt,
+  parseUnitAudioScriptResponse,
+  type AudioScriptResponse,
 } from './curriculum-generation.server';
 
 export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
@@ -145,4 +148,37 @@ export const generateQuiz = async (
       : 'Unknown AI generation error';
 
   throw new Error(`Failed to generate quiz. Last error: ${errorMessage}`);
+};
+
+export const generateUnitAudioScript = async (
+  content: string,
+  apiKey: string,
+  preferredModel: string,
+): Promise<AudioScriptResponse> => {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const prompt = buildUnitAudioScriptPrompt(content);
+
+  let lastError: unknown;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: preferredModel });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseUnitAudioScriptResponse(response.text());
+  } catch (e: unknown) {
+    lastError = e;
+    logError(
+      e,
+      `Error generating unit audio script with model ${preferredModel}`,
+    );
+  }
+
+  const errorMessage =
+    lastError instanceof Error
+      ? lastError.message
+      : 'Unknown AI generation error';
+
+  throw new Error(
+    `Failed to generate unit audio script. Last error: ${errorMessage}`,
+  );
 };

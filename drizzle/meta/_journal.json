@@ -141,6 +141,13 @@
       "when": 1776419187145,
       "tag": "0019_lumpy_leopardon",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "6",
+      "when": 1776431515646,
+      "tag": "0020_ancient_whiplash",
+      "breakpoints": true
     }
   ]
 }

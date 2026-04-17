@@ -63,6 +63,10 @@ export default [
       'routes/api/courses/$id.units.$unitId.generate-content.tsx',
     ),
     route(
+      'api/courses/:id/units/:unitId/generate-audio-script',
+      'routes/api/courses/$id.units.$unitId.generate-audio-script.tsx',
+    ),
+    route(
       'api/courses/:id/units/:unitId/upload-media',
       'routes/api/courses/$id.units.$unitId.upload-media.tsx',
     ),

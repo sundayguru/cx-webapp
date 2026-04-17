@@ -1,0 +1,1 @@
+ALTER TABLE `units` ADD `audio_script` text;

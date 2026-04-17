@@ -192,6 +192,8 @@ const UnitPageContent = ({
   const [showSidebarDrawer, setShowSidebarDrawer] = useState(false);
   const [showCourseMaterialModal, setShowCourseMaterialModal] = useState(false);
   const [showUploadMediaModal, setShowUploadMediaModal] = useState(false);
+  const [showGenerateAudioScriptModal, setShowGenerateAudioScriptModal] =
+    useState(false);
   const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
   const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -212,6 +214,7 @@ const UnitPageContent = ({
   );
   const generateContentFetcher = useFetcher();
   const generateQuizFetcher = useFetcher();
+  const generateAudioScriptFetcher = useFetcher();
   const completeFetcher = useFetcher();
   const clearQuizzesFetcher = useFetcher();
   const uploadMediaFetcher = useFetcher();
@@ -219,11 +222,13 @@ const UnitPageContent = ({
   const saveQuizSessionFetcher = useFetcher();
   const isGenerating = generateContentFetcher.state !== 'idle';
   const isGeneratingQuiz = generateQuizFetcher.state !== 'idle';
+  const isGeneratingAudioScript = generateAudioScriptFetcher.state !== 'idle';
   const isClearingQuizzes = clearQuizzesFetcher.state !== 'idle';
   const isUploadingMedia = uploadMediaFetcher.state !== 'idle';
   const { showToast } = useToast();
   const handledGenerateContentResult = useRef<string | null>(null);
   const handledGenerateQuizResult = useRef<string | null>(null);
+  const handledGenerateAudioScriptResult = useRef<string | null>(null);
   const quizSessionId =
     startQuizSessionFetcher.state === 'idle' &&
     (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
@@ -266,6 +271,16 @@ const UnitPageContent = ({
       {
         method: 'post',
         action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-quiz`,
+      },
+    );
+  };
+
+  const handleGenerateAudioScript = () => {
+    generateAudioScriptFetcher.submit(
+      { provider: selectedProvider, model: selectedModel },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-audio-script`,
       },
     );
   };
@@ -345,6 +360,41 @@ const UnitPageContent = ({
   }, [generateQuizFetcher, showToast]);
 
   useEffect(() => {
+    if (
+      generateAudioScriptFetcher.state === 'idle' &&
+      generateAudioScriptFetcher.data
+    ) {
+      const result = generateAudioScriptFetcher.data as {
+        success?: boolean;
+        error?: string;
+        scriptLength?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (
+        result.success &&
+        handledGenerateAudioScriptResult.current !== resultKey
+      ) {
+        handledGenerateAudioScriptResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Generated unit audio script${result.scriptLength ? ` (${result.scriptLength} chars)` : ''}`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledGenerateAudioScriptResult.current !== resultKey
+      ) {
+        handledGenerateAudioScriptResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [generateAudioScriptFetcher, showToast]);
+
+  useEffect(() => {
     if (clearQuizzesFetcher.data) {
       const result = clearQuizzesFetcher.data as {
         success?: boolean;
@@ -396,8 +446,8 @@ const UnitPageContent = ({
         message: result.error,
       });
     }
-    uploadMediaFetcher.reset()
-  }, [showToast, uploadMediaFetcher.data]);
+    uploadMediaFetcher.reset();
+  }, [showToast, uploadMediaFetcher, uploadMediaFetcher.data]);
 
   useEffect(() => {
     if (
@@ -726,7 +776,6 @@ const UnitPageContent = ({
     setQuestion('');
   };
 
-
   return (
     <div className='min-h-[calc(100vh-8rem)] overflow-hidden rounded-[24px] border border-black/5 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] md:h-[calc(100vh-8rem)] md:rounded-[36px]'>
       <div className='flex h-full min-h-0 flex-col lg:flex-row'>
@@ -890,6 +939,17 @@ const UnitPageContent = ({
                     {isInstructor ? (
                       <>
                         <div className='my-1 border-t border-black/5' />
+                        <button
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            setShowGenerateAudioScriptModal(true);
+                          }}
+                          disabled={!currentUnit.content?.trim()}
+                          className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                        >
+                          <Sparkles size={16} />
+                          Generate Unit Audio Script
+                        </button>
                         <button
                           onClick={() => {
                             setShowMoreMenu(false);
@@ -1519,6 +1579,99 @@ const UnitPageContent = ({
               {renderUnitSidebar(true)}
             </motion.aside>
           </>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showGenerateAudioScriptModal ? (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className='w-full max-w-md rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6 flex items-center justify-between'>
+                <div>
+                  <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                    Generate Unit Audio Script
+                  </h2>
+                  <p className='mt-2 text-sm text-black/55'>
+                    Turn this unit&apos;s lesson content into a spoken narration
+                    script that can later be converted into audio.
+                  </p>
+                </div>
+              </div>
+
+              <div className='space-y-5'>
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    AI Provider
+                  </label>
+                  <select
+                    value={selectedProvider}
+                    onChange={(e) =>
+                      handleProviderChange(
+                        e.target.value as CurriculumAiProvider,
+                      )
+                    }
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    <option value='google'>Google</option>
+                    <option value='groq'>Groq</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    Model
+                  </label>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    {CURRICULUM_MODEL_OPTIONS[selectedProvider].map(
+                      (option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+
+                <div className='rounded-2xl border border-black/5 bg-[#faf9f4] p-4 text-sm text-black/55'>
+                  {currentUnit.audioScript?.trim()
+                    ? 'An audio script already exists for this unit. Generating again will replace it.'
+                    : 'No audio script exists yet. Generating will save one to this unit.'}
+                </div>
+              </div>
+
+              <div className='mt-8 flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => {
+                    if (!isGeneratingAudioScript) {
+                      setShowGenerateAudioScriptModal(false);
+                    }
+                  }}
+                  disabled={isGeneratingAudioScript}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                >
+                  {isGeneratingAudioScript ? 'Please wait...' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleGenerateAudioScript}
+                  disabled={
+                    isGeneratingAudioScript || !currentUnit.content?.trim()
+                  }
+                  className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+                >
+                  {isGeneratingAudioScript ? 'Generating...' : 'Generate'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
         ) : null}
       </AnimatePresence>
 

@@ -11,6 +11,7 @@ export const units = sqliteTable('units', {
   content: text('content'),
   summary: text('summary'),
   rawText: text('raw_text'),
+  audioScript: text('audio_script'),
   order: integer('order').notNull().default(0),
   audioUrl: text('audio_url'),
   videoUrl: text('video_url'),

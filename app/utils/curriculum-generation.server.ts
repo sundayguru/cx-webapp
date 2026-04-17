@@ -133,6 +133,41 @@ export const parseModuleUnitResponse = (
   return JSON.parse(jsonStr) as CurriculumUnit;
 };
 
+export type AudioScriptResponse = {
+  audioScript: string;
+};
+
+export const buildUnitAudioScriptPrompt = (content: string) => `
+  Convert the following unit lesson content into a natural narration script that can be read aloud and later converted into audio.
+  Respond ONLY with a JSON object.
+  The JSON object must contain:
+  - audioScript: string
+
+  Rules:
+  - Rewrite the lesson into flowing spoken narration, not bullet points or headings.
+  - Keep the meaning faithful to the source content.
+  - Remove markdown formatting, headings, and visual-only references.
+  - Use a warm, clear instructional tone suitable for text-to-speech.
+  - Keep transitions natural so it sounds like one continuous lesson.
+  - Do not include stage directions like "pause", "music", or "read heading".
+  - Do not invent facts not supported by the source.
+
+  Format:
+  {
+    "audioScript": "Narrative script here"
+  }
+
+  CONTENT TO CONVERT:
+  ${content.slice(0, 40000)}
+`;
+
+export const parseUnitAudioScriptResponse = (
+  responseText: string,
+): AudioScriptResponse => {
+  const jsonStr = responseText.replace(/```json|```/g, '').trim();
+  return JSON.parse(jsonStr) as AudioScriptResponse;
+};
+
 export type QuizQuestion = {
   question: string;
   questionType: 'openText' | 'choice';
