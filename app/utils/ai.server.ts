@@ -12,6 +12,9 @@ import {
   buildModuleUnitPrompt,
   parseModuleUnitResponse,
   type CurriculumUnit,
+  buildGenerateQuizPrompt,
+  parseQuizResponse,
+  type QuizResponse,
 } from './curriculum-generation.server';
 
 export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
@@ -113,4 +116,33 @@ export const generateModuleUnit = async (
       : 'Unknown AI generation error';
 
   throw new Error(`Failed to generate unit. Last error: ${errorMessage}`);
+};
+
+export const generateQuiz = async (
+  text: string,
+  existingQuestions: string[],
+  apiKey: string,
+  preferredModel: string,
+): Promise<QuizResponse> => {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const prompt = buildGenerateQuizPrompt(text, existingQuestions);
+
+  let lastError: unknown;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: preferredModel });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseQuizResponse(response.text());
+  } catch (e: unknown) {
+    lastError = e;
+    logError(e, `Error generating quiz with model ${preferredModel}`);
+  }
+
+  const errorMessage =
+    lastError instanceof Error
+      ? lastError.message
+      : 'Unknown AI generation error';
+
+  throw new Error(`Failed to generate quiz. Last error: ${errorMessage}`);
 };

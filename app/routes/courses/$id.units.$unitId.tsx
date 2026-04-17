@@ -1,11 +1,13 @@
 import type { Route } from './+types/$id.units.$unitId';
 import { data, Link, useFetcher, useLoaderData } from 'react-router';
 import { getCourseById } from '~/db/courses';
+import { getQuizzesByUnitId } from '~/db/quizzes';
 import { getUserFromRequest } from '~/utils/session.server';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
 import type { SelectModule } from '~/db/schemas/modules';
 import type { SelectUnit } from '~/db/schemas/units';
+import type { SelectQuiz } from '~/db/schemas/quizzes';
 import type { User } from '~/types';
 import { useToast } from '~/utils/useToast';
 import {
@@ -57,6 +59,7 @@ type LoaderData = {
   currentUnit: FlattenedUnit;
   previousUnit: FlattenedUnit | null;
   nextUnit: FlattenedUnit | null;
+  quizzes: SelectQuiz[];
   user: User | null;
 };
 
@@ -137,12 +140,15 @@ export const loader = async ({
     throw data({ error: 'Unit not found' }, { status: 404 });
   }
 
+  const quizzes = await getQuizzesByUnitId(unitId);
+
   return {
     course: courseData,
     modules,
     currentUnit: flattenedUnits[currentUnitIndex],
     previousUnit: flattenedUnits[currentUnitIndex - 1] ?? null,
     nextUnit: flattenedUnits[currentUnitIndex + 1] ?? null,
+    quizzes,
     user,
   };
 };
@@ -167,13 +173,15 @@ const UnitPageContent = ({
   currentUnit,
   previousUnit,
   nextUnit,
+  quizzes,
   user,
 }: LoaderData) => {
-  const [mode, setMode] = useState<'text' | 'audio' | 'video'>('text');
+  const [mode, setMode] = useState<'text' | 'audio' | 'video' | 'quiz'>('text');
   const [showChat, setShowChat] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
@@ -181,11 +189,13 @@ const UnitPageContent = ({
     DEFAULT_CURRICULUM_MODELS[DEFAULT_CURRICULUM_PROVIDER],
   );
   const generateContentFetcher = useFetcher();
+  const generateQuizFetcher = useFetcher();
   const completeFetcher = useFetcher();
   const isGenerating = generateContentFetcher.state !== 'idle';
-  const isTogglingComplete = completeFetcher.state !== 'idle';
+  const isGeneratingQuiz = generateQuizFetcher.state !== 'idle';
   const { showToast } = useToast();
   const handledGenerateContentResult = useRef<string | null>(null);
+  const handledGenerateQuizResult = useRef<string | null>(null);
 
   const isInstructor = user?.id === course?.course.createdBy;
   const hasRawText = Boolean(currentUnit.rawText?.trim());
@@ -209,6 +219,16 @@ const UnitPageContent = ({
       {
         method: 'post',
         action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-content`,
+      },
+    );
+  };
+
+  const handleGenerateQuiz = () => {
+    generateQuizFetcher.submit(
+      { provider: selectedProvider, model: selectedModel },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-quiz`,
       },
     );
   };
@@ -247,6 +267,35 @@ const UnitPageContent = ({
       }
     }
   }, [generateContentFetcher, showToast]);
+
+  useEffect(() => {
+    if (generateQuizFetcher.state === 'idle' && generateQuizFetcher.data) {
+      const result = generateQuizFetcher.data as {
+        success?: boolean;
+        error?: string;
+        count?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledGenerateQuizResult.current !== resultKey) {
+        handledGenerateQuizResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Generated ${result.count ?? 0} quiz questions`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledGenerateQuizResult.current !== resultKey
+      ) {
+        handledGenerateQuizResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [generateQuizFetcher, showToast]);
 
   const quizQuestions = useMemo(
     () => buildQuiz(currentUnit.content ?? ''),
@@ -422,6 +471,25 @@ const UnitPageContent = ({
                     Video
                   </span>
                 </button>
+                <button
+                  onClick={() => setMode('quiz')}
+                  className={cx(
+                    'rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
+                    mode === 'quiz'
+                      ? 'bg-white text-[#1a1a1a] shadow-sm'
+                      : 'text-black/40',
+                  )}
+                >
+                  <span className='flex items-center gap-2'>
+                    <HelpCircle size={16} />
+                    Quiz
+                    {quizzes.length > 0 && (
+                      <span className='ml-1 rounded-full bg-[#5A5A40] px-1.5 py-0.5 text-[10px] text-white'>
+                        {quizzes.length}
+                      </span>
+                    )}
+                  </span>
+                </button>
               </div>
             </div>
 
@@ -504,6 +572,16 @@ const UnitPageContent = ({
                         >
                           <Sparkles size={16} />
                           Generate Content
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            setShowGenerateQuizModal(true);
+                          }}
+                          className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                        >
+                          <HelpCircle size={16} />
+                          Generate Quiz
                         </button>
                       </>
                     )}
@@ -618,6 +696,89 @@ const UnitPageContent = ({
                             When a video lesson is attached to this unit, it
                             will appear here with playback controls.
                           </p>
+                        </div>
+                      )}
+                    </motion.div>
+                  ) : null}
+
+                  {mode === 'quiz' ? (
+                    <motion.div
+                      key='quiz'
+                      initial={{ opacity: 0, scale: 0.96 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 0.96 }}
+                      className='rounded-[32px] border border-black/5 bg-white p-8 shadow-sm'
+                    >
+                      <div className='mb-6 flex items-center justify-between'>
+                        <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                          Quiz Questions
+                        </h2>
+                        {isInstructor && hasRawText && (
+                          <button
+                            onClick={() => setShowGenerateQuizModal(true)}
+                            className='rounded-xl bg-[#5A5A40] px-4 py-2 text-sm font-bold text-white'
+                          >
+                            Generate More
+                          </button>
+                        )}
+                      </div>
+
+                      {quizzes.length > 0 ? (
+                        <div className='space-y-6'>
+                          {quizzes.map((quiz, index) => (
+                            <div
+                              key={quiz.id}
+                              className='rounded-2xl border border-black/5 bg-[#faf9f4] p-6'
+                            >
+                              <p className='mb-4 font-medium text-[#1a1a1a]'>
+                                {index + 1}. {quiz.question}
+                              </p>
+                              {quiz.questionType === 'choice' &&
+                              quiz.options ? (
+                                <div className='space-y-2'>
+                                  {JSON.parse(quiz.options).map(
+                                    (option: string, optIndex: number) => (
+                                      <div
+                                        key={optIndex}
+                                        className='flex items-center gap-3 rounded-xl border border-black/10 bg-white px-4 py-3'
+                                      >
+                                        <span className='flex h-6 w-6 items-center justify-center rounded-full bg-black/5 text-xs font-bold'>
+                                          {String.fromCharCode(65 + optIndex)}
+                                        </span>
+                                        <span className='text-sm text-[#1a1a1a]'>
+                                          {option}
+                                        </span>
+                                      </div>
+                                    ),
+                                  )}
+                                </div>
+                              ) : (
+                                <div className='rounded-xl border border-black/10 bg-white px-4 py-3'>
+                                  <textarea
+                                    className='w-full resize-none border-none bg-transparent text-sm text-black/60 focus:outline-none'
+                                    placeholder='Write your answer here...'
+                                    rows={3}
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className='py-12 text-center text-black/50'>
+                          <HelpCircle
+                            size={48}
+                            className='mx-auto mb-4 text-black/20'
+                          />
+                          <p>No quiz questions yet.</p>
+                          {isInstructor && hasRawText && (
+                            <button
+                              onClick={() => setShowGenerateQuizModal(true)}
+                              className='mt-4 text-[#5A5A40] underline'
+                            >
+                              Generate quiz from unit content
+                            </button>
+                          )}
                         </div>
                       )}
                     </motion.div>
@@ -907,6 +1068,91 @@ const UnitPageContent = ({
                   className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
                 >
                   {isGenerating ? 'Generating...' : 'Generate'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showGenerateQuizModal ? (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className='w-full max-w-md rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6 flex items-center justify-between'>
+                <div>
+                  <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                    Generate Quiz Questions
+                  </h2>
+                  <p className='mt-2 text-sm text-black/55'>
+                    Choose an AI provider and model to generate quiz questions
+                    for this unit.
+                  </p>
+                </div>
+              </div>
+
+              <div className='space-y-5'>
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    AI Provider
+                  </label>
+                  <select
+                    value={selectedProvider}
+                    onChange={(e) =>
+                      handleProviderChange(
+                        e.target.value as CurriculumAiProvider,
+                      )
+                    }
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    <option value='google'>Google</option>
+                    <option value='groq'>Groq</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    Model
+                  </label>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    {CURRICULUM_MODEL_OPTIONS[selectedProvider].map(
+                      (option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className='mt-8 flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => {
+                    if (!isGeneratingQuiz) {
+                      setShowGenerateQuizModal(false);
+                    }
+                  }}
+                  disabled={isGeneratingQuiz}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                >
+                  {isGeneratingQuiz ? 'Please wait...' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleGenerateQuiz}
+                  disabled={isGeneratingQuiz}
+                  className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+                >
+                  {isGeneratingQuiz ? 'Generating...' : 'Generate'}
                 </button>
               </div>
             </motion.div>

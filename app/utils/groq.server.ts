@@ -9,6 +9,9 @@ import {
   buildModuleUnitPrompt,
   parseModuleUnitResponse,
   type CurriculumUnit,
+  type QuizResponse,
+  buildGenerateQuizPrompt,
+  parseQuizResponse,
 } from './curriculum-generation.server';
 import { GROQ_MODELS } from './constants';
 
@@ -116,6 +119,27 @@ export const generateCurriculumWithGroq = async (
 
   return parseCurriculumResponse(response.text);
 };
+
+export const generateQuizWithGroq = async (
+  text: string,
+  existingQuestions: string[],
+  apiKey: string,
+  model: string,
+): Promise<QuizResponse> => {
+   const prompt = buildGenerateQuizPrompt(text, existingQuestions);
+   const response = await GroqService.generate({
+    apiKey,
+    model,
+    systemPrompt:
+      'You are an instructional designer. Return valid JSON only, with no markdown fences or commentary.',
+    userPrompt: prompt,
+    temperature: 0.2,
+  });
+
+  return parseQuizResponse(response.text);
+};
+
+
 
 export const generateModuleUnitsWithGroq = async (
   text: string,

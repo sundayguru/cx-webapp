@@ -132,3 +132,57 @@ export const parseModuleUnitResponse = (
   const jsonStr = responseText.replace(/```json|```/g, '').trim();
   return JSON.parse(jsonStr) as CurriculumUnit;
 };
+
+export type QuizQuestion = {
+  question: string;
+  questionType: 'openText' | 'choice';
+  answer: string;
+  options?: string[];
+};
+
+export type QuizResponse = {
+  quizzes: QuizQuestion[];
+};
+
+export const buildGenerateQuizPrompt = (
+  rawText: string,
+  existingQuestions: string[],
+) => {
+  const existingContext =
+    existingQuestions.length > 0
+      ? `\n\nEXISTING QUESTIONS (DO NOT REPEAT THESE):\n${existingQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nMake sure new questions are different from the existing ones above.`
+      : '';
+
+  return `Analyze the following educational content and generate 10 quiz questions to test understanding.
+${existingContext}
+Each quiz question should be one of these types:
+- "openText": Questions that require a written answer
+- "choice": Questions with multiple choice options (3 options)
+
+Respond ONLY with a JSON object:
+{
+  "quizzes": [
+    {
+      "question": "Question text",
+      "questionType": "openText" or "choice",
+      "options": ["Option A", "Option B", "Option C"] // only for choice type
+      "answer": "The correct answer to the question"
+    }
+  ]
+}
+
+Rules:
+- Questions should test understanding, not just recall
+- For choice questions, provide exactly 3 options
+- Make sure options are plausible and related to the content
+- Questions should be clear and unambiguous
+
+TEXT TO ANALYZE:
+${rawText.slice(0, 40000)}
+`;
+};
+
+export const parseQuizResponse = (responseText: string): QuizResponse => {
+  const jsonStr = responseText.replace(/```json|```/g, '').trim();
+  return JSON.parse(jsonStr) as QuizResponse;
+};

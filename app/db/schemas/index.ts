@@ -9,3 +9,4 @@ export * from './schools';
 export * from './authors';
 export * from './modules';
 export * from './units';
+export * from './quizzes';

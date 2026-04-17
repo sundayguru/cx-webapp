@@ -67,5 +67,9 @@ export default [
       'api/courses/:id/units/:unitId/set-complete',
       'routes/api/courses/$id.units.$unitId.set-complete.tsx',
     ),
+    route(
+      'api/courses/:id/units/:unitId/generate-quiz',
+      'routes/api/courses/$id.units.$unitId.generate-quiz.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;
