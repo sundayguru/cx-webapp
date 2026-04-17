@@ -25,6 +25,7 @@ import {
   Play,
   Sparkles,
   Trash2,
+  Upload,
   Volume2,
   X,
 } from 'lucide-react';
@@ -190,6 +191,7 @@ const UnitPageContent = ({
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showSidebarDrawer, setShowSidebarDrawer] = useState(false);
   const [showCourseMaterialModal, setShowCourseMaterialModal] = useState(false);
+  const [showUploadMediaModal, setShowUploadMediaModal] = useState(false);
   const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
   const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -212,11 +214,13 @@ const UnitPageContent = ({
   const generateQuizFetcher = useFetcher();
   const completeFetcher = useFetcher();
   const clearQuizzesFetcher = useFetcher();
+  const uploadMediaFetcher = useFetcher();
   const startQuizSessionFetcher = useFetcher();
   const saveQuizSessionFetcher = useFetcher();
   const isGenerating = generateContentFetcher.state !== 'idle';
   const isGeneratingQuiz = generateQuizFetcher.state !== 'idle';
   const isClearingQuizzes = clearQuizzesFetcher.state !== 'idle';
+  const isUploadingMedia = uploadMediaFetcher.state !== 'idle';
   const { showToast } = useToast();
   const handledGenerateContentResult = useRef<string | null>(null);
   const handledGenerateQuizResult = useRef<string | null>(null);
@@ -362,6 +366,38 @@ const UnitPageContent = ({
       clearQuizzesFetcher.reset();
     }
   }, [clearQuizzesFetcher, clearQuizzesFetcher.data, showToast]);
+
+  useEffect(() => {
+    if (!uploadMediaFetcher.data) {
+      return;
+    }
+
+    const result = uploadMediaFetcher.data as {
+      success?: boolean;
+      error?: string;
+      audioUploaded?: boolean;
+      videoUploaded?: boolean;
+    };
+
+    if (result.success) {
+      const uploadedItems = [
+        result.audioUploaded ? 'audio' : null,
+        result.videoUploaded ? 'video' : null,
+      ].filter(Boolean);
+
+      showToast({
+        tone: 'success',
+        message: `Uploaded ${uploadedItems.join(' and ')} for this unit`,
+      });
+      window.setTimeout(() => window.location.reload(), 1200);
+    } else if (result.error) {
+      showToast({
+        tone: 'error',
+        message: result.error,
+      });
+    }
+    uploadMediaFetcher.reset()
+  }, [showToast, uploadMediaFetcher.data]);
 
   useEffect(() => {
     if (
@@ -690,6 +726,7 @@ const UnitPageContent = ({
     setQuestion('');
   };
 
+
   return (
     <div className='min-h-[calc(100vh-8rem)] overflow-hidden rounded-[24px] border border-black/5 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] md:h-[calc(100vh-8rem)] md:rounded-[36px]'>
       <div className='flex h-full min-h-0 flex-col lg:flex-row'>
@@ -850,9 +887,23 @@ const UnitPageContent = ({
                       <HelpCircle size={16} />
                       Quiz Me
                     </button>
-                    {isInstructor && hasRawText && (
+                    {isInstructor ? (
                       <>
                         <div className='my-1 border-t border-black/5' />
+                        <button
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            setShowUploadMediaModal(true);
+                          }}
+                          className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                        >
+                          <Upload size={16} />
+                          Upload Unit Media
+                        </button>
+                      </>
+                    ) : null}
+                    {isInstructor && hasRawText ? (
+                      <>
                         <button
                           onClick={() => {
                             setShowMoreMenu(false);
@@ -874,7 +925,7 @@ const UnitPageContent = ({
                           Generate Quiz
                         </button>
                       </>
-                    )}
+                    ) : null}
                   </div>
                 )}
               </div>
@@ -929,30 +980,69 @@ const UnitPageContent = ({
                       initial={{ opacity: 0, scale: 0.96 }}
                       animate={{ opacity: 1, scale: 1 }}
                       exit={{ opacity: 0, scale: 0.96 }}
-                      className='flex min-h-[28rem] flex-col items-center justify-center rounded-[36px] border border-black/5 bg-[#f5f5f0] p-8 text-center'
+                      className='rounded-[36px] border border-black/5 bg-[#f5f5f0] p-6 md:p-8'
                     >
-                      <div className='mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-[#5A5A40] text-white shadow-xl shadow-[#5A5A40]/20'>
-                        <Volume2 size={42} />
-                      </div>
-                      <h2 className='mb-3 font-serif text-3xl text-[#1a1a1a]'>
-                        Listening Mode
-                      </h2>
-                      <p className='mb-8 max-w-lg text-black/45'>
-                        {currentUnit.audioUrl
-                          ? 'Listen to the prepared narration for this unit.'
-                          : 'This unit does not have an audio track yet. You can still read the lesson in text mode.'}
-                      </p>
-
                       {currentUnit.audioUrl ? (
-                        <audio
-                          ref={audioRef}
-                          controls
-                          src={currentUnit.audioUrl}
-                          className='w-full max-w-xl'
-                        />
+                        <div className='mx-auto flex min-h-[28rem] max-w-3xl flex-col justify-center'>
+                          <div className='mb-8 flex flex-col items-center text-center'>
+                            <div className='mb-6 flex h-24 w-24 items-center justify-center rounded-full bg-[#5A5A40] text-white shadow-xl shadow-[#5A5A40]/20'>
+                              <Volume2 size={38} />
+                            </div>
+                            <h2 className='font-serif text-3xl text-[#1a1a1a]'>
+                              Listening Mode
+                            </h2>
+                            <p className='mt-3 max-w-xl text-sm leading-7 text-black/50'>
+                              Listen to the prepared narration for this unit.
+                            </p>
+                          </div>
+
+                          <div className='rounded-[32px] border border-black/5 bg-white p-6 shadow-sm'>
+                            <div className='mb-6 flex items-center justify-between gap-4'>
+                              <div>
+                                <p className='text-[11px] font-bold tracking-[0.24em] text-[#5A5A40] uppercase'>
+                                  Unit Audio
+                                </p>
+                                <p className='mt-2 text-lg font-semibold text-[#1a1a1a]'>
+                                  {currentUnit.title}
+                                </p>
+                              </div>
+                              <div className='hidden items-center gap-1 md:flex'>
+                                {[...Array(12)].map((_, index) => (
+                                  <span
+                                    key={index}
+                                    className='w-1 rounded-full bg-[#5A5A40]/35'
+                                    style={{
+                                      height: `${18 + ((index % 4) + 1) * 7}px`,
+                                    }}
+                                  />
+                                ))}
+                              </div>
+                            </div>
+
+                            <audio
+                              ref={audioRef}
+                              controls
+                              src={currentUnit.audioUrl}
+                              className='w-full'
+                            />
+                          </div>
+                        </div>
                       ) : (
-                        <div className='rounded-2xl border border-dashed border-black/10 bg-white px-6 py-5 text-sm text-black/50'>
-                          Audio will appear here when a narration is available.
+                        <div className='flex min-h-[28rem] flex-col items-center justify-center text-center'>
+                          <div className='mb-8 flex h-28 w-28 items-center justify-center rounded-full bg-[#5A5A40] text-white shadow-xl shadow-[#5A5A40]/20'>
+                            <Volume2 size={42} />
+                          </div>
+                          <h2 className='mb-3 font-serif text-3xl text-[#1a1a1a]'>
+                            Listening Mode
+                          </h2>
+                          <p className='mb-8 max-w-lg text-black/45'>
+                            This unit does not have an audio track yet. You can
+                            still read the lesson in text mode.
+                          </p>
+                          <div className='rounded-2xl border border-dashed border-black/10 bg-white px-6 py-5 text-sm text-black/50'>
+                            Audio will appear here when a narration is
+                            available.
+                          </div>
                         </div>
                       )}
                     </motion.div>
@@ -967,11 +1057,29 @@ const UnitPageContent = ({
                       className='overflow-hidden rounded-[36px] border border-black/5 bg-black'
                     >
                       {currentUnit.videoUrl ? (
-                        <video
-                          src={currentUnit.videoUrl}
-                          controls
-                          className='aspect-video w-full object-cover'
-                        />
+                        <div className='bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_40%),linear-gradient(180deg,_#232321,_#090909)] p-4 md:p-6'>
+                          <div className='mb-5 flex flex-col gap-3 md:flex-row md:items-end md:justify-between'>
+                            <div>
+                              <p className='text-[11px] font-bold tracking-[0.24em] text-white/50 uppercase'>
+                                Unit Video
+                              </p>
+                              <h2 className='mt-2 font-serif text-2xl text-white md:text-3xl'>
+                                {currentUnit.title}
+                              </h2>
+                              <p className='mt-2 max-w-2xl text-sm leading-7 text-white/55'>
+                                Watch the lesson presentation for this unit.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className='overflow-hidden rounded-[28px] border border-white/10 bg-black shadow-2xl'>
+                            <video
+                              src={currentUnit.videoUrl}
+                              controls
+                              className='aspect-video w-full object-cover'
+                            />
+                          </div>
+                        </div>
                       ) : (
                         <div className='flex aspect-video flex-col items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.14),_transparent_40%),linear-gradient(180deg,_#232321,_#090909)] p-8 text-center'>
                           <Play
@@ -1411,6 +1519,101 @@ const UnitPageContent = ({
               {renderUnitSidebar(true)}
             </motion.aside>
           </>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showUploadMediaModal ? (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className='w-full max-w-lg rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6'>
+                <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                  Upload Unit Media
+                </h2>
+                <p className='mt-2 text-sm text-black/55'>
+                  Add or replace the audio and video files used for this unit.
+                </p>
+              </div>
+
+              <uploadMediaFetcher.Form
+                method='post'
+                encType='multipart/form-data'
+                action={`/api/courses/${course?.course.id}/units/${currentUnit.id}/upload-media`}
+                className='space-y-5'
+              >
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    Audio File
+                  </label>
+                  <input
+                    type='file'
+                    name='audioFile'
+                    accept='audio/*'
+                    className='w-full rounded-xl border border-black/10 px-4 py-3 text-sm text-[#1a1a1a] file:mr-4 file:rounded-lg file:border-0 file:bg-[#5A5A40] file:px-3 file:py-2 file:text-sm file:font-bold file:text-white'
+                  />
+                  <p className='mt-2 text-xs text-black/45'>
+                    {currentUnit.audioUrl
+                      ? 'Uploading a new audio file will replace the current one.'
+                      : 'Upload narration or lesson audio for this unit.'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    Video File
+                  </label>
+                  <input
+                    type='file'
+                    name='videoFile'
+                    accept='video/*'
+                    className='w-full rounded-xl border border-black/10 px-4 py-3 text-sm text-[#1a1a1a] file:mr-4 file:rounded-lg file:border-0 file:bg-[#1f4a57] file:px-3 file:py-2 file:text-sm file:font-bold file:text-white'
+                  />
+                  <p className='mt-2 text-xs text-black/45'>
+                    {currentUnit.videoUrl
+                      ? 'Uploading a new video file will replace the current one.'
+                      : 'Upload a video lesson for this unit.'}
+                  </p>
+                </div>
+
+                <div className='rounded-2xl border border-black/5 bg-[#faf9f4] p-4 text-sm text-black/55'>
+                  <p>Current media status:</p>
+                  <p className='mt-2'>
+                    Audio: {currentUnit.audioUrl ? 'Uploaded' : 'Not uploaded'}
+                  </p>
+                  <p>
+                    Video: {currentUnit.videoUrl ? 'Uploaded' : 'Not uploaded'}
+                  </p>
+                </div>
+
+                <div className='flex items-center justify-end gap-3'>
+                  <button
+                    type='button'
+                    onClick={() => {
+                      if (!isUploadingMedia) {
+                        setShowUploadMediaModal(false);
+                      }
+                    }}
+                    disabled={isUploadingMedia}
+                    className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                  >
+                    {isUploadingMedia ? 'Please wait...' : 'Cancel'}
+                  </button>
+                  <button
+                    type='submit'
+                    disabled={isUploadingMedia}
+                    className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+                  >
+                    {isUploadingMedia ? 'Uploading...' : 'Upload Media'}
+                  </button>
+                </div>
+              </uploadMediaFetcher.Form>
+            </motion.div>
+          </div>
         ) : null}
       </AnimatePresence>
 

@@ -63,6 +63,10 @@ export default [
       'routes/api/courses/$id.units.$unitId.generate-content.tsx',
     ),
     route(
+      'api/courses/:id/units/:unitId/upload-media',
+      'routes/api/courses/$id.units.$unitId.upload-media.tsx',
+    ),
+    route(
       'api/courses/:id/units/:unitId/set-complete',
       'routes/api/courses/$id.units.$unitId.set-complete.tsx',
     ),
