@@ -46,11 +46,13 @@ export const QuizTakerView = ({
 }: QuizTakerViewProps) => {
   const [isRevealed, setIsRevealed] = useState(false);
   const [timeRemaining, setTimeRemaining] = useState(QUESTION_TIMER_SECONDS);
+  const [showAnswerWarning, setShowAnswerWarning] = useState(false);
 
   const currentQuiz = quizzes[currentIndex];
   const currentAnswer = userAnswers[currentIndex] ?? '';
   const isLastQuestion = currentIndex === quizzes.length - 1;
   const isLearningMode = mode === 'learning';
+  const hasAnswer = currentAnswer.trim().length > 0;
   const options = useMemo(
     () => parseQuizOptions(currentQuiz?.options ?? null),
     [currentQuiz?.options],
@@ -86,10 +88,17 @@ export const QuizTakerView = ({
   }
 
   const handlePrimaryAction = () => {
+    if (mode === 'exam' && !hasAnswer) {
+      setShowAnswerWarning(true);
+      return;
+    }
+
     if (isLearningMode && !isRevealed) {
       setIsRevealed(true);
       return;
     }
+
+    setShowAnswerWarning(false);
 
     if (isLastQuestion) {
       onFinish();
@@ -110,20 +119,20 @@ export const QuizTakerView = ({
       : 'Next Question';
 
   return (
-    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'>
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-0 backdrop-blur-sm md:p-4'>
       <motion.div
         initial={{ opacity: 0, y: 16, scale: 0.98 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 16, scale: 0.98 }}
-        className='flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl'
+        className='flex h-[100dvh] w-full max-w-4xl flex-col overflow-hidden bg-white shadow-2xl md:h-auto md:max-h-[90vh] md:rounded-[32px]'
       >
-        <div className='border-b border-black/5 bg-[#faf9f4] px-6 py-5 md:px-8'>
-          <div className='flex items-start justify-between gap-4'>
+        <div className='border-b border-black/5 bg-[#faf9f4] px-4 py-4 md:px-8 md:py-5'>
+          <div className='flex items-start justify-between gap-3 md:gap-4'>
             <div>
               <p className='text-[11px] font-bold tracking-[0.24em] text-[#5A5A40] uppercase'>
                 {mode === 'learning' ? 'Learning Mode' : 'Exam Mode'}
               </p>
-              <h2 className='mt-2 font-serif text-3xl text-[#1a1a1a]'>
+              <h2 className='mt-2 font-serif text-2xl text-[#1a1a1a] md:text-3xl'>
                 Quiz in Progress
               </h2>
               <div className='mt-3 flex flex-wrap items-center gap-3 text-sm text-black/50'>
@@ -157,15 +166,15 @@ export const QuizTakerView = ({
           </div>
         </div>
 
-        <div className='flex-1 overflow-y-auto px-6 py-6 md:px-8 md:py-8'>
-          <div className='rounded-[28px] border border-black/5 bg-white p-6 shadow-sm md:p-8'>
+        <div className='flex-1 overflow-y-auto px-4 py-4 md:px-8 md:py-8'>
+          <div className='rounded-[24px] border border-black/5 bg-white p-4 shadow-sm md:rounded-[28px] md:p-8'>
             <div className='mb-5 inline-flex rounded-full bg-black/5 px-3 py-1 text-xs font-bold tracking-wide text-black/50 uppercase'>
               {currentQuiz.questionType === 'choice'
                 ? 'Multiple Choice'
                 : 'Open Response'}
             </div>
 
-            <h3 className='text-2xl leading-tight font-semibold text-[#1a1a1a]'>
+            <h3 className='text-xl leading-tight font-semibold text-[#1a1a1a] md:text-2xl'>
               {currentQuiz.question}
             </h3>
 
@@ -184,9 +193,12 @@ export const QuizTakerView = ({
                     return (
                       <button
                         key={`${currentQuiz.id}-${optionLetter}`}
-                        onClick={() => onAnswer(option)}
+                        onClick={() => {
+                          setShowAnswerWarning(false);
+                          onAnswer(option);
+                        }}
                         className={[
-                          'flex w-full items-start gap-4 rounded-2xl border px-4 py-4 text-left transition-all',
+                          'flex w-full items-start gap-3 rounded-2xl border px-4 py-4 text-left transition-all md:gap-4',
                           isCorrectOption
                             ? 'border-green-400 bg-green-50'
                             : isWrongSelection
@@ -220,12 +232,21 @@ export const QuizTakerView = ({
               ) : (
                 <textarea
                   value={currentAnswer}
-                  onChange={(event) => onAnswer(event.target.value)}
+                  onChange={(event) => {
+                    setShowAnswerWarning(false);
+                    onAnswer(event.target.value);
+                  }}
                   placeholder='Write your answer here...'
                   className='min-h-40 w-full rounded-[24px] border border-black/10 bg-[#faf9f4] px-5 py-4 text-base text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
                 />
               )}
             </div>
+
+            {mode === 'exam' && showAnswerWarning ? (
+              <div className='mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800'>
+                Answer this question before moving on.
+              </div>
+            ) : null}
 
             {isLearningMode && isRevealed ? (
               <div className='mt-6 rounded-[24px] border border-green-200 bg-green-50 p-5'>
@@ -243,20 +264,24 @@ export const QuizTakerView = ({
           </div>
         </div>
 
-        <div className='border-t border-black/5 bg-white px-6 py-5 md:px-8'>
-          <div className='flex flex-wrap items-center justify-between gap-3'>
-            <button
-              onClick={onPrev}
-              disabled={currentIndex === 0}
-              className='inline-flex items-center gap-2 rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium text-black/60 transition-all hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50'
-            >
-              <ChevronLeft size={16} />
-              Previous
-            </button>
+        <div className='border-t border-black/5 bg-white px-4 py-4 md:px-8 md:py-5'>
+          <div className='flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between'>
+            {mode === 'learning' ? (
+              <button
+                onClick={onPrev}
+                disabled={currentIndex === 0}
+                className='inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium text-black/60 transition-all hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto'
+              >
+                <ChevronLeft size={16} />
+                Previous
+              </button>
+            ) : (
+              <div className='hidden sm:block' />
+            )}
 
             <button
               onClick={handlePrimaryAction}
-              className='inline-flex items-center gap-2 rounded-2xl bg-[#5A5A40] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#4a4a35]'
+              className='inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5A5A40] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#4a4a35] sm:w-auto'
             >
               {primaryLabel}
               {!isLearningMode || isRevealed ? (

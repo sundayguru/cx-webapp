@@ -21,12 +21,14 @@ import {
   HelpCircle,
   MessageCircle,
   MoreVertical,
+  PanelLeft,
   Play,
   Sparkles,
   Trash2,
   Volume2,
+  X,
 } from 'lucide-react';
-import { useMemo, useRef, useState, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   CURRICULUM_MODEL_OPTIONS,
   DEFAULT_CURRICULUM_MODELS,
@@ -58,12 +60,6 @@ type ChatMessage = {
   text: string;
 };
 
-type QuizQuestion = {
-  id: string;
-  prompt: string;
-  context?: string;
-};
-
 type LoaderData = {
   course: Awaited<ReturnType<typeof getCourseById>>;
   modules: CourseModuleWithUnits[];
@@ -84,17 +80,6 @@ const splitIntoParagraphs = (content: string) =>
     .split(/\n\s*\n/g)
     .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
     .filter(Boolean);
-
-const buildQuiz = (content: string): QuizQuestion[] => {
-  const paragraphs = splitIntoParagraphs(content);
-
-  return paragraphs.slice(0, 3).map((paragraph, index) => ({
-    id: `question-${index}`,
-    prompt: `How would you explain insight ${index + 1} from this unit in your own words?`,
-    context:
-      paragraph.length > 180 ? `${paragraph.slice(0, 177)}...` : paragraph,
-  }));
-};
 
 const answerFromContent = (content: string, question: string) => {
   const paragraphs = splitIntoParagraphs(content);
@@ -201,8 +186,8 @@ const UnitPageContent = ({
   const [mode, setMode] = useState<'text' | 'audio' | 'video' | 'quiz'>('text');
   const [showChat, setShowChat] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
-  const [showQuiz, setShowQuiz] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showSidebarDrawer, setShowSidebarDrawer] = useState(false);
   const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
   const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -418,11 +403,6 @@ const UnitPageContent = ({
     }
   }, [saveQuizSessionFetcher.data, saveQuizSessionFetcher.state, showToast]);
 
-  const quizQuestions = useMemo(
-    () => buildQuiz(currentUnit.content ?? ''),
-    [currentUnit.content],
-  );
-
   const paginatedQuizzes = quizzes.slice(
     (quizPage - 1) * QUIZZES_PER_PAGE,
     quizPage * QUIZZES_PER_PAGE,
@@ -565,6 +545,95 @@ const UnitPageContent = ({
     );
   };
 
+  const launchTakeQuiz = () => {
+    setMode('quiz');
+    setShowMoreMenu(false);
+    startQuiz();
+  };
+
+  const renderUnitSidebar = (isMobile = false) => (
+    <div className='flex h-full min-h-0 flex-col'>
+      <div className='border-b border-black/5 p-6'>
+        <div className='mb-4 flex items-center justify-between gap-3'>
+          <Link
+            to={`/courses/${course?.course.id}`}
+            onClick={() => setShowSidebarDrawer(false)}
+            className='flex items-center gap-2 text-sm text-black/40 transition-colors hover:text-[#5A5A40]'
+          >
+            <ChevronLeft size={16} />
+            Back to Course
+          </Link>
+          {isMobile ? (
+            <button
+              onClick={() => setShowSidebarDrawer(false)}
+              className='flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-black/45 transition-colors hover:bg-black/5 hover:text-black'
+            >
+              <X size={18} />
+            </button>
+          ) : null}
+        </div>
+        <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+          {course?.course.title}
+        </h2>
+        <p className='mt-2 text-sm text-black/45'>
+          Continue through the course structure one unit at a time.
+        </p>
+      </div>
+
+      <div className='min-h-0 flex-1 overflow-y-auto p-4'>
+        <div className='space-y-6'>
+          {modules.map((module, moduleIndex) => (
+            <div key={module.id}>
+              <h3 className='mb-3 px-2 text-[11px] font-bold tracking-[0.24em] text-black/30 uppercase'>
+                Module {moduleIndex + 1}: {module.title}
+              </h3>
+              <div className='space-y-1'>
+                {module.units.map((unit) => {
+                  const isActive = unit.id === currentUnit.id;
+                  const isUnitComplete = unit.isComplete === 1;
+
+                  return (
+                    <Link
+                      key={unit.id}
+                      to={`/courses/${course?.course.id}/units/${unit.id}`}
+                      onClick={() => setShowSidebarDrawer(false)}
+                      className={cx(
+                        'flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-all',
+                        isActive
+                          ? 'bg-[#5A5A40] text-white shadow-lg shadow-[#5A5A40]/15'
+                          : 'text-black/60 hover:bg-black/5',
+                      )}
+                    >
+                      <span
+                        className={cx(
+                          'flex h-6 w-6 items-center justify-center rounded-full border text-[10px]',
+                          isActive
+                            ? 'border-white/20 bg-white/10'
+                            : isUnitComplete
+                              ? 'border-green-200 bg-green-50 text-green-600'
+                              : 'border-black/10 bg-white',
+                        )}
+                      >
+                        {isUnitComplete && !isActive ? (
+                          <CheckCircle size={12} />
+                        ) : isActive ? (
+                          <Play size={10} fill='currentColor' />
+                        ) : (
+                          unit.order + 1
+                        )}
+                      </span>
+                      <span className='flex-1'>{unit.title}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
   const toggleBookmark = () => {
     const bookmarks = JSON.parse(
       window.localStorage.getItem('coursex:bookmarked-units') ?? '[]',
@@ -614,85 +683,20 @@ const UnitPageContent = ({
   };
 
   return (
-    <div className='h-[calc(100vh-8rem)] overflow-hidden rounded-[36px] border border-black/5 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)]'>
-      <div className='flex h-full min-h-0'>
+    <div className='min-h-[calc(100vh-8rem)] overflow-hidden rounded-[24px] border border-black/5 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] md:h-[calc(100vh-8rem)] md:rounded-[36px]'>
+      <div className='flex h-full min-h-0 flex-col lg:flex-row'>
         <aside className='hidden w-80 border-r border-black/5 bg-[#faf9f4] lg:block'>
-          <div className='border-b border-black/5 p-6'>
-            <Link
-              to={`/courses/${course?.course.id}`}
-              className='mb-4 flex items-center gap-2 text-sm text-black/40 transition-colors hover:text-[#5A5A40]'
-            >
-              <ChevronLeft size={16} />
-              Back to Course
-            </Link>
-            <h2 className='font-serif text-2xl text-[#1a1a1a]'>
-              {course?.course.title}
-            </h2>
-            <p className='mt-2 text-sm text-black/45'>
-              Continue through the course structure one unit at a time.
-            </p>
-          </div>
-
-          <div className='h-[calc(100%-7.5rem)] overflow-y-auto p-4'>
-            <div className='space-y-6'>
-              {modules.map((module, moduleIndex) => (
-                <div key={module.id}>
-                  <h3 className='mb-3 px-2 text-[11px] font-bold tracking-[0.24em] text-black/30 uppercase'>
-                    Module {moduleIndex + 1}: {module.title}
-                  </h3>
-                  <div className='space-y-1'>
-                    {module.units.map((unit) => {
-                      const isActive = unit.id === currentUnit.id;
-                      const isUnitComplete = unit.isComplete === 1;
-
-                      return (
-                        <Link
-                          key={unit.id}
-                          to={`/courses/${course?.course.id}/units/${unit.id}`}
-                          className={cx(
-                            'flex w-full items-center gap-3 rounded-2xl px-3 py-3 text-sm transition-all',
-                            isActive
-                              ? 'bg-[#5A5A40] text-white shadow-lg shadow-[#5A5A40]/15'
-                              : 'text-black/60 hover:bg-black/5',
-                          )}
-                        >
-                          <span
-                            className={cx(
-                              'flex h-6 w-6 items-center justify-center rounded-full border text-[10px]',
-                              isActive
-                                ? 'border-white/20 bg-white/10'
-                                : isUnitComplete
-                                  ? 'border-green-200 bg-green-50 text-green-600'
-                                  : 'border-black/10 bg-white',
-                            )}
-                          >
-                            {isUnitComplete && !isActive ? (
-                              <CheckCircle size={12} />
-                            ) : isActive ? (
-                              <Play size={10} fill='currentColor' />
-                            ) : (
-                              unit.order + 1
-                            )}
-                          </span>
-                          <span className='flex-1'>{unit.title}</span>
-                        </Link>
-                      );
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
+          {renderUnitSidebar()}
         </aside>
 
-        <div className='flex min-w-0 flex-1 flex-col'>
-          <div className='sticky top-0 z-10 flex h-16 items-center justify-between border-b border-black/5 bg-white/90 px-4 backdrop-blur-md md:px-8'>
-            <div className='flex items-center gap-2'>
-              <div className='rounded-2xl bg-black/5 p-1'>
+        <div className='flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden'>
+          <div className='sticky top-0 z-10 flex flex-col gap-3 border-b border-black/5 bg-white/90 px-4 py-3 backdrop-blur-md md:px-8 xl:h-16 xl:flex-row xl:items-center xl:justify-between xl:py-0'>
+            <div className='min-w-0'>
+              <div className='flex w-full gap-1 overflow-x-auto rounded-2xl bg-black/5 p-1'>
                 <button
                   onClick={() => setMode('text')}
                   className={cx(
-                    'rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
+                    'flex shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
                     mode === 'text'
                       ? 'bg-white text-[#1a1a1a] shadow-sm'
                       : 'text-black/40',
@@ -709,7 +713,7 @@ const UnitPageContent = ({
                     audioRef.current?.load();
                   }}
                   className={cx(
-                    'rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
+                    'flex shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
                     mode === 'audio'
                       ? 'bg-white text-[#1a1a1a] shadow-sm'
                       : 'text-black/40',
@@ -723,7 +727,7 @@ const UnitPageContent = ({
                 <button
                   onClick={() => setMode('video')}
                   className={cx(
-                    'rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
+                    'flex shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
                     mode === 'video'
                       ? 'bg-white text-[#1a1a1a] shadow-sm'
                       : 'text-black/40',
@@ -737,7 +741,7 @@ const UnitPageContent = ({
                 <button
                   onClick={() => setMode('quiz')}
                   className={cx(
-                    'rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
+                    'flex shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
                     mode === 'quiz'
                       ? 'bg-white text-[#1a1a1a] shadow-sm'
                       : 'text-black/40',
@@ -756,7 +760,14 @@ const UnitPageContent = ({
               </div>
             </div>
 
-            <div className='hidden items-center gap-3 xl:flex'>
+            <div className='flex flex-wrap items-center gap-2 sm:gap-3 xl:flex-nowrap'>
+              <button
+                onClick={() => setShowSidebarDrawer(true)}
+                className='inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5 lg:hidden'
+              >
+                <PanelLeft size={18} />
+                Units
+              </button>
               <button
                 onClick={markAsComplete}
                 className={cx(
@@ -815,8 +826,7 @@ const UnitPageContent = ({
                     </button>
                     <button
                       onClick={() => {
-                        setShowMoreMenu(false);
-                        setShowQuiz(true);
+                        launchTakeQuiz();
                       }}
                       className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
                     >
@@ -854,8 +864,8 @@ const UnitPageContent = ({
             </div>
           </div>
 
-          <div className='flex min-h-0 flex-1'>
-            <div className='min-w-0 flex-1 overflow-y-auto p-6 md:p-10 xl:p-12'>
+          <div className='flex min-h-0 flex-1 overflow-hidden'>
+            <div className='min-w-0 flex-1 overflow-y-auto p-6 md:min-h-0 md:p-10 xl:p-12'>
               <div className='mx-auto max-w-4xl'>
                 <div className='mb-8 flex flex-wrap items-center gap-3 text-sm text-black/40'>
                   <Link
@@ -1049,7 +1059,7 @@ const UnitPageContent = ({
                               disabled={
                                 startQuizSessionFetcher.state !== 'idle'
                               }
-                              className='rounded-2xl bg-[#5A5A40] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#4a4a35] disabled:opacity-50'
+                              className='w-full rounded-2xl bg-[#5A5A40] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#4a4a35] disabled:opacity-50 md:w-auto'
                             >
                               {startQuizSessionFetcher.state !== 'idle'
                                 ? 'Preparing Quiz...'
@@ -1220,11 +1230,11 @@ const UnitPageContent = ({
                     </motion.div>
                   ) : null}
                 </AnimatePresence>
-                <div className='mt-4 flex items-center gap-3'>
+                <div className='mt-4 flex flex-col gap-3 sm:flex-row sm:items-center'>
                   {previousUnit ? (
                     <Link
                       to={`/courses/${course?.course.id}/units/${previousUnit.id}`}
-                      className='inline-flex items-center gap-2 rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
+                      className='inline-flex items-center justify-center gap-2 rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
                     >
                       <ChevronLeft size={16} />
                       Previous
@@ -1233,7 +1243,7 @@ const UnitPageContent = ({
                   {nextUnit ? (
                     <Link
                       to={`/courses/${course?.course.id}/units/${nextUnit.id}`}
-                      className='inline-flex items-center gap-2 rounded-2xl bg-[#5A5A40] px-4 py-3 text-sm font-bold text-white transition-all hover:bg-[#4a4a35]'
+                      className='inline-flex items-center justify-center gap-2 rounded-2xl bg-[#5A5A40] px-4 py-3 text-sm font-bold text-white transition-all hover:bg-[#4a4a35]'
                     >
                       Next Unit
                       <ChevronRight size={16} />
@@ -1322,6 +1332,28 @@ const UnitPageContent = ({
       </div>
 
       <AnimatePresence>
+        {showSidebarDrawer ? (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowSidebarDrawer(false)}
+              className='fixed inset-0 z-40 bg-black/40 backdrop-blur-sm lg:hidden'
+            />
+            <motion.aside
+              initial={{ x: -320 }}
+              animate={{ x: 0 }}
+              exit={{ x: -320 }}
+              className='fixed inset-y-0 left-0 z-50 w-[min(22rem,88vw)] border-r border-black/5 bg-[#faf9f4] shadow-2xl lg:hidden'
+            >
+              {renderUnitSidebar(true)}
+            </motion.aside>
+          </>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
         {showSummary ? (
           <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
             <motion.div
@@ -1359,67 +1391,6 @@ const UnitPageContent = ({
                 className='mt-8 w-full rounded-2xl bg-[#5A5A40] py-4 font-bold text-white transition-colors hover:bg-[#4a4a35]'
               >
                 Close Summary
-              </button>
-            </motion.div>
-          </div>
-        ) : null}
-      </AnimatePresence>
-
-      <AnimatePresence>
-        {showQuiz ? (
-          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.95 }}
-              className='max-h-[80vh] w-full max-w-3xl overflow-y-auto rounded-[32px] bg-white p-8 shadow-2xl'
-            >
-              <div className='mb-8 flex items-center justify-between'>
-                <div>
-                  <h2 className='font-serif text-2xl text-[#1a1a1a]'>
-                    Review Prompts
-                  </h2>
-                  <p className='mt-2 text-sm text-black/45'>
-                    Use these questions to test recall and deepen understanding.
-                  </p>
-                </div>
-                <button
-                  onClick={() => setShowQuiz(false)}
-                  className='text-black/40 transition-colors hover:text-black'
-                >
-                  <ChevronRight size={22} className='rotate-90' />
-                </button>
-              </div>
-
-              <div className='space-y-5'>
-                {quizQuestions.length > 0 ? (
-                  quizQuestions.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className='rounded-2xl border border-black/5 bg-[#f5f5f0] p-6'
-                    >
-                      <p className='mb-3 font-bold text-[#1a1a1a]'>
-                        {index + 1}. {item.prompt}
-                      </p>
-                      {item.context ? (
-                        <p className='text-sm leading-7 text-black/60'>
-                          Reference: {item.context}
-                        </p>
-                      ) : null}
-                    </div>
-                  ))
-                ) : (
-                  <div className='rounded-2xl border border-dashed border-black/10 bg-[#f5f5f0] p-6 text-sm text-black/55'>
-                    Add more unit content to generate richer review prompts.
-                  </div>
-                )}
-              </div>
-
-              <button
-                onClick={() => setShowQuiz(false)}
-                className='mt-8 w-full rounded-2xl bg-[#5A5A40] py-4 font-bold text-white transition-colors hover:bg-[#4a4a35]'
-              >
-                Back to Lesson
               </button>
             </motion.div>
           </div>
