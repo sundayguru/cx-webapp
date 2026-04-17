@@ -1,5 +1,5 @@
 import { Link } from 'react-router';
-import { BookOpen, Clock, Edit3, FileText, Sparkles } from 'lucide-react';
+import { BookOpen, Clock, Edit3, FileText, Sparkles, Send } from 'lucide-react';
 import type { SidebarProps } from './types';
 
 export const CourseSidebar = ({
@@ -17,6 +17,7 @@ export const CourseSidebar = ({
   onOpenSplitWarning,
   onOpenGenerateWarning,
   onOpenGenerateUnitsModal,
+  onPublish,
 }: SidebarProps) => {
   return (
     <aside className='space-y-6'>
@@ -98,6 +99,15 @@ export const CourseSidebar = ({
               <Sparkles size={20} />
               {isGeneratingUnits ? 'Generating Units...' : 'Generate Units'}
             </button>
+            {course.status !== 'published' && onPublish ? (
+              <button
+                onClick={onPublish}
+                className='flex w-full items-center justify-center gap-2 rounded-2xl bg-green-600 py-4 text-lg font-bold text-white shadow-md shadow-green-600/25 transition-all hover:bg-green-700'
+              >
+                <Send size={20} />
+                Publish Course
+              </button>
+            ) : null}
           </div>
         ) : (
           <div className='space-y-3'>

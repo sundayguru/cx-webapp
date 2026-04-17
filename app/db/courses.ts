@@ -31,6 +31,20 @@ export const createCourse = async (
   }
 };
 
+export const publishCourse = async (courseId: string): Promise<boolean> => {
+  try {
+    const db = getDb();
+    await db
+      .update(courses)
+      .set({ status: 'published', updatedAt: new Date().toISOString() })
+      .where(eq(courses.id, courseId));
+    return true;
+  } catch (e) {
+    logError(e, 'Error publishing course');
+    return false;
+  }
+};
+
 export const getCourseById = async (id: string) => {
   try {
     const db = getDb();
@@ -48,7 +62,9 @@ export const getCourseById = async (id: string) => {
       .where(eq(courses.id, id))
       .limit(1);
 
-    if (results.length === 0) {return null;}
+    if (results.length === 0) {
+      return null;
+    }
 
     const courseData = results[0];
 
@@ -107,6 +123,7 @@ type CourseFilters = {
   level?: string;
   category?: string;
   createdBy?: string;
+  publishedOnly?: boolean;
 };
 
 export const getCourses = async (filters?: CourseFilters) => {
@@ -116,6 +133,10 @@ export const getCourses = async (filters?: CourseFilters) => {
 
     if (filters?.createdBy) {
       conditions.push(eq(courses.createdBy, filters.createdBy));
+    }
+
+    if (filters?.publishedOnly) {
+      conditions.push(eq(courses.status, 'published'));
     }
 
     if (filters?.search) {

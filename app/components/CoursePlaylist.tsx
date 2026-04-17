@@ -99,14 +99,18 @@ export const CoursePlaylist = ({
   };
 
   const handleSeek = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!mediaRef.current || !mediaRef.current.duration) {return;}
+    if (!mediaRef.current || !mediaRef.current.duration) {
+      return;
+    }
     const rect = e.currentTarget.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const percentage = x / rect.width;
     mediaRef.current.currentTime = percentage * mediaRef.current.duration;
   };
 
-  if (!isOpen) {return null;}
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <AnimatePresence>
@@ -116,7 +120,9 @@ export const CoursePlaylist = ({
         exit={{ opacity: 0 }}
         className='fixed inset-0 z-[100] flex flex-col bg-black'
         onClick={(e) => {
-          if (e.target === e.currentTarget) {onClose();}
+          if (e.target === e.currentTarget) {
+            onClose();
+          }
         }}
       >
         <motion.div

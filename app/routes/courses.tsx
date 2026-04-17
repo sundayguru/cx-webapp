@@ -36,6 +36,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     schoolId,
     authorId,
     createdBy: mine && user ? user.id : undefined,
+    publishedOnly: !mine || !user,
   };
 
   const courses = await getCourses(filters);
@@ -59,7 +60,6 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 export default function CoursesPage({ loaderData }: Route.ComponentProps) {
   const { courses, filters, metadata, user } = loaderData;
   const submit = useSubmit();
-  const navigation = useNavigation();
   const [showFilters, setShowFilters] = useState(false);
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {

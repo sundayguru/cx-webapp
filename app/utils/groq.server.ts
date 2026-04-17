@@ -197,9 +197,13 @@ export const generateUnitAudioScriptWithGroq = async (
 export async function transcribeAudioGroqFromUrl(
   audioUrl: string,
 ): Promise<any> {
-  if (!audioUrl) {throw new Error('audioUrl is required');}
+  if (!audioUrl) {
+    throw new Error('audioUrl is required');
+  }
   const res = await fetch(audioUrl);
-  if (!res.ok) {throw new Error('Failed to fetch audio');}
+  if (!res.ok) {
+    throw new Error('Failed to fetch audio');
+  }
   const contentTypeHeader = res.headers.get('content-type') || '';
   const arrayBuffer = await res.arrayBuffer();
   // Determine a supported extension for Groq Whisper

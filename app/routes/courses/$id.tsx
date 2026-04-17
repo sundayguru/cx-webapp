@@ -71,6 +71,7 @@ export default function CourseDetailsPage({
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
   const moduleRawTextUpdateFetcher = useFetcher();
+  const publishFetcher = useFetcher();
 
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
@@ -151,6 +152,16 @@ export default function CourseDetailsPage({
     );
   };
 
+  const handlePublish = () => {
+    publishFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/publish`,
+      },
+    );
+  };
+
   const handleExtractRawText = () => {
     rawTextFetcher.submit(
       {},
@@ -192,7 +203,9 @@ export default function CourseDetailsPage({
   };
 
   const handleUpdateModuleRawText = () => {
-    if (!editingModuleId) {return;}
+    if (!editingModuleId) {
+      return;
+    }
     moduleRawTextUpdateFetcher.submit(
       { moduleId: editingModuleId, rawText: editableModuleRawText },
       {
@@ -447,6 +460,29 @@ export default function CourseDetailsPage({
     }
   }, [showToast, enrollFetcher]);
 
+  const handledPublishResult = useRef<string | null>(null);
+  useEffect(() => {
+    if (publishFetcher.state === 'idle' && publishFetcher.data) {
+      const result = publishFetcher.data as {
+        success?: boolean;
+        error?: string;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledPublishResult.current !== resultKey) {
+        handledPublishResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: 'Course published successfully!',
+        });
+        window.location.reload();
+      } else if (result.error && handledPublishResult.current !== resultKey) {
+        handledPublishResult.current = resultKey;
+        showToast({ tone: 'error', message: result.error });
+      }
+    }
+  }, [showToast, publishFetcher]);
+
   if (!data) {
     return (
       <div className='mx-auto max-w-4xl px-4 py-12'>
@@ -537,6 +573,7 @@ export default function CourseDetailsPage({
           onOpenSplitWarning={() => setIsSplitWarningOpen(true)}
           onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
+          onPublish={handlePublish}
         />
       </div>
 

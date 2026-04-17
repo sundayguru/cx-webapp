@@ -46,6 +46,7 @@ export type SidebarProps = {
   onOpenSplitWarning: () => void;
   onOpenGenerateWarning: () => void;
   onOpenGenerateUnitsModal: () => void;
+  onPublish?: () => void;
 };
 
 export type CourseContentProps = {
