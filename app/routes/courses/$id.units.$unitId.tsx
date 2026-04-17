@@ -46,6 +46,8 @@ import {
   type QuizPerformanceStat,
   type QuizSessionAnswer,
 } from '~/utils/quiz-session';
+import { getChatHistoryByUnitId } from '~/db/chat-history';
+import type { SelectChatMessage } from '~/db/schemas';
 
 type CourseModuleWithUnits = SelectModule & {
   units: SelectUnit[];
@@ -58,10 +60,6 @@ type FlattenedUnit = SelectUnit & {
   unitIndex: number;
 };
 
-type ChatMessage = {
-  role: 'user' | 'assistant';
-  text: string;
-};
 
 type LoaderData = {
   course: Awaited<ReturnType<typeof getCourseById>>;
@@ -72,6 +70,7 @@ type LoaderData = {
   quizzes: SelectQuiz[];
   quizPerformance: Record<string, QuizPerformanceStat>;
   user: User | null;
+  chatHistory: SelectChatMessage[]
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
@@ -151,6 +150,8 @@ export const loader = async ({
     quizSessions,
   );
 
+  const chatHistory = await getChatHistoryByUnitId(unitId);
+
   return {
     course: courseData,
     modules,
@@ -160,6 +161,7 @@ export const loader = async ({
     quizzes,
     quizPerformance,
     user,
+    chatHistory
   };
 };
 
@@ -186,6 +188,7 @@ const UnitPageContent = ({
   quizzes,
   quizPerformance,
   user,
+  chatHistory
 }: LoaderData) => {
   const [mode, setMode] = useState<'text' | 'audio' | 'video' | 'quiz'>('text');
   const [showChat, setShowChat] = useState(false);
@@ -248,8 +251,6 @@ const UnitPageContent = ({
   const [isBookmarked, setIsBookmarked] = useState(() =>
     readStoredUnitIds('coursex:bookmarked-units').includes(currentUnit.id),
   );
-  const [question, setQuestion] = useState('');
-  const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
   const [quizPerformanceState, setQuizPerformanceState] =
     useState(quizPerformance);
@@ -778,26 +779,6 @@ const UnitPageContent = ({
     );
   };
 
-  const handleAskQuestion = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!question.trim()) {
-      return;
-    }
-
-    const userMessage: ChatMessage = {
-      role: 'user',
-      text: question.trim(),
-    };
-    const answer = answerFromContent(currentUnit.content ?? '', question);
-    const assistantMessage: ChatMessage = {
-      role: 'assistant',
-      text: answer,
-    };
-
-    setChatHistory((history) => [...history, userMessage, assistantMessage]);
-    setQuestion('');
-  };
 
   return (
     <div className='min-h-[calc(100vh-8rem)] overflow-hidden rounded-[24px] border border-black/5 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] md:h-[calc(100vh-8rem)] md:rounded-[36px]'>
@@ -1473,6 +1454,10 @@ const UnitPageContent = ({
               courseId={course?.course.id ?? ''}
               isOpen={showChat}
               onClose={() => setShowChat(false)}
+              initialMessages={chatHistory.map((message) => ({
+                content: message.content,
+                role: message.role as 'user' | 'assistant'
+              }))}
             />
           </div>
         </div>
