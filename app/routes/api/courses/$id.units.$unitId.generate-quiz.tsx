@@ -89,17 +89,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   try {
-    const generatedQuiz = provider === "google" ? await generateQuiz(
-      unit.rawText,
-      existingQuestions,
-      apiKey,
-      model,
-    ) :  await generateQuizWithGroq(
-       unit.rawText,
-      existingQuestions,
-      apiKey,
-      model,
-    );
+    const generatedQuiz =
+      provider === 'google'
+        ? await generateQuiz(unit.rawText, existingQuestions, apiKey, model)
+        : await generateQuizWithGroq(
+            unit.rawText,
+            existingQuestions,
+            apiKey,
+            model,
+          );
 
     if (!generatedQuiz.quizzes || generatedQuiz.quizzes.length === 0) {
       return data(
@@ -124,7 +122,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       count: newQuizzes.length,
     });
   } catch (err: unknown) {
-    console.log(err)
+    console.log(err);
     const message = err instanceof Error ? err.message : 'Generation failed';
     return data({ error: message }, { status: 500 });
   }

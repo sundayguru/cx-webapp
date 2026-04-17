@@ -8,6 +8,7 @@ export const createQuiz = async (
   unitId: string,
   question: string,
   questionType: 'openText' | 'choice',
+  answer: string,
   options?: string[],
 ): Promise<SelectQuiz | null> => {
   try {
@@ -17,6 +18,7 @@ export const createQuiz = async (
       unitId,
       question,
       questionType,
+      answer,
       options: options ? JSON.stringify(options) : null,
     };
 

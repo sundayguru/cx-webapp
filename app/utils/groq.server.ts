@@ -126,8 +126,8 @@ export const generateQuizWithGroq = async (
   apiKey: string,
   model: string,
 ): Promise<QuizResponse> => {
-   const prompt = buildGenerateQuizPrompt(text, existingQuestions);
-   const response = await GroqService.generate({
+  const prompt = buildGenerateQuizPrompt(text, existingQuestions);
+  const response = await GroqService.generate({
     apiKey,
     model,
     systemPrompt:
@@ -138,8 +138,6 @@ export const generateQuizWithGroq = async (
 
   return parseQuizResponse(response.text);
 };
-
-
 
 export const generateModuleUnitsWithGroq = async (
   text: string,

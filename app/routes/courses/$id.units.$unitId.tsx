@@ -730,6 +730,13 @@ const UnitPageContent = ({
                               key={quiz.id}
                               className='rounded-2xl border border-black/5 bg-[#faf9f4] p-6'
                             >
+                              <div className='mb-3 flex items-center gap-2'>
+                                <span className='rounded-full bg-black/5 px-2.5 py-1 text-xs font-medium text-black/60'>
+                                  {quiz.questionType === 'choice'
+                                    ? 'Multiple Choice'
+                                    : 'Open Text'}
+                                </span>
+                              </div>
                               <p className='mb-4 font-medium text-[#1a1a1a]'>
                                 {index + 1}. {quiz.question}
                               </p>
@@ -737,28 +744,53 @@ const UnitPageContent = ({
                               quiz.options ? (
                                 <div className='space-y-2'>
                                   {JSON.parse(quiz.options).map(
-                                    (option: string, optIndex: number) => (
-                                      <div
-                                        key={optIndex}
-                                        className='flex items-center gap-3 rounded-xl border border-black/10 bg-white px-4 py-3'
-                                      >
-                                        <span className='flex h-6 w-6 items-center justify-center rounded-full bg-black/5 text-xs font-bold'>
-                                          {String.fromCharCode(65 + optIndex)}
-                                        </span>
-                                        <span className='text-sm text-[#1a1a1a]'>
-                                          {option}
-                                        </span>
-                                      </div>
-                                    ),
+                                    (option: string, optIndex: number) => {
+                                      const isCorrect =
+                                        quiz.answer === option ||
+                                        quiz.answer === String(optIndex);
+                                      return (
+                                        <div
+                                          key={optIndex}
+                                          className={cx(
+                                            'flex items-center gap-3 rounded-xl border px-4 py-3',
+                                            isCorrect
+                                              ? 'border-green-500/50 bg-green-50'
+                                              : 'border-black/10 bg-white',
+                                          )}
+                                        >
+                                          <span
+                                            className={cx(
+                                              'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                                              isCorrect
+                                                ? 'bg-green-500 text-white'
+                                                : 'bg-black/5',
+                                            )}
+                                          >
+                                            {String.fromCharCode(65 + optIndex)}
+                                          </span>
+                                          <span
+                                            className={cx(
+                                              'text-sm',
+                                              isCorrect
+                                                ? 'font-medium text-green-800'
+                                                : 'text-[#1a1a1a]',
+                                            )}
+                                          >
+                                            {option}
+                                          </span>
+                                        </div>
+                                      );
+                                    },
                                   )}
                                 </div>
                               ) : (
                                 <div className='rounded-xl border border-black/10 bg-white px-4 py-3'>
-                                  <textarea
-                                    className='w-full resize-none border-none bg-transparent text-sm text-black/60 focus:outline-none'
-                                    placeholder='Write your answer here...'
-                                    rows={3}
-                                  />
+                                  <p className='mb-1 text-xs font-medium text-black/40'>
+                                    Answer:
+                                  </p>
+                                  <p className='text-sm text-[#1a1a1a]'>
+                                    {quiz.answer}
+                                  </p>
                                 </div>
                               )}
                             </div>
