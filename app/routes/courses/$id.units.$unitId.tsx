@@ -185,6 +185,8 @@ const UnitPageContent = ({
   const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
   const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [quizPage, setQuizPage] = useState(1);
+  const QUIZS_PER_PAGE = 10;
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
   const [selectedModel, setSelectedModel] = useState(
@@ -330,7 +332,7 @@ const UnitPageContent = ({
           message: result.error,
         });
       }
-      clearQuizzesFetcher.reset()
+      clearQuizzesFetcher.reset();
     }
   }, [clearQuizzesFetcher.data, showToast]);
 
@@ -772,77 +774,125 @@ const UnitPageContent = ({
                       </div>
 
                       {quizzes.length > 0 ? (
-                        <div className='space-y-6'>
-                          {quizzes.map((quiz, index) => (
-                            <div
-                              key={quiz.id}
-                              className='rounded-2xl border border-black/5 bg-[#faf9f4] p-6'
-                            >
-                              <div className='mb-3 flex items-center gap-2'>
-                                <span className='rounded-full bg-black/5 px-2.5 py-1 text-xs font-medium text-black/60'>
-                                  {quiz.questionType === 'choice'
-                                    ? 'Multiple Choice'
-                                    : 'Open Text'}
-                                </span>
-                              </div>
-                              <p className='mb-4 font-medium text-[#1a1a1a]'>
-                                {index + 1}. {quiz.question}
-                              </p>
-                              {quiz.questionType === 'choice' &&
-                              quiz.options ? (
-                                <div className='space-y-2'>
-                                  {JSON.parse(quiz.options).map(
-                                    (option: string, optIndex: number) => {
-                                      const isCorrect =
-                                        quiz.answer === option ||
-                                        quiz.answer === String(optIndex);
-                                      return (
-                                        <div
-                                          key={optIndex}
-                                          className={cx(
-                                            'flex items-center gap-3 rounded-xl border px-4 py-3',
-                                            isCorrect
-                                              ? 'border-green-500/50 bg-green-50'
-                                              : 'border-black/10 bg-white',
-                                          )}
-                                        >
-                                          <span
-                                            className={cx(
-                                              'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
-                                              isCorrect
-                                                ? 'bg-green-500 text-white'
-                                                : 'bg-black/5',
-                                            )}
-                                          >
-                                            {String.fromCharCode(65 + optIndex)}
-                                          </span>
-                                          <span
-                                            className={cx(
-                                              'text-sm',
-                                              isCorrect
-                                                ? 'font-medium text-green-800'
-                                                : 'text-[#1a1a1a]',
-                                            )}
-                                          >
-                                            {option}
-                                          </span>
-                                        </div>
-                                      );
-                                    },
+                        <div>
+                          <div className='space-y-6'>
+                            {quizzes
+                              .slice(
+                                (quizPage - 1) * QUIZS_PER_PAGE,
+                                quizPage * QUIZS_PER_PAGE,
+                              )
+                              .map((quiz, index) => (
+                                <div
+                                  key={quiz.id}
+                                  className='rounded-2xl border border-black/5 bg-[#faf9f4] p-6'
+                                >
+                                  <div className='mb-3 flex items-center gap-2'>
+                                    <span className='rounded-full bg-black/5 px-2.5 py-1 text-xs font-medium text-black/60'>
+                                      {quiz.questionType === 'choice'
+                                        ? 'Multiple Choice'
+                                        : 'Open Text'}
+                                    </span>
+                                  </div>
+                                  <p className='mb-4 font-medium text-[#1a1a1a]'>
+                                    {(quizPage - 1) * QUIZS_PER_PAGE +
+                                      index +
+                                      1}
+                                    . {quiz.question}
+                                  </p>
+                                  {quiz.questionType === 'choice' &&
+                                  quiz.options ? (
+                                    <div className='space-y-2'>
+                                      {JSON.parse(quiz.options).map(
+                                        (option: string, optIndex: number) => {
+                                          const isCorrect =
+                                            quiz.answer === option ||
+                                            quiz.answer === String(optIndex);
+                                          return (
+                                            <div
+                                              key={optIndex}
+                                              className={cx(
+                                                'flex items-center gap-3 rounded-xl border px-4 py-3',
+                                                isCorrect
+                                                  ? 'border-green-500/50 bg-green-50'
+                                                  : 'border-black/10 bg-white',
+                                              )}
+                                            >
+                                              <span
+                                                className={cx(
+                                                  'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                                                  isCorrect
+                                                    ? 'bg-green-500 text-white'
+                                                    : 'bg-black/5',
+                                                )}
+                                              >
+                                                {String.fromCharCode(
+                                                  65 + optIndex,
+                                                )}
+                                              </span>
+                                              <span
+                                                className={cx(
+                                                  'text-sm',
+                                                  isCorrect
+                                                    ? 'font-medium text-green-800'
+                                                    : 'text-[#1a1a1a]',
+                                                )}
+                                              >
+                                                {option}
+                                              </span>
+                                            </div>
+                                          );
+                                        },
+                                      )}
+                                    </div>
+                                  ) : (
+                                    <div className='rounded-xl border border-black/10 bg-white px-4 py-3'>
+                                      <p className='mb-1 text-xs font-medium text-black/40'>
+                                        Answer:
+                                      </p>
+                                      <p className='text-sm text-[#1a1a1a]'>
+                                        {quiz.answer}
+                                      </p>
+                                    </div>
                                   )}
                                 </div>
-                              ) : (
-                                <div className='rounded-xl border border-black/10 bg-white px-4 py-3'>
-                                  <p className='mb-1 text-xs font-medium text-black/40'>
-                                    Answer:
-                                  </p>
-                                  <p className='text-sm text-[#1a1a1a]'>
-                                    {quiz.answer}
-                                  </p>
-                                </div>
-                              )}
+                              ))}
+                          </div>
+                          {quizzes.length > QUIZS_PER_PAGE && (
+                            <div className='mt-6 flex items-center justify-center gap-2'>
+                              <button
+                                onClick={() =>
+                                  setQuizPage((p) => Math.max(1, p - 1))
+                                }
+                                disabled={quizPage === 1}
+                                className='rounded-lg border border-black/10 px-3 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                              >
+                                Previous
+                              </button>
+                              <span className='px-3 text-sm text-black/60'>
+                                Page {quizPage} of{' '}
+                                {Math.ceil(quizzes.length / QUIZS_PER_PAGE)}
+                              </span>
+                              <button
+                                onClick={() =>
+                                  setQuizPage((p) =>
+                                    Math.min(
+                                      Math.ceil(
+                                        quizzes.length / QUIZS_PER_PAGE,
+                                      ),
+                                      p + 1,
+                                    ),
+                                  )
+                                }
+                                disabled={
+                                  quizPage >=
+                                  Math.ceil(quizzes.length / QUIZS_PER_PAGE)
+                                }
+                                className='rounded-lg border border-black/10 px-3 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                              >
+                                Next
+                              </button>
                             </div>
-                          ))}
+                          )}
                         </div>
                       ) : (
                         <div className='py-12 text-center text-black/50'>

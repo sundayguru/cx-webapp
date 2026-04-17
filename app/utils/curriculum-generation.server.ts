@@ -178,6 +178,7 @@ Rules:
 - Questions should be clear and unambiguous
 - answer must contain the valid response to the question or the option value to the correct option for the question
 - open text question answer should not be more than 3 words
+- Ensure to include more choice questions
 
 TEXT TO ANALYZE:
 ${rawText.slice(0, 40000)}
