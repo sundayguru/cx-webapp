@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
-import { Edit3, MessageSquare, Play } from 'lucide-react';
+import { MessageSquare, MoreVertical, Play } from 'lucide-react';
 import type { CourseModuleWithUnits } from './types';
 
 type CourseContentProps = {
@@ -19,6 +20,11 @@ export const CourseContent = ({
   onSplitModuleRawText,
   onOpenModuleRawTextModal,
 }: CourseContentProps) => {
+  const [openMenuModuleId, setOpenMenuModuleId] = useState<string | null>(null);
+
+  const toggleMenu = (moduleId: string) => {
+    setOpenMenuModuleId(openMenuModuleId === moduleId ? null : moduleId);
+  };
   return (
     <div className='grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_320px]'>
       <section className='rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_25px_70px_-35px_rgba(0,0,0,0.18)]'>
@@ -58,28 +64,42 @@ export const CourseContent = ({
                 </div>
                 <div className='flex items-center gap-3'>
                   {isInstructor && module.rawText?.trim() ? (
-                    <>
+                    <div className='relative'>
                       <button
-                        onClick={() =>
-                          onOpenModuleRawTextModal(
-                            module.id,
-                            module.rawText || '',
-                          )
-                        }
-                        className='rounded-xl border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-all hover:bg-black/5'
+                        onClick={() => toggleMenu(module.id)}
+                        className='flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-black/60 transition-all hover:bg-black/5'
                       >
-                        Edit
+                        <MoreVertical size={16} />
                       </button>
-                      <button
-                        onClick={() => onSplitModuleRawText(module.id)}
-                        disabled={isSplittingModuleRawText}
-                        className='rounded-xl border border-black/10 px-3 py-1.5 text-xs font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
-                      >
-                        {isSplittingModuleRawText
-                          ? 'Splitting...'
-                          : 'Split into Units'}
-                      </button>
-                    </>
+                      {openMenuModuleId === module.id && (
+                        <div className='absolute top-10 right-0 z-20 min-w-[160px] rounded-xl border border-black/10 bg-white py-1 shadow-lg'>
+                          <button
+                            onClick={() => {
+                              onOpenModuleRawTextModal(
+                                module.id,
+                                module.rawText || '',
+                              );
+                              setOpenMenuModuleId(null);
+                            }}
+                            className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                          >
+                            Edit Raw Text
+                          </button>
+                          <button
+                            onClick={() => {
+                              onSplitModuleRawText(module.id);
+                              setOpenMenuModuleId(null);
+                            }}
+                            disabled={isSplittingModuleRawText}
+                            className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                          >
+                            {isSplittingModuleRawText
+                              ? 'Splitting...'
+                              : 'Split into Units'}
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   ) : null}
                   <span className='rounded-full bg-black/5 px-3 py-1 text-xs font-bold tracking-wider text-black/45 uppercase'>
                     {module.units.length} Units
