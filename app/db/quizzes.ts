@@ -1,6 +1,12 @@
-import { eq, asc } from 'drizzle-orm';
+import { and, asc, eq } from 'drizzle-orm';
 import { getDb } from './connection';
-import { quizzes, type InsertQuiz, type SelectQuiz } from './schemas';
+import {
+  quizzes,
+  quizSessions,
+  type InsertQuiz,
+  type SelectQuiz,
+  type SelectQuizSession,
+} from './schemas';
 import { v4 as uuidv4 } from 'uuid';
 import { logError } from '~/utils/logger';
 
@@ -35,7 +41,7 @@ export const getQuizzesByUnitId = async (
 ): Promise<SelectQuiz[]> => {
   try {
     const db = getDb();
-    return db
+    return await db
       .select()
       .from(quizzes)
       .where(eq(quizzes.unitId, unitId))
@@ -73,5 +79,92 @@ export const createManyQuizzes = async (
   } catch (e) {
     logError(e, 'Error creating many quizzes');
     return false;
+  }
+};
+
+export const createQuizSession = async (
+  unitId: string,
+  userId: string,
+  mode: 'learning' | 'exam',
+  timerEnabled: boolean,
+  totalQuestions: number,
+): Promise<SelectQuizSession | null> => {
+  try {
+    const db = getDb();
+    const session = {
+      id: uuidv4(),
+      unitId,
+      userId,
+      mode,
+      timerEnabled: timerEnabled ? 1 : 0,
+      totalQuestions,
+      correctAnswers: 0,
+      timeSpentSeconds: 0,
+    };
+    await db.insert(quizSessions).values(session);
+    return session as SelectQuizSession;
+  } catch (e) {
+    logError(e, 'Error creating quiz session');
+    return null;
+  }
+};
+
+export const updateQuizSession = async (
+  sessionId: string,
+  correctAnswers: number,
+  timeSpentSeconds: number,
+  answers: string,
+): Promise<boolean> => {
+  try {
+    const db = getDb();
+    await db
+      .update(quizSessions)
+      .set({
+        correctAnswers,
+        timeSpentSeconds,
+        answers,
+        completedAt: new Date().toISOString(),
+      })
+      .where(eq(quizSessions.id, sessionId));
+    return true;
+  } catch (e) {
+    logError(e, 'Error updating quiz session');
+    return false;
+  }
+};
+
+export const getQuizSessionById = async (
+  sessionId: string,
+): Promise<SelectQuizSession | null> => {
+  try {
+    const db = getDb();
+    const [session] = await db
+      .select()
+      .from(quizSessions)
+      .where(eq(quizSessions.id, sessionId))
+      .limit(1);
+    return session ?? null;
+  } catch (e) {
+    logError(e, 'Error getting quiz session');
+    return null;
+  }
+};
+
+export const getQuizSessionsByUnitAndUser = async (
+  unitId: string,
+  userId: string,
+): Promise<SelectQuizSession[]> => {
+  try {
+    const db = getDb();
+    return await db
+      .select()
+      .from(quizSessions)
+      .where(
+        and(eq(quizSessions.unitId, unitId), eq(quizSessions.userId, userId)),
+      )
+      .orderBy(asc(quizSessions.startedAt));
+  } catch (e) {
+    logError(e, 'Error getting quiz sessions');
+    return [];
   }
 };

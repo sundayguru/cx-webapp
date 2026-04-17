@@ -1,0 +1,271 @@
+import { useEffect, useMemo, useState } from 'react';
+import { motion } from 'motion/react';
+import { CheckCircle, ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
+import type { SelectQuiz } from '~/db/schemas/quizzes';
+import { getQuizDisplayAnswer } from '~/utils/quiz-session';
+
+type QuizTakerViewProps = {
+  quizzes: SelectQuiz[];
+  mode: 'learning' | 'exam';
+  timerEnabled: boolean;
+  currentIndex: number;
+  userAnswers: (string | null)[];
+  onAnswer: (answer: string) => void;
+  onNext: () => void;
+  onPrev: () => void;
+  onFinish: () => void;
+  onClose: () => void;
+};
+
+const QUESTION_TIMER_SECONDS = 30;
+
+const parseQuizOptions = (options: string | null) => {
+  if (!options) {
+    return [] as string[];
+  }
+
+  try {
+    const parsed = JSON.parse(options) as unknown;
+    return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+  } catch {
+    return [];
+  }
+};
+
+export const QuizTakerView = ({
+  quizzes,
+  mode,
+  timerEnabled,
+  currentIndex,
+  userAnswers,
+  onAnswer,
+  onNext,
+  onPrev,
+  onFinish,
+  onClose,
+}: QuizTakerViewProps) => {
+  const [isRevealed, setIsRevealed] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(QUESTION_TIMER_SECONDS);
+
+  const currentQuiz = quizzes[currentIndex];
+  const currentAnswer = userAnswers[currentIndex] ?? '';
+  const isLastQuestion = currentIndex === quizzes.length - 1;
+  const isLearningMode = mode === 'learning';
+  const options = useMemo(
+    () => parseQuizOptions(currentQuiz?.options ?? null),
+    [currentQuiz?.options],
+  );
+
+  useEffect(() => {
+    if (!timerEnabled || timeRemaining <= 0) {
+      return;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setTimeRemaining((value) => value - 1);
+    }, 1000);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [timeRemaining, timerEnabled]);
+
+  useEffect(() => {
+    if (!timerEnabled || timeRemaining > 0) {
+      return;
+    }
+
+    if (isLastQuestion) {
+      onFinish();
+      return;
+    }
+
+    onNext();
+  }, [isLastQuestion, onFinish, onNext, timeRemaining, timerEnabled]);
+
+  if (!currentQuiz) {
+    return null;
+  }
+
+  const handlePrimaryAction = () => {
+    if (isLearningMode && !isRevealed) {
+      setIsRevealed(true);
+      return;
+    }
+
+    if (isLastQuestion) {
+      onFinish();
+      return;
+    }
+
+    onNext();
+  };
+
+  const primaryLabel = isLearningMode
+    ? isRevealed
+      ? isLastQuestion
+        ? 'See Results'
+        : 'Next Question'
+      : 'Check Answer'
+    : isLastQuestion
+      ? 'Finish Quiz'
+      : 'Next Question';
+
+  return (
+    <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm'>
+      <motion.div
+        initial={{ opacity: 0, y: 16, scale: 0.98 }}
+        animate={{ opacity: 1, y: 0, scale: 1 }}
+        exit={{ opacity: 0, y: 16, scale: 0.98 }}
+        className='flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl'
+      >
+        <div className='border-b border-black/5 bg-[#faf9f4] px-6 py-5 md:px-8'>
+          <div className='flex items-start justify-between gap-4'>
+            <div>
+              <p className='text-[11px] font-bold tracking-[0.24em] text-[#5A5A40] uppercase'>
+                {mode === 'learning' ? 'Learning Mode' : 'Exam Mode'}
+              </p>
+              <h2 className='mt-2 font-serif text-3xl text-[#1a1a1a]'>
+                Quiz in Progress
+              </h2>
+              <div className='mt-3 flex flex-wrap items-center gap-3 text-sm text-black/50'>
+                <span>
+                  Question {currentIndex + 1} of {quizzes.length}
+                </span>
+                {timerEnabled ? (
+                  <span className='inline-flex items-center gap-2 rounded-full bg-[#5A5A40]/10 px-3 py-1 text-[#5A5A40]'>
+                    <Clock size={14} />
+                    {timeRemaining}s left
+                  </span>
+                ) : null}
+              </div>
+            </div>
+
+            <button
+              onClick={onClose}
+              className='flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-black/45 transition-colors hover:bg-black/5 hover:text-black'
+            >
+              <X size={18} />
+            </button>
+          </div>
+
+          <div className='mt-5 h-2 overflow-hidden rounded-full bg-black/5'>
+            <div
+              className='h-full rounded-full bg-[#5A5A40] transition-all duration-300'
+              style={{
+                width: `${((currentIndex + 1) / quizzes.length) * 100}%`,
+              }}
+            />
+          </div>
+        </div>
+
+        <div className='flex-1 overflow-y-auto px-6 py-6 md:px-8 md:py-8'>
+          <div className='rounded-[28px] border border-black/5 bg-white p-6 shadow-sm md:p-8'>
+            <div className='mb-5 inline-flex rounded-full bg-black/5 px-3 py-1 text-xs font-bold tracking-wide text-black/50 uppercase'>
+              {currentQuiz.questionType === 'choice'
+                ? 'Multiple Choice'
+                : 'Open Response'}
+            </div>
+
+            <h3 className='text-2xl leading-tight font-semibold text-[#1a1a1a]'>
+              {currentQuiz.question}
+            </h3>
+
+            <div className='mt-8'>
+              {currentQuiz.questionType === 'choice' ? (
+                <div className='space-y-3'>
+                  {options.map((option, index) => {
+                    const optionLetter = String.fromCharCode(65 + index);
+                    const isSelected = currentAnswer === option;
+                    const correctAnswer = getQuizDisplayAnswer(currentQuiz);
+                    const isCorrectOption =
+                      isRevealed && option === correctAnswer;
+                    const isWrongSelection =
+                      isRevealed && isSelected && option !== correctAnswer;
+
+                    return (
+                      <button
+                        key={`${currentQuiz.id}-${optionLetter}`}
+                        onClick={() => onAnswer(option)}
+                        className={[
+                          'flex w-full items-start gap-4 rounded-2xl border px-4 py-4 text-left transition-all',
+                          isCorrectOption
+                            ? 'border-green-400 bg-green-50'
+                            : isWrongSelection
+                              ? 'border-red-300 bg-red-50'
+                              : isSelected
+                                ? 'border-[#5A5A40] bg-[#5A5A40]/5'
+                                : 'border-black/10 hover:border-black/20 hover:bg-black/[0.02]',
+                        ].join(' ')}
+                      >
+                        <span
+                          className={[
+                            'flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-sm font-bold',
+                            isCorrectOption
+                              ? 'bg-green-500 text-white'
+                              : isWrongSelection
+                                ? 'bg-red-500 text-white'
+                                : isSelected
+                                  ? 'bg-[#5A5A40] text-white'
+                                  : 'bg-black/5 text-black/55',
+                          ].join(' ')}
+                        >
+                          {optionLetter}
+                        </span>
+                        <span className='pt-1 text-base text-[#1a1a1a]'>
+                          {option}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : (
+                <textarea
+                  value={currentAnswer}
+                  onChange={(event) => onAnswer(event.target.value)}
+                  placeholder='Write your answer here...'
+                  className='min-h-40 w-full rounded-[24px] border border-black/10 bg-[#faf9f4] px-5 py-4 text-base text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                />
+              )}
+            </div>
+
+            {isLearningMode && isRevealed ? (
+              <div className='mt-6 rounded-[24px] border border-green-200 bg-green-50 p-5'>
+                <div className='mb-2 flex items-center gap-2 text-green-700'>
+                  <CheckCircle size={18} />
+                  <p className='text-sm font-bold tracking-wide uppercase'>
+                    Suggested Answer
+                  </p>
+                </div>
+                <p className='text-sm leading-7 text-green-900'>
+                  {getQuizDisplayAnswer(currentQuiz)}
+                </p>
+              </div>
+            ) : null}
+          </div>
+        </div>
+
+        <div className='border-t border-black/5 bg-white px-6 py-5 md:px-8'>
+          <div className='flex flex-wrap items-center justify-between gap-3'>
+            <button
+              onClick={onPrev}
+              disabled={currentIndex === 0}
+              className='inline-flex items-center gap-2 rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium text-black/60 transition-all hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50'
+            >
+              <ChevronLeft size={16} />
+              Previous
+            </button>
+
+            <button
+              onClick={handlePrimaryAction}
+              className='inline-flex items-center gap-2 rounded-2xl bg-[#5A5A40] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#4a4a35]'
+            >
+              {primaryLabel}
+              {!isLearningMode || isRevealed ? (
+                <ChevronRight size={16} />
+              ) : null}
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+};

@@ -1,7 +1,7 @@
 import type { Route } from './+types/$id.units.$unitId';
-import { data, Link, useFetcher, useLoaderData } from 'react-router';
+import { data, Link, useFetcher } from 'react-router';
 import { getCourseById } from '~/db/courses';
-import { getQuizzesByUnitId } from '~/db/quizzes';
+import { getQuizzesByUnitId, getQuizSessionsByUnitAndUser } from '~/db/quizzes';
 import { getUserFromRequest } from '~/utils/session.server';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
@@ -10,6 +10,8 @@ import type { SelectUnit } from '~/db/schemas/units';
 import type { SelectQuiz } from '~/db/schemas/quizzes';
 import type { User } from '~/types';
 import { useToast } from '~/utils/useToast';
+import { QuizResultsView } from '~/components/quiz/QuizResultsView';
+import { QuizTakerView } from '~/components/quiz/QuizTakerView';
 import {
   Bookmark,
   CheckCircle,
@@ -31,6 +33,14 @@ import {
   DEFAULT_CURRICULUM_PROVIDER,
   type CurriculumAiProvider,
 } from '~/utils/curriculum-options';
+import {
+  buildQuizPerformanceMap,
+  getQuizDisplayAnswer,
+  getWeightedRandomizedQuizzes,
+  isQuizAnswerCorrect,
+  type QuizPerformanceStat,
+  type QuizSessionAnswer,
+} from '~/utils/quiz-session';
 
 type CourseModuleWithUnits = SelectModule & {
   units: SelectUnit[];
@@ -61,11 +71,13 @@ type LoaderData = {
   previousUnit: FlattenedUnit | null;
   nextUnit: FlattenedUnit | null;
   quizzes: SelectQuiz[];
+  quizPerformance: Record<string, QuizPerformanceStat>;
   user: User | null;
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
   classes.filter(Boolean).join(' ');
+const QUIZ_SESSION_SIZE = 10;
 
 const splitIntoParagraphs = (content: string) =>
   content
@@ -142,6 +154,13 @@ export const loader = async ({
   }
 
   const quizzes = await getQuizzesByUnitId(unitId);
+  const quizSessions = user
+    ? await getQuizSessionsByUnitAndUser(unitId, user.id)
+    : [];
+  const quizPerformance = buildQuizPerformanceMap(
+    quizzes.map((quiz) => quiz.id),
+    quizSessions,
+  );
 
   return {
     course: courseData,
@@ -150,6 +169,7 @@ export const loader = async ({
     previousUnit: flattenedUnits[currentUnitIndex - 1] ?? null,
     nextUnit: flattenedUnits[currentUnitIndex + 1] ?? null,
     quizzes,
+    quizPerformance,
     user,
   };
 };
@@ -175,6 +195,7 @@ const UnitPageContent = ({
   previousUnit,
   nextUnit,
   quizzes,
+  quizPerformance,
   user,
 }: LoaderData) => {
   const [mode, setMode] = useState<'text' | 'audio' | 'video' | 'quiz'>('text');
@@ -186,7 +207,15 @@ const UnitPageContent = ({
   const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [quizPage, setQuizPage] = useState(1);
-  const QUIZS_PER_PAGE = 10;
+  const QUIZZES_PER_PAGE = 10;
+  const [showQuizTaker, setShowQuizTaker] = useState(false);
+  const [quizMode, setQuizMode] = useState<'learning' | 'exam'>('learning');
+  const [quizTimerEnabled, setQuizTimerEnabled] = useState(false);
+  const [currentQuizIndex, setCurrentQuizIndex] = useState(0);
+  const [activeQuizzes, setActiveQuizzes] = useState<SelectQuiz[]>([]);
+  const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
+  const [showResults, setShowResults] = useState(false);
+  const [quizStartTime, setQuizStartTime] = useState<number>(() => Date.now());
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
   const [selectedModel, setSelectedModel] = useState(
@@ -196,12 +225,21 @@ const UnitPageContent = ({
   const generateQuizFetcher = useFetcher();
   const completeFetcher = useFetcher();
   const clearQuizzesFetcher = useFetcher();
+  const startQuizSessionFetcher = useFetcher();
+  const saveQuizSessionFetcher = useFetcher();
   const isGenerating = generateContentFetcher.state !== 'idle';
   const isGeneratingQuiz = generateQuizFetcher.state !== 'idle';
   const isClearingQuizzes = clearQuizzesFetcher.state !== 'idle';
   const { showToast } = useToast();
   const handledGenerateContentResult = useRef<string | null>(null);
   const handledGenerateQuizResult = useRef<string | null>(null);
+  const quizSessionId =
+    startQuizSessionFetcher.state === 'idle' &&
+    (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
+      ?.sessionId
+      ? (startQuizSessionFetcher.data as { sessionId: string } | undefined)
+          ?.sessionId
+      : null;
 
   const isInstructor = user?.id === course?.course.createdBy;
   const hasRawText = Boolean(currentUnit.rawText?.trim());
@@ -213,6 +251,8 @@ const UnitPageContent = ({
   const [question, setQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const [quizPerformanceState, setQuizPerformanceState] =
+    useState(quizPerformance);
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
     setSelectedProvider(provider);
@@ -334,12 +374,196 @@ const UnitPageContent = ({
       }
       clearQuizzesFetcher.reset();
     }
-  }, [clearQuizzesFetcher.data, showToast]);
+  }, [clearQuizzesFetcher, clearQuizzesFetcher.data, showToast]);
+
+  useEffect(() => {
+    if (
+      startQuizSessionFetcher.state !== 'idle' ||
+      !startQuizSessionFetcher.data
+    ) {
+      return;
+    }
+
+    const result = startQuizSessionFetcher.data as {
+      success?: boolean;
+      error?: string;
+    };
+
+    if (result.error) {
+      showToast({
+        tone: 'error',
+        message: result.error,
+      });
+    }
+  }, [showToast, startQuizSessionFetcher.data, startQuizSessionFetcher.state]);
+
+  useEffect(() => {
+    if (
+      saveQuizSessionFetcher.state !== 'idle' ||
+      !saveQuizSessionFetcher.data
+    ) {
+      return;
+    }
+
+    const result = saveQuizSessionFetcher.data as {
+      success?: boolean;
+      error?: string;
+    };
+
+    if (result.error) {
+      showToast({
+        tone: 'error',
+        message: result.error,
+      });
+    }
+  }, [saveQuizSessionFetcher.data, saveQuizSessionFetcher.state, showToast]);
 
   const quizQuestions = useMemo(
     () => buildQuiz(currentUnit.content ?? ''),
     [currentUnit.content],
   );
+
+  const paginatedQuizzes = quizzes.slice(
+    (quizPage - 1) * QUIZZES_PER_PAGE,
+    quizPage * QUIZZES_PER_PAGE,
+  );
+
+  const startQuiz = () => {
+    if (quizzes.length === 0) {
+      return;
+    }
+
+    const randomizedQuizzes = getWeightedRandomizedQuizzes(
+      quizzes,
+      quizPerformanceState,
+    ).slice(0, QUIZ_SESSION_SIZE);
+
+    setActiveQuizzes(randomizedQuizzes);
+    setCurrentQuizIndex(0);
+    setUserAnswers(new Array(randomizedQuizzes.length).fill(null));
+    setShowResults(false);
+    setShowQuizTaker(true);
+    setQuizStartTime(Date.now());
+
+    startQuizSessionFetcher.submit(
+      {
+        mode: quizMode,
+        timerEnabled: String(quizTimerEnabled),
+        totalQuestions: String(randomizedQuizzes.length),
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/start-quiz-session`,
+      },
+    );
+  };
+
+  const completeQuizSession = () => {
+    const quizzesToGrade = activeQuizzes.length > 0 ? activeQuizzes : quizzes;
+    const answers: QuizSessionAnswer[] = quizzesToGrade.map((quiz, index) => ({
+      quizId: quiz.id,
+      answer: userAnswers[index] ?? null,
+      isCorrect: isQuizAnswerCorrect(quiz, userAnswers[index] ?? null),
+    }));
+    const correctAnswers = answers.filter((answer) => answer.isCorrect).length;
+    const timeSpent = Math.max(
+      1,
+      Math.round((Date.now() - quizStartTime) / 1000),
+    );
+
+    setQuizPerformanceState((current) => {
+      const next = { ...current };
+
+      answers.forEach((answer) => {
+        const previous = next[answer.quizId] ?? {
+          quizId: answer.quizId,
+          attempts: 0,
+          correctCount: 0,
+          incorrectCount: 0,
+          accuracy: null,
+          lastResult: null,
+          lastAttemptedAt: null,
+          priorityWeight: 6,
+        };
+        const attempts = previous.attempts + 1;
+        const correctCount = previous.correctCount + (answer.isCorrect ? 1 : 0);
+        const incorrectCount =
+          previous.incorrectCount + (answer.isCorrect ? 0 : 1);
+        const accuracy = correctCount / attempts;
+
+        next[answer.quizId] = {
+          quizId: answer.quizId,
+          attempts,
+          correctCount,
+          incorrectCount,
+          accuracy,
+          lastResult: answer.isCorrect ? 'correct' : 'incorrect',
+          lastAttemptedAt: new Date().toISOString(),
+          priorityWeight: Math.max(
+            1,
+            attempts === 0
+              ? 6
+              : 1 +
+                  Math.max(0, 1 - accuracy) * 4 +
+                  incorrectCount * 1.5 +
+                  (answer.isCorrect ? 0 : 1.5),
+          ),
+        };
+      });
+
+      return next;
+    });
+
+    if (quizSessionId) {
+      saveQuizSessionFetcher.submit(
+        {
+          sessionId: quizSessionId,
+          correctAnswers: String(correctAnswers),
+          timeSpent: String(timeSpent),
+          answers: JSON.stringify(answers),
+        },
+        {
+          method: 'post',
+          action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/save-quiz-session`,
+        },
+      );
+    }
+
+    setShowResults(true);
+  };
+
+  const closeQuizExperience = () => {
+    setShowQuizTaker(false);
+    setShowResults(false);
+    setCurrentQuizIndex(0);
+    setUserAnswers([]);
+    setActiveQuizzes([]);
+  };
+
+  const retryQuiz = () => {
+    const randomizedQuizzes = getWeightedRandomizedQuizzes(
+      quizzes,
+      quizPerformanceState,
+    ).slice(0, QUIZ_SESSION_SIZE);
+
+    setActiveQuizzes(randomizedQuizzes);
+    setCurrentQuizIndex(0);
+    setUserAnswers(new Array(randomizedQuizzes.length).fill(null));
+    setShowResults(false);
+    setQuizStartTime(Date.now());
+
+    startQuizSessionFetcher.submit(
+      {
+        mode: quizMode,
+        timerEnabled: String(quizTimerEnabled),
+        totalQuestions: String(randomizedQuizzes.length),
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/start-quiz-session`,
+      },
+    );
+  };
 
   const toggleBookmark = () => {
     const bookmarks = JSON.parse(
@@ -748,12 +972,19 @@ const UnitPageContent = ({
                       exit={{ opacity: 0, scale: 0.96 }}
                       className='rounded-[32px] border border-black/5 bg-white p-8 shadow-sm'
                     >
-                      <div className='mb-6 flex items-center justify-between'>
-                        <h2 className='font-serif text-2xl text-[#1a1a1a]'>
-                          Quiz Questions
-                        </h2>
-                        <div className='flex items-center gap-2'>
-                          {quizzes.length > 0 && isInstructor && (
+                      <div className='mb-8 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between'>
+                        <div>
+                          <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                            Quiz Questions
+                          </h2>
+                          <p className='mt-2 max-w-2xl text-sm text-black/50'>
+                            Each run is shuffled so weaker and unattempted
+                            questions surface earlier, while still keeping the
+                            session varied.
+                          </p>
+                        </div>
+                        <div className='flex flex-wrap items-center gap-2'>
+                          {quizzes.length > 0 && isInstructor ? (
                             <button
                               onClick={() => setShowClearQuizzesModal(true)}
                               className='flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50'
@@ -761,40 +992,115 @@ const UnitPageContent = ({
                               <Trash2 size={16} />
                               Clear All
                             </button>
-                          )}
-                          {isInstructor && hasRawText && (
+                          ) : null}
+                          {isInstructor && hasRawText ? (
                             <button
                               onClick={() => setShowGenerateQuizModal(true)}
                               className='rounded-xl bg-[#5A5A40] px-4 py-2 text-sm font-bold text-white'
                             >
                               Generate More
                             </button>
-                          )}
+                          ) : null}
                         </div>
                       </div>
 
                       {quizzes.length > 0 ? (
                         <div>
+                          <div className='mb-6 grid gap-4 rounded-[28px] border border-black/5 bg-[#faf9f4] p-5 md:grid-cols-[minmax(0,1fr)_auto] md:items-end'>
+                            <div className='grid gap-4 sm:grid-cols-2'>
+                              <label className='block'>
+                                <span className='mb-2 block text-[11px] font-bold tracking-[0.2em] text-black/35 uppercase'>
+                                  Quiz Mode
+                                </span>
+                                <select
+                                  value={quizMode}
+                                  onChange={(event) =>
+                                    setQuizMode(
+                                      event.target.value as 'learning' | 'exam',
+                                    )
+                                  }
+                                  className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] outline-none focus:border-[#5A5A40]'
+                                >
+                                  <option value='learning'>
+                                    Learning mode
+                                  </option>
+                                  <option value='exam'>Exam mode</option>
+                                </select>
+                              </label>
+                              <label className='flex items-center gap-3 rounded-xl border border-black/10 bg-white px-4 py-3 text-sm text-[#1a1a1a]'>
+                                <input
+                                  type='checkbox'
+                                  checked={quizTimerEnabled}
+                                  onChange={(event) =>
+                                    setQuizTimerEnabled(event.target.checked)
+                                  }
+                                  className='h-4 w-4 rounded border-black/20 text-[#5A5A40] focus:ring-[#5A5A40]'
+                                />
+                                <span>
+                                  Timed questions
+                                  <span className='ml-2 text-black/45'>
+                                    30 seconds each
+                                  </span>
+                                </span>
+                              </label>
+                            </div>
+                            <button
+                              onClick={startQuiz}
+                              disabled={
+                                startQuizSessionFetcher.state !== 'idle'
+                              }
+                              className='rounded-2xl bg-[#5A5A40] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#4a4a35] disabled:opacity-50'
+                            >
+                              {startQuizSessionFetcher.state !== 'idle'
+                                ? 'Preparing Quiz...'
+                                : 'Take Quiz'}
+                            </button>
+                          </div>
+
                           <div className='space-y-6'>
-                            {quizzes
-                              .slice(
-                                (quizPage - 1) * QUIZS_PER_PAGE,
-                                quizPage * QUIZS_PER_PAGE,
-                              )
-                              .map((quiz, index) => (
+                            {paginatedQuizzes.map((quiz, index) => {
+                              const stats = quizPerformanceState[quiz.id];
+                              const displayAnswer = getQuizDisplayAnswer(quiz);
+
+                              return (
                                 <div
                                   key={quiz.id}
                                   className='rounded-2xl border border-black/5 bg-[#faf9f4] p-6'
                                 >
-                                  <div className='mb-3 flex items-center gap-2'>
+                                  <div className='mb-3 flex flex-wrap items-center gap-2'>
                                     <span className='rounded-full bg-black/5 px-2.5 py-1 text-xs font-medium text-black/60'>
                                       {quiz.questionType === 'choice'
                                         ? 'Multiple Choice'
                                         : 'Open Text'}
                                     </span>
+                                    <span
+                                      className={cx(
+                                        'rounded-full px-2.5 py-1 text-xs font-medium',
+                                        stats?.attempts
+                                          ? 'bg-[#5A5A40]/10 text-[#5A5A40]'
+                                          : 'bg-amber-100 text-amber-700',
+                                      )}
+                                    >
+                                      {stats?.attempts
+                                        ? `${stats.attempts} attempt${stats.attempts === 1 ? '' : 's'}`
+                                        : 'Unattempted'}
+                                    </span>
+                                    {stats?.attempts ? (
+                                      <span className='rounded-full bg-black/5 px-2.5 py-1 text-xs font-medium text-black/60'>
+                                        {Math.round(
+                                          (stats.accuracy ?? 0) * 100,
+                                        )}
+                                        % accuracy
+                                      </span>
+                                    ) : null}
+                                    {stats?.lastResult === 'incorrect' ? (
+                                      <span className='rounded-full bg-red-100 px-2.5 py-1 text-xs font-medium text-red-700'>
+                                        Needs review
+                                      </span>
+                                    ) : null}
                                   </div>
                                   <p className='mb-4 font-medium text-[#1a1a1a]'>
-                                    {(quizPage - 1) * QUIZS_PER_PAGE +
+                                    {(quizPage - 1) * QUIZZES_PER_PAGE +
                                       index +
                                       1}
                                     . {quiz.question}
@@ -805,8 +1111,7 @@ const UnitPageContent = ({
                                       {JSON.parse(quiz.options).map(
                                         (option: string, optIndex: number) => {
                                           const isCorrect =
-                                            quiz.answer === option ||
-                                            quiz.answer === String(optIndex);
+                                            option === displayAnswer;
                                           return (
                                             <div
                                               key={optIndex}
@@ -850,14 +1155,15 @@ const UnitPageContent = ({
                                         Answer:
                                       </p>
                                       <p className='text-sm text-[#1a1a1a]'>
-                                        {quiz.answer}
+                                        {displayAnswer}
                                       </p>
                                     </div>
                                   )}
                                 </div>
-                              ))}
+                              );
+                            })}
                           </div>
-                          {quizzes.length > QUIZS_PER_PAGE && (
+                          {quizzes.length > QUIZZES_PER_PAGE && (
                             <div className='mt-6 flex items-center justify-center gap-2'>
                               <button
                                 onClick={() =>
@@ -870,14 +1176,14 @@ const UnitPageContent = ({
                               </button>
                               <span className='px-3 text-sm text-black/60'>
                                 Page {quizPage} of{' '}
-                                {Math.ceil(quizzes.length / QUIZS_PER_PAGE)}
+                                {Math.ceil(quizzes.length / QUIZZES_PER_PAGE)}
                               </span>
                               <button
                                 onClick={() =>
                                   setQuizPage((p) =>
                                     Math.min(
                                       Math.ceil(
-                                        quizzes.length / QUIZS_PER_PAGE,
+                                        quizzes.length / QUIZZES_PER_PAGE,
                                       ),
                                       p + 1,
                                     ),
@@ -885,7 +1191,7 @@ const UnitPageContent = ({
                                 }
                                 disabled={
                                   quizPage >=
-                                  Math.ceil(quizzes.length / QUIZS_PER_PAGE)
+                                  Math.ceil(quizzes.length / QUIZZES_PER_PAGE)
                                 }
                                 className='rounded-lg border border-black/10 px-3 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
                               >
@@ -1331,6 +1637,50 @@ const UnitPageContent = ({
             </motion.div>
           </div>
         ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showQuizTaker && !showResults && (
+          <QuizTakerView
+            key={`${quizSessionId ?? 'quiz-session'}-${currentQuizIndex}-${quizTimerEnabled ? 'timed' : 'untimed'}`}
+            quizzes={activeQuizzes}
+            mode={quizMode}
+            timerEnabled={quizTimerEnabled}
+            currentIndex={currentQuizIndex}
+            userAnswers={userAnswers}
+            onAnswer={(answer) => {
+              const newAnswers = [...userAnswers];
+              newAnswers[currentQuizIndex] = answer;
+              setUserAnswers(newAnswers);
+            }}
+            onNext={() => {
+              if (currentQuizIndex < activeQuizzes.length - 1) {
+                setCurrentQuizIndex((i) => i + 1);
+              } else {
+                completeQuizSession();
+              }
+            }}
+            onPrev={() => {
+              if (currentQuizIndex > 0) {
+                setCurrentQuizIndex((i) => i - 1);
+              }
+            }}
+            onClose={closeQuizExperience}
+            onFinish={completeQuizSession}
+          />
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showQuizTaker && showResults && (
+          <QuizResultsView
+            quizzes={activeQuizzes}
+            userAnswers={userAnswers}
+            mode={quizMode}
+            onClose={closeQuizExperience}
+            onRetry={retryQuiz}
+          />
+        )}
       </AnimatePresence>
     </div>
   );

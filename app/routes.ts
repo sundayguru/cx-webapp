@@ -1,7 +1,6 @@
 import {
   type RouteConfig,
   layout,
-  prefix,
   route,
   index,
 } from '@react-router/dev/routes';
@@ -70,6 +69,14 @@ export default [
     route(
       'api/courses/:id/units/:unitId/generate-quiz',
       'routes/api/courses/$id.units.$unitId.generate-quiz.tsx',
+    ),
+    route(
+      'api/courses/:id/units/:unitId/start-quiz-session',
+      'routes/api/courses/$id.units.$unitId.start-quiz-session.tsx',
+    ),
+    route(
+      'api/courses/:id/units/:unitId/save-quiz-session',
+      'routes/api/courses/$id.units.$unitId.save-quiz-session.tsx',
     ),
     route(
       'api/courses/:id/units/:unitId/clear-quizzes',
