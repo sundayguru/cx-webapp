@@ -52,6 +52,7 @@ export type CourseContentProps = {
   courseId: string;
   modules: CourseModuleWithUnits[];
   isInstructor: boolean;
+  isEnrolled: boolean;
   isSplittingModuleRawText: boolean;
   onSplitModuleRawText: (moduleId: string) => void;
   onOpenModuleRawTextModal: (moduleId: string, rawText: string) => void;

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { MessageSquare, MoreVertical, Play } from 'lucide-react';
+import { Lock, MessageSquare, MoreVertical, Play } from 'lucide-react';
 import type { CourseModuleWithUnits } from './types';
 
 type CourseContentProps = {
   courseId: string;
   modules: CourseModuleWithUnits[];
   isInstructor: boolean;
+  isEnrolled: boolean;
   isSplittingModuleRawText: boolean;
   onSplitModuleRawText: (moduleId: string) => void;
   onOpenModuleRawTextModal: (moduleId: string, rawText: string) => void;
@@ -16,6 +17,7 @@ export const CourseContent = ({
   courseId,
   modules,
   isInstructor,
+  isEnrolled,
   isSplittingModuleRawText,
   onSplitModuleRawText,
   onOpenModuleRawTextModal,
@@ -110,10 +112,9 @@ export const CourseContent = ({
               <div className='divide-y divide-black/5'>
                 {module.units.length > 0 ? (
                   module.units.map((unit, unitIndex) => (
-                    <Link
+                    <div
                       key={unit.id}
-                      to={`/courses/${courseId}/units/${unit.id}`}
-                      className='group flex items-center gap-4 px-6 py-4 transition-colors hover:bg-black/[0.02]'
+                      className={`group relative flex items-center gap-4 px-6 py-4 transition-colors ${isEnrolled || isInstructor ? 'hover:bg-black/[0.02]' : ''}`}
                     >
                       <div className='flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-xs font-bold text-black/40 transition-all group-hover:bg-[#5A5A40] group-hover:text-white'>
                         {unitIndex + 1}
@@ -128,11 +129,20 @@ export const CourseContent = ({
                           </p>
                         ) : null}
                       </div>
-                      <Play
-                        size={16}
-                        className='text-black/20 group-hover:text-[#5A5A40]'
-                      />
-                    </Link>
+                      {isEnrolled || isInstructor ? (
+                        <Link to={`/courses/${courseId}/units/${unit.id}`}>
+                          <Play
+                            size={16}
+                            className='text-black/20 group-hover:text-[#5A5A40]'
+                          />
+                        </Link>
+                      ) : (
+                        <Lock size={16} className='text-black/20' />
+                      )}
+                      {!isEnrolled && !isInstructor && (
+                        <div className='absolute inset-0 cursor-not-allowed bg-black/5' />
+                      )}
+                    </div>
                   ))
                 ) : (
                   <div className='px-6 py-6 text-sm text-black/45'>

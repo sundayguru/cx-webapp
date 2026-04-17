@@ -7,9 +7,9 @@ import {
   Clock,
   FileText,
   Globe,
+  Lock,
   Play,
   Target,
-  Volume2,
   Users,
   Zap,
 } from 'lucide-react';
@@ -28,6 +28,9 @@ type CourseOverviewProps = {
   onOpenPlaylist: () => void;
   hasPlaylist?: boolean;
   progressStats?: CourseProgressStats | null;
+  isEnrolled?: boolean;
+  learnerCount?: number;
+  onEnroll?: () => void;
 };
 
 export const CourseOverview = ({
@@ -40,6 +43,9 @@ export const CourseOverview = ({
   onOpenPlaylist,
   hasPlaylist = false,
   progressStats,
+  isEnrolled = true,
+  learnerCount = 0,
+  onEnroll,
 }: CourseOverviewProps) => {
   const formatTime = (seconds: number) => {
     if (seconds < 60) return `${seconds}s`;
@@ -88,7 +94,7 @@ export const CourseOverview = ({
             Learners
           </p>
           <p className='mt-2 text-lg font-semibold text-[#1a1a1a]'>
-            24 Students
+            {learnerCount} Student{learnerCount !== 1 ? 's' : ''}
           </p>
         </div>
 
@@ -129,10 +135,10 @@ export const CourseOverview = ({
           <p className='mt-2 text-lg font-semibold'>Course PDF</p>
         </button>
 
-        {hasPlaylist ? (
-          <button
+        {!hasPlaylist &&   <button
             onClick={onOpenPlaylist}
-            className='cursor-pointer rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a]'
+            disabled={!isEnrolled}
+            className='rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a]'
           >
             <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
               <Play size={20} />
@@ -141,8 +147,22 @@ export const CourseOverview = ({
               Course Player
             </p>
             <p className='mt-2 text-lg font-semibold'>Listen & Watch</p>
+          </button>}
+
+        {!isEnrolled && onEnroll && (
+          <button
+            onClick={onEnroll}
+            className='rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a]'
+          >
+            <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
+              <Lock size={20} />
+            </div>
+            <p className='text-xs font-bold tracking-[0.18em] text-white/60 uppercase'>
+              Not Enrolled
+            </p>
+            <p className='mt-2 text-lg font-semibold'>Enroll Now</p>
           </button>
-        ) : null}
+        )}
       </div>
 
       {progressStats && progressStats.quizzesTaken > 0 && (

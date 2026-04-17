@@ -202,14 +202,21 @@ export const getCourseProgressStats = async (
 ): Promise<CourseProgressStats> => {
   const db = getDb();
 
-  const allQuizzes = await db.select().from(quizzes).where(inArray(quizzes.unitId, unitIds));
+  const allQuizzes = await db
+    .select()
+    .from(quizzes)
+    .where(inArray(quizzes.unitId, unitIds));
   const totalQuizzes = allQuizzes.length;
 
   const relevantSessions = await db
     .select()
     .from(quizSessions)
-    .where(and(inArray(quizSessions.unitId, unitIds), eq(quizSessions.userId, userId)));
-
+    .where(
+      and(
+        inArray(quizSessions.unitId, unitIds),
+        eq(quizSessions.userId, userId),
+      ),
+    );
 
   const uniqueUnitsWithQuizzes = new Set(relevantSessions.map((s) => s.unitId));
   const quizAttempts = relevantSessions.length;

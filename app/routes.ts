@@ -94,5 +94,6 @@ export default [
       'api/courses/:id/units/:unitId/chat',
       'routes/api/courses/$id.units.$unitId.chat.tsx',
     ),
+    route('api/courses/:id/enroll', 'routes/api/courses/$id.enroll.tsx'),
   ]),
 ] satisfies RouteConfig;

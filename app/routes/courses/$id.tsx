@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { getCourseById } from '~/db/courses';
 import { getCourseProgressStats } from '~/db/quizzes';
+import { getEnrollmentCount, isUserEnrolled } from '~/db/enrollments';
 import { getUserFromRequest } from '~/utils/session.server';
 import {
   CURRICULUM_MODEL_OPTIONS,
@@ -21,27 +22,50 @@ import { CourseProgress } from '~/components/CourseProgress';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
-  if (!user) {
-    return { data: null, user: null, progressStats: null };
+  const courseId = (params as Record<string, string>).id;
+
+  if (!courseId) {
+    return {
+      data: null,
+      user: null,
+      progressStats: null,
+      isEnrolled: false,
+      enrollmentCount: 0,
+    };
   }
 
-  const courseId = (params as Record<string, string>).id;
   const data = await getCourseById(courseId);
+  const enrollmentCount = await getEnrollmentCount(courseId);
+
+  if (!user) {
+    return {
+      data,
+      user: null,
+      progressStats: null,
+      isEnrolled: false,
+      enrollmentCount,
+    };
+  }
+
+  const isEnrolled = await isUserEnrolled(courseId, user.id);
 
   const allUnitIds =
     data?.modules.flatMap((m) => m.units.map((u) => u.id)) || [];
-  const progressStats = await getCourseProgressStats(user.id, allUnitIds);
+  const progressStats = isEnrolled
+    ? await getCourseProgressStats(user.id, allUnitIds)
+    : null;
 
-  return { data, user, progressStats };
+  return { data, user, progressStats, isEnrolled, enrollmentCount };
 };
 
 export default function CourseDetailsPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { data, user, progressStats } = loaderData;
+  const { data, user, progressStats, isEnrolled, enrollmentCount } = loaderData;
   const { showToast } = useToast();
   const curriculumFetcher = useFetcher();
   const unitGenerationFetcher = useFetcher();
+  const enrollFetcher = useFetcher();
   const rawTextFetcher = useFetcher();
   const rawTextUpdateFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
@@ -403,6 +427,26 @@ export default function CourseDetailsPage({
     }
   }, [showToast, moduleRawTextUpdateFetcher]);
 
+  const handledEnrollResult = useRef<string | null>(null);
+  useEffect(() => {
+    if (enrollFetcher.state === 'idle' && enrollFetcher.data) {
+      const result = enrollFetcher.data as {
+        success?: boolean;
+        error?: string;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledEnrollResult.current !== resultKey) {
+        handledEnrollResult.current = resultKey;
+        showToast({ tone: 'success', message: 'Successfully enrolled!' });
+        window.location.reload();
+      } else if (result.error && handledEnrollResult.current !== resultKey) {
+        handledEnrollResult.current = resultKey;
+        showToast({ tone: 'error', message: result.error });
+      }
+    }
+  }, [showToast, enrollFetcher]);
+
   if (!data) {
     return (
       <div className='mx-auto max-w-4xl px-4 py-12'>
@@ -456,8 +500,16 @@ export default function CourseDetailsPage({
           isDraft={isDraft}
           onOpenPdf={() => setIsPdfModalOpen(true)}
           onOpenPlaylist={() => setIsPlaylistOpen(true)}
-          hasPlaylist={hasPlaylist}
+          hasPlaylist={hasPlaylist && isEnrolled}
           progressStats={progressStats}
+          isEnrolled={isEnrolled}
+          learnerCount={enrollmentCount}
+          onEnroll={() => {
+            enrollFetcher.submit(
+              {},
+              { method: 'post', action: `/api/courses/${course.id}/enroll` },
+            );
+          }}
         />
 
         <CourseSidebar
@@ -493,6 +545,7 @@ export default function CourseDetailsPage({
           courseId={course.id}
           modules={modules}
           isInstructor={isInstructor}
+          isEnrolled={isEnrolled}
           isSplittingModuleRawText={isSplittingModuleRawText}
           onSplitModuleRawText={handleSplitModuleRawTextIntoUnits}
           onOpenModuleRawTextModal={openModuleRawTextModal}
