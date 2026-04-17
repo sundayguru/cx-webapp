@@ -168,22 +168,21 @@ export const CourseOverview = ({
             />
             <StatPill
               icon={<BarChart size={14} className='sm:size-4' />}
-              label='Quizzes'
+              label='Attempts'
               value={`${progressStats.quizzesTaken}/${progressStats.totalQuizzes}`}
             />
             <StatPill
               icon={<Clock size={14} className='sm:size-4' />}
-              label='Time'
-              value={formatTime(progressStats.totalTimeSpent)}
+              label='Units'
+              value={`${progressStats.unitsStarted}/${progressStats.totalUnits}`}
             />
           </div>
           <div className='mt-4'>
             <div className='flex items-center justify-between text-xs sm:text-sm'>
-              <span className='text-black/40'>Quiz Progress</span>
+              <span className='text-black/40'>Units Covered</span>
               <span className='font-medium text-[#1a1a1a]'>
                 {Math.round(
-                  (progressStats.quizzesTaken / progressStats.totalQuizzes) *
-                    100,
+                  (progressStats.unitsStarted / progressStats.totalUnits) * 100,
                 )}
                 %
               </span>
@@ -192,7 +191,7 @@ export const CourseOverview = ({
               <div
                 className='h-full rounded-full bg-[#5A5A40] transition-all'
                 style={{
-                  width: `${Math.min((progressStats.quizzesTaken / progressStats.totalQuizzes) * 100, 100)}%`,
+                  width: `${Math.min((progressStats.unitsStarted / progressStats.totalUnits) * 100, 100)}%`,
                 }}
               />
             </div>

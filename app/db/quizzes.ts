@@ -1,4 +1,4 @@
-import { and, asc, eq } from 'drizzle-orm';
+import { and, asc, eq, inArray } from 'drizzle-orm';
 import { getDb } from './connection';
 import {
   quizzes,
@@ -187,8 +187,8 @@ export const getQuizSessionsByUser = async (
 
 export type CourseProgressStats = {
   totalUnits: number;
-  completedUnits: number;
   totalQuizzes: number;
+  unitsStarted: number;
   quizzesTaken: number;
   correctAnswers: number;
   totalQuestions: number;
@@ -202,41 +202,45 @@ export const getCourseProgressStats = async (
 ): Promise<CourseProgressStats> => {
   const db = getDb();
 
-  const quizSessionsForUnits = await db
+  const allQuizzes = await db.select().from(quizzes).where(inArray(quizzes.unitId, unitIds));
+  const totalQuizzes = allQuizzes.length;
+
+  const relevantSessions = await db
     .select()
     .from(quizSessions)
-    .where(and(eq(quizSessions.userId, userId)));
+    .where(and(inArray(quizSessions.unitId, unitIds), eq(quizSessions.userId, userId)));
 
-  const relevantSessions = quizSessionsForUnits.filter((s) =>
-    unitIds.includes(s.unitId),
-  );
 
-  const completedUnits = 0;
-  const quizzesTaken = relevantSessions.length;
-  const correctAnswers = relevantSessions.reduce(
-    (sum, s) => sum + s.correctAnswers,
-    0,
-  );
-  const totalQuestions = relevantSessions.reduce(
-    (sum, s) => sum + s.totalQuestions,
-    0,
-  );
+  const uniqueUnitsWithQuizzes = new Set(relevantSessions.map((s) => s.unitId));
+  const quizAttempts = relevantSessions.length;
+
   const totalTimeSpent = relevantSessions.reduce(
     (sum, s) => sum + s.timeSpentSeconds,
     0,
   );
 
+  const totalQuestions = relevantSessions.reduce(
+    (sum, s) => sum + s.totalQuestions,
+    0,
+  );
+  const correctAnswers = relevantSessions.reduce(
+    (sum, s) => sum + s.correctAnswers,
+    0,
+  );
+
+  const averageScore =
+    totalQuestions > 0
+      ? Math.round((correctAnswers / totalQuestions) * 100)
+      : 0;
+
   return {
     totalUnits: unitIds.length,
-    completedUnits,
-    totalQuizzes: unitIds.length,
-    quizzesTaken,
+    totalQuizzes,
+    unitsStarted: uniqueUnitsWithQuizzes.size,
+    quizzesTaken: quizAttempts,
     correctAnswers,
     totalQuestions,
-    averageScore:
-      totalQuestions > 0
-        ? Math.round((correctAnswers / totalQuestions) * 100)
-        : 0,
+    averageScore,
     totalTimeSpent,
   };
 };
