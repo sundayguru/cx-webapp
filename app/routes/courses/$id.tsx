@@ -192,7 +192,7 @@ export default function CourseDetailsPage({
   };
 
   const handleUpdateModuleRawText = () => {
-    if (!editingModuleId) return;
+    if (!editingModuleId) {return;}
     moduleRawTextUpdateFetcher.submit(
       { moduleId: editingModuleId, rawText: editableModuleRawText },
       {

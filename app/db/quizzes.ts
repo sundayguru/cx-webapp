@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { getDb } from './connection';
 import {
   quizzes,
@@ -181,6 +181,26 @@ export const getQuizSessionsByUser = async (
       .orderBy(asc(quizSessions.startedAt));
   } catch (e) {
     logError(e, 'Error getting user quiz sessions');
+    return [];
+  }
+};
+
+export const getRecentQuizSessionsWithCourse = async (
+  userId: string,
+  limit: number = 5,
+): Promise<Array<{ session: SelectQuizSession; courseId: string }>> => {
+  try {
+    const db = getDb();
+    const sessions = await db
+      .select()
+      .from(quizSessions)
+      .where(eq(quizSessions.userId, userId))
+      .orderBy(desc(quizSessions.startedAt))
+      .limit(limit);
+
+    return sessions.map((s) => ({ session: s, courseId: s.unitId }));
+  } catch (e) {
+    logError(e, 'Error getting recent quiz sessions');
     return [];
   }
 };

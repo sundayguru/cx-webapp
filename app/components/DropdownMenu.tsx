@@ -32,7 +32,7 @@ export const DropdownMenu = ({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div

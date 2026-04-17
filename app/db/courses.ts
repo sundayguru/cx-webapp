@@ -48,7 +48,7 @@ export const getCourseById = async (id: string) => {
       .where(eq(courses.id, id))
       .limit(1);
 
-    if (results.length === 0) return null;
+    if (results.length === 0) {return null;}
 
     const courseData = results[0];
 

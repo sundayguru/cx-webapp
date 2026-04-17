@@ -169,6 +169,13 @@
       "when": 1776448125669,
       "tag": "0023_soft_charles_xavier",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "6",
+      "when": 1776450400739,
+      "tag": "0024_shocking_rockslide",
+      "breakpoints": true
     }
   ]
 }

@@ -1,13 +1,5 @@
 import { Link } from 'react-router';
-import {
-  BookOpen,
-  CheckCircle,
-  Clock,
-  Edit3,
-  FileText,
-  Globe,
-  Sparkles,
-} from 'lucide-react';
+import { BookOpen, Clock, Edit3, FileText, Sparkles } from 'lucide-react';
 import type { SidebarProps } from './types';
 
 export const CourseSidebar = ({
@@ -18,13 +10,7 @@ export const CourseSidebar = ({
   isExtractingRawText,
   isSplittingRawText,
   hasRawText,
-  rawTextLength,
   modulesWithRawText,
-  selectedProvider,
-  selectedModel,
-  modelOptions,
-  onProviderChange,
-  onModelChange,
   onOpenPdf,
   onOpenExtractWarning,
   onOpenRawTextEditor,
@@ -57,10 +43,6 @@ export const CourseSidebar = ({
 
         {isInstructor ? (
           <div className='space-y-3'>
-            <button className='flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'>
-              <Globe size={20} />
-              Course Settings
-            </button>
             <Link
               to={`/courses/${course.id}/edit`}
               className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5'
@@ -136,18 +118,6 @@ export const CourseSidebar = ({
           <div className='flex items-center gap-3 text-sm text-black/50'>
             <Clock size={16} />
             <span>Full lifetime access</span>
-          </div>
-          <div className='flex items-center gap-3 text-sm text-black/50'>
-            <CheckCircle size={16} />
-            <span>Certificate of completion</span>
-          </div>
-          <div className='flex items-center gap-3 text-sm text-black/50'>
-            <FileText size={16} />
-            <span>
-              {hasRawText
-                ? `Raw text stored (${rawTextLength} chars)`
-                : 'Raw text not extracted yet'}
-            </span>
           </div>
         </div>
       </div>

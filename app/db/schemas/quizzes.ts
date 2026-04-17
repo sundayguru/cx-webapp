@@ -1,6 +1,6 @@
 import { sql } from 'drizzle-orm';
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { units, users } from './index';
+import { courses, units, users } from './index';
 
 export const questionTypes = ['openText', 'choice'] as const;
 export type QuestionType = (typeof questionTypes)[number];
@@ -27,6 +27,9 @@ export type QuizSessionMode = (typeof quizSessionModes)[number];
 
 export const quizSessions = sqliteTable('quiz_sessions', {
   id: text('id', { length: 36 }).primaryKey(),
+  courseId: text('course_id').references(() => courses.id, {
+    onDelete: 'cascade',
+  }),
   unitId: text('unit_id')
     .notNull()
     .references(() => units.id, { onDelete: 'cascade' }),
