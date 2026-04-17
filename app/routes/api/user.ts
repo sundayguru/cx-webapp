@@ -9,7 +9,6 @@ export const loader = async () => {
     email: 'john.doe+5@example.com',
   });
   if (user) {
-    console.log('USER', user);
     await insertProfile({
       id: '5',
       userId: user[0].id,

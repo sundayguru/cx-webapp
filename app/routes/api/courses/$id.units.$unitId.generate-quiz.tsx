@@ -122,7 +122,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       count: newQuizzes.length,
     });
   } catch (err: unknown) {
-    console.log(err);
     const message = err instanceof Error ? err.message : 'Generation failed';
     return data({ error: message }, { status: 500 });
   }

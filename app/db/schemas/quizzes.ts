@@ -12,7 +12,7 @@ export const quizzes = sqliteTable('quizzes', {
     .references(() => units.id, { onDelete: 'cascade' }),
   question: text('question').notNull(),
   questionType: text('question_type', { length: 20 }).notNull(),
-  answer: text('question_type').notNull(),
+  answer: text('answer').notNull(),
   options: text('options'), // JSON array for choice questions
   createdAt: text('created_at')
     .notNull()

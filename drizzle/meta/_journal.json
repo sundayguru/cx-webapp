@@ -127,6 +127,13 @@
       "when": 1776414839491,
       "tag": "0017_eminent_loki",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "6",
+      "when": 1776417848345,
+      "tag": "0018_elite_reaper",
+      "breakpoints": true
     }
   ]
 }

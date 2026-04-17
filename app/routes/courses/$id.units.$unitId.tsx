@@ -21,6 +21,7 @@ import {
   MoreVertical,
   Play,
   Sparkles,
+  Trash2,
   Volume2,
 } from 'lucide-react';
 import { useMemo, useRef, useState, useEffect } from 'react';
@@ -182,6 +183,7 @@ const UnitPageContent = ({
   const [showQuiz, setShowQuiz] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
+  const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
@@ -191,8 +193,10 @@ const UnitPageContent = ({
   const generateContentFetcher = useFetcher();
   const generateQuizFetcher = useFetcher();
   const completeFetcher = useFetcher();
+  const clearQuizzesFetcher = useFetcher();
   const isGenerating = generateContentFetcher.state !== 'idle';
   const isGeneratingQuiz = generateQuizFetcher.state !== 'idle';
+  const isClearingQuizzes = clearQuizzesFetcher.state !== 'idle';
   const { showToast } = useToast();
   const handledGenerateContentResult = useRef<string | null>(null);
   const handledGenerateQuizResult = useRef<string | null>(null);
@@ -229,6 +233,16 @@ const UnitPageContent = ({
       {
         method: 'post',
         action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-quiz`,
+      },
+    );
+  };
+
+  const handleClearQuizzes = () => {
+    clearQuizzesFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/clear-quizzes`,
       },
     );
   };
@@ -296,6 +310,29 @@ const UnitPageContent = ({
       }
     }
   }, [generateQuizFetcher, showToast]);
+
+  useEffect(() => {
+    if (clearQuizzesFetcher.data) {
+      const result = clearQuizzesFetcher.data as {
+        success?: boolean;
+        error?: string;
+      };
+
+      if (result.success) {
+        showToast({
+          tone: 'success',
+          message: 'All quizzes cleared successfully',
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (result.error) {
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+      clearQuizzesFetcher.reset()
+    }
+  }, [clearQuizzesFetcher.data, showToast]);
 
   const quizQuestions = useMemo(
     () => buildQuiz(currentUnit.content ?? ''),
@@ -713,14 +750,25 @@ const UnitPageContent = ({
                         <h2 className='font-serif text-2xl text-[#1a1a1a]'>
                           Quiz Questions
                         </h2>
-                        {isInstructor && hasRawText && (
-                          <button
-                            onClick={() => setShowGenerateQuizModal(true)}
-                            className='rounded-xl bg-[#5A5A40] px-4 py-2 text-sm font-bold text-white'
-                          >
-                            Generate More
-                          </button>
-                        )}
+                        <div className='flex items-center gap-2'>
+                          {quizzes.length > 0 && isInstructor && (
+                            <button
+                              onClick={() => setShowClearQuizzesModal(true)}
+                              className='flex items-center gap-2 rounded-xl border border-red-200 px-4 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50'
+                            >
+                              <Trash2 size={16} />
+                              Clear All
+                            </button>
+                          )}
+                          {isInstructor && hasRawText && (
+                            <button
+                              onClick={() => setShowGenerateQuizModal(true)}
+                              className='rounded-xl bg-[#5A5A40] px-4 py-2 text-sm font-bold text-white'
+                            >
+                              Generate More
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       {quizzes.length > 0 ? (
@@ -1185,6 +1233,49 @@ const UnitPageContent = ({
                   className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
                 >
                   {isGeneratingQuiz ? 'Generating...' : 'Generate'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showClearQuizzesModal ? (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className='w-full max-w-md rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6'>
+                <div className='mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-100'>
+                  <Trash2 size={24} className='text-red-600' />
+                </div>
+                <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                  Clear All Quizzes?
+                </h2>
+                <p className='mt-2 text-sm text-black/55'>
+                  This will permanently delete all {quizzes.length} quiz
+                  questions for this unit. This action cannot be undone.
+                </p>
+              </div>
+
+              <div className='mt-8 flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => setShowClearQuizzesModal(false)}
+                  disabled={isClearingQuizzes}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                >
+                  {isClearingQuizzes ? 'Please wait...' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleClearQuizzes}
+                  disabled={isClearingQuizzes}
+                  className='rounded-2xl bg-red-600 px-5 py-3 font-bold text-white transition-all hover:bg-red-700 disabled:opacity-50'
+                >
+                  {isClearingQuizzes ? 'Clearing...' : 'Clear All'}
                 </button>
               </div>
             </motion.div>

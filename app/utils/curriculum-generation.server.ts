@@ -176,6 +176,8 @@ Rules:
 - For choice questions, provide exactly 3 options
 - Make sure options are plausible and related to the content
 - Questions should be clear and unambiguous
+- answer must contain the valid response to the question or the option value to the correct option for the question
+- open text question answer should not be more than 3 words
 
 TEXT TO ANALYZE:
 ${rawText.slice(0, 40000)}
