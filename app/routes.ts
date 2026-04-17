@@ -63,5 +63,9 @@ export default [
       'api/courses/:id/units/:unitId/generate-content',
       'routes/api/courses/$id.units.$unitId.generate-content.tsx',
     ),
+    route(
+      'api/courses/:id/units/:unitId/set-complete',
+      'routes/api/courses/$id.units.$unitId.set-complete.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;

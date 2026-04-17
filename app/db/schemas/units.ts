@@ -8,12 +8,13 @@ export const units = sqliteTable('units', {
     .notNull()
     .references(() => modules.id, { onDelete: 'cascade' }),
   title: text('title', { length: 255 }).notNull(),
-  content: text('content'), // This could be text, markdown, or a key to R2 for non-PDF content
-  summary: text('summary'), // This could be text, markdown, or a key to R2 for non-PDF content
-  rawText: text('raw_text'), // This could be text, markdown, or a key to R2 for non-PDF content
+  content: text('content'),
+  summary: text('summary'),
+  rawText: text('raw_text'),
   order: integer('order').notNull().default(0),
   audioUrl: text('audio_url'),
   videoUrl: text('video_url'),
+  isComplete: integer('is_complete').notNull().default(0),
   createdAt: text('created_at')
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),

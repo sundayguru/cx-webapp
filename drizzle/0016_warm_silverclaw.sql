@@ -1,0 +1,1 @@
+ALTER TABLE `units` ADD `is_complete` integer DEFAULT 0 NOT NULL;

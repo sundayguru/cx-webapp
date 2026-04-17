@@ -461,3 +461,20 @@ export const updateModuleRawText = async (
     return false;
   }
 };
+
+export const setUnitComplete = async (unitId: string, isComplete: boolean) => {
+  try {
+    const db = getDb();
+    await db
+      .update(units)
+      .set({
+        isComplete: isComplete ? 1 : 0,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(units.id, unitId));
+    return true;
+  } catch (e) {
+    logError(e, 'Error setting unit complete');
+    return false;
+  }
+};

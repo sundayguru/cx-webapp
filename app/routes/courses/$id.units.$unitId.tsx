@@ -181,18 +181,18 @@ const UnitPageContent = ({
     DEFAULT_CURRICULUM_MODELS[DEFAULT_CURRICULUM_PROVIDER],
   );
   const generateContentFetcher = useFetcher();
+  const completeFetcher = useFetcher();
   const isGenerating = generateContentFetcher.state !== 'idle';
+  const isTogglingComplete = completeFetcher.state !== 'idle';
   const { showToast } = useToast();
   const handledGenerateContentResult = useRef<string | null>(null);
 
   const isInstructor = user?.id === course?.course.createdBy;
   const hasRawText = Boolean(currentUnit.rawText?.trim());
 
+  const isCompleted = currentUnit.isComplete === 1;
   const [isBookmarked, setIsBookmarked] = useState(() =>
     readStoredUnitIds('coursex:bookmarked-units').includes(currentUnit.id),
-  );
-  const [isCompleted, setIsCompleted] = useState(() =>
-    readStoredUnitIds('coursex:completed-units').includes(currentUnit.id),
   );
   const [question, setQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
@@ -270,19 +270,14 @@ const UnitPageContent = ({
   };
 
   const markAsComplete = () => {
-    const completedUnits = JSON.parse(
-      window.localStorage.getItem('coursex:completed-units') ?? '[]',
-    ) as string[];
-
-    if (!completedUnits.includes(currentUnit.id)) {
-      const nextCompletedUnits = [...completedUnits, currentUnit.id];
-      window.localStorage.setItem(
-        'coursex:completed-units',
-        JSON.stringify(nextCompletedUnits),
-      );
-    }
-
-    setIsCompleted(true);
+    const newIsComplete = !isCompleted;
+    completeFetcher.submit(
+      { isComplete: String(newIsComplete) },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/set-complete`,
+      },
+    );
   };
 
   const handleAskQuestion = (event: React.FormEvent<HTMLFormElement>) => {
@@ -336,6 +331,7 @@ const UnitPageContent = ({
                   <div className='space-y-1'>
                     {module.units.map((unit) => {
                       const isActive = unit.id === currentUnit.id;
+                      const isUnitComplete = unit.isComplete === 1;
 
                       return (
                         <Link
@@ -353,10 +349,14 @@ const UnitPageContent = ({
                               'flex h-6 w-6 items-center justify-center rounded-full border text-[10px]',
                               isActive
                                 ? 'border-white/20 bg-white/10'
-                                : 'border-black/10 bg-white',
+                                : isUnitComplete
+                                  ? 'border-green-200 bg-green-50 text-green-600'
+                                  : 'border-black/10 bg-white',
                             )}
                           >
-                            {isActive ? (
+                            {isUnitComplete && !isActive ? (
+                              <CheckCircle size={12} />
+                            ) : isActive ? (
                               <Play size={10} fill='currentColor' />
                             ) : (
                               unit.order + 1
@@ -427,47 +427,6 @@ const UnitPageContent = ({
 
             <div className='hidden items-center gap-3 xl:flex'>
               <button
-                onClick={() => setShowChat((visible) => !visible)}
-                className={cx(
-                  'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all',
-                  showChat
-                    ? 'border-[#5A5A40] bg-[#5A5A40] text-white'
-                    : 'border-black/10 text-black/60 hover:bg-black/5',
-                )}
-              >
-                <MessageCircle size={18} />
-                Ask AI
-              </button>
-              <button
-                onClick={toggleBookmark}
-                className={cx(
-                  'flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition-all',
-                  isBookmarked
-                    ? 'border-orange-100 bg-orange-50 text-orange-600'
-                    : 'border-black/10 text-black/60 hover:bg-black/5',
-                )}
-              >
-                <Bookmark
-                  size={18}
-                  fill={isBookmarked ? 'currentColor' : 'none'}
-                />
-                {isBookmarked ? 'Bookmarked' : 'Bookmark'}
-              </button>
-              <button
-                onClick={() => setShowSummary(true)}
-                className='flex items-center gap-2 rounded-xl border border-black/10 px-3 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
-              >
-                <Sparkles size={18} />
-                Summary
-              </button>
-              <button
-                onClick={() => setShowQuiz(true)}
-                className='flex items-center gap-2 rounded-xl border border-black/10 px-3 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
-              >
-                <HelpCircle size={18} />
-                Quiz Me
-              </button>
-              <button
                 onClick={markAsComplete}
                 className={cx(
                   'flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-bold transition-all',
@@ -479,17 +438,63 @@ const UnitPageContent = ({
                 <CheckCircle size={18} />
                 {isCompleted ? 'Completed' : 'Complete'}
               </button>
-              {isInstructor && (
-                <div className='relative'>
-                  <button
-                    onClick={() => setShowMoreMenu(!showMoreMenu)}
-                    className='flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-black/60 transition-all hover:bg-black/5'
-                  >
-                    <MoreVertical size={18} />
-                  </button>
-                  {showMoreMenu && (
-                    <div className='absolute top-12 right-0 z-20 min-w-[180px] rounded-xl border border-black/10 bg-white py-1 shadow-lg'>
-                      {hasRawText && (
+              <div className='relative'>
+                <button
+                  onClick={() => setShowMoreMenu(!showMoreMenu)}
+                  className={cx(
+                    'flex h-10 w-10 items-center justify-center rounded-full border transition-all',
+                    showMoreMenu
+                      ? 'border-[#5A5A40] bg-[#5A5A40] text-white'
+                      : 'border-black/10 text-black/60 hover:bg-black/5',
+                  )}
+                >
+                  <MoreVertical size={18} />
+                </button>
+                {showMoreMenu && (
+                  <div className='absolute top-12 right-0 z-20 min-w-[200px] rounded-xl border border-black/10 bg-white py-1 shadow-lg'>
+                    <button
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        setShowChat((visible) => !visible);
+                      }}
+                      className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                    >
+                      <MessageCircle size={16} />
+                      Ask AI
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        toggleBookmark();
+                      }}
+                      className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                    >
+                      <Bookmark size={16} />
+                      {isBookmarked ? 'Bookmarked' : 'Bookmark'}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        setShowSummary(true);
+                      }}
+                      className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                    >
+                      <Sparkles size={16} />
+                      Summary
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowMoreMenu(false);
+                        setShowQuiz(true);
+                      }}
+                      className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                    >
+                      <HelpCircle size={16} />
+                      Quiz Me
+                    </button>
+                    {isInstructor && hasRawText && (
+                      <>
+                        <div className='my-1 border-t border-black/5' />
                         <button
                           onClick={() => {
                             setShowMoreMenu(false);
@@ -500,11 +505,11 @@ const UnitPageContent = ({
                           <Sparkles size={16} />
                           Generate Content
                         </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
