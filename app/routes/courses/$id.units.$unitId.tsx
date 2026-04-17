@@ -7,6 +7,7 @@ import Markdown from 'react-markdown';
 import type { SelectModule } from '~/db/schemas/modules';
 import type { SelectUnit } from '~/db/schemas/units';
 import type { User } from '~/types';
+import { useToast } from '~/utils/useToast';
 import {
   Bookmark,
   CheckCircle,
@@ -20,7 +21,7 @@ import {
   Sparkles,
   Volume2,
 } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
+import { useMemo, useRef, useState, useEffect } from 'react';
 import {
   CURRICULUM_MODEL_OPTIONS,
   DEFAULT_CURRICULUM_MODELS,
@@ -181,6 +182,8 @@ const UnitPageContent = ({
   );
   const generateContentFetcher = useFetcher();
   const isGenerating = generateContentFetcher.state !== 'idle';
+  const { showToast } = useToast();
+  const handledGenerateContentResult = useRef<string | null>(null);
 
   const isInstructor = user?.id === course?.course.createdBy;
   const hasRawText = Boolean(currentUnit.rawText?.trim());
@@ -209,6 +212,41 @@ const UnitPageContent = ({
       },
     );
   };
+
+  useEffect(() => {
+    if (
+      generateContentFetcher.state === 'idle' &&
+      generateContentFetcher.data
+    ) {
+      const result = generateContentFetcher.data as {
+        success?: boolean;
+        error?: string;
+        title?: string;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (
+        result.success &&
+        handledGenerateContentResult.current !== resultKey
+      ) {
+        handledGenerateContentResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Unit content generated: ${result.title || 'Success'}`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledGenerateContentResult.current !== resultKey
+      ) {
+        handledGenerateContentResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [generateContentFetcher, showToast]);
 
   const quizQuestions = useMemo(
     () => buildQuiz(currentUnit.content ?? ''),
@@ -492,7 +530,6 @@ const UnitPageContent = ({
                       Module {currentUnit.moduleIndex + 1} • Unit{' '}
                       {currentUnit.unitIndex + 1}
                     </p>
-                    
                   </div>
                 </div>
 
@@ -849,17 +886,18 @@ const UnitPageContent = ({
 
               <div className='mt-8 flex items-center justify-end gap-3'>
                 <button
-                  onClick={() => setShowGenerateModal(false)}
+                  onClick={() => {
+                    if (!isGenerating) {
+                      setShowGenerateModal(false);
+                    }
+                  }}
                   disabled={isGenerating}
                   className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
                 >
-                  Cancel
+                  {isGenerating ? 'Please wait...' : 'Cancel'}
                 </button>
                 <button
-                  onClick={() => {
-                    setShowGenerateModal(false);
-                    handleGenerateContent();
-                  }}
+                  onClick={handleGenerateContent}
                   disabled={isGenerating}
                   className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
                 >

@@ -112,7 +112,5 @@ export const generateModuleUnit = async (
       ? lastError.message
       : 'Unknown AI generation error';
 
-  throw new Error(
-    `Failed to generate unit. Last error: ${errorMessage}`,
-  );
+  throw new Error(`Failed to generate unit. Last error: ${errorMessage}`);
 };

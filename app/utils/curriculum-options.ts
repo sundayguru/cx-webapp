@@ -8,7 +8,10 @@ export type CurriculumModelOption = {
 };
 
 export const GOOGLE_CURRICULUM_MODEL_OPTIONS: CurriculumModelOption[] = [
-  { value: 'gemini-3.1-flash-lite-preview', label: 'Gemini 3.1 Flash Lite Preview' },
+  {
+    value: 'gemini-3.1-flash-lite-preview',
+    label: 'Gemini 3.1 Flash Lite Preview',
+  },
   { value: 'gemini-3-flash-preview', label: 'Gemini 3 Flash Preview' },
   { value: 'gemini-3.1-pro-preview', label: 'Gemini 3 Pro Preview' },
 ];
