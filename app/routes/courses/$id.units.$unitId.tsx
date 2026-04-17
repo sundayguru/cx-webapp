@@ -189,6 +189,7 @@ const UnitPageContent = ({
   const [showSummary, setShowSummary] = useState(false);
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showSidebarDrawer, setShowSidebarDrawer] = useState(false);
+  const [showCourseMaterialModal, setShowCourseMaterialModal] = useState(false);
   const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
   const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -787,6 +788,15 @@ const UnitPageContent = ({
                 <CheckCircle size={18} />
                 {isCompleted ? 'Completed' : 'Complete'}
               </button>
+              {course?.course.contentKey ? (
+                <button
+                  onClick={() => setShowCourseMaterialModal(true)}
+                  className='inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
+                >
+                  <FileText size={18} />
+                  Read Course Material
+                </button>
+              ) : null}
               <div className='relative'>
                 <button
                   onClick={() => setShowMoreMenu(!showMoreMenu)}
@@ -1332,6 +1342,55 @@ const UnitPageContent = ({
           </div>
         </div>
       </div>
+
+      <AnimatePresence>
+        {showCourseMaterialModal && course?.course.contentKey ? (
+          <div className='fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8'>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              onClick={() => setShowCourseMaterialModal(false)}
+              className='absolute inset-0 bg-black/80 backdrop-blur-sm'
+            />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className='relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-[40px] bg-white shadow-2xl'
+            >
+              <div className='flex items-center justify-between border-b border-black/5 bg-white p-6'>
+                <div className='flex items-center gap-4 text-[#5A5A40]'>
+                  <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]/10'>
+                    <FileText size={20} />
+                  </div>
+                  <div>
+                    <h3 className='leading-tight font-bold text-[#1a1a1a]'>
+                      Course Content
+                    </h3>
+                    <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
+                      {course.course.code}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCourseMaterialModal(false)}
+                  className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10'
+                >
+                  <X size={20} />
+                </button>
+              </div>
+              <div className='flex-1 bg-gray-100 p-4'>
+                <iframe
+                  src={`/api/course/serve/${course.course.contentKey}`}
+                  className='h-full w-full rounded-2xl border border-black/5 bg-white'
+                  title={course.course.title}
+                />
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
 
       <AnimatePresence>
         {showSidebarDrawer ? (
