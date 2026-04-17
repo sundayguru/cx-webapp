@@ -882,7 +882,7 @@ const UnitPageContent = ({
                   className='inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
                 >
                   <FileText size={18} />
-                  Read Course Material
+                  PDF
                 </button>
               ) : null}
               <div className='relative'>

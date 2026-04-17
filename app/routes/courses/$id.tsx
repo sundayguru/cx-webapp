@@ -15,6 +15,7 @@ import { CourseContent } from './course-details/CourseContent';
 import { CourseModals } from './course-details/CourseModals';
 import { CourseOverview } from './course-details/CourseOverview';
 import { CourseSidebar } from './course-details/CourseSidebar';
+import { CoursePlaylist, type PlaylistItem } from '~/components/CoursePlaylist';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -42,6 +43,7 @@ export default function CourseDetailsPage({
   const moduleRawTextUpdateFetcher = useFetcher();
 
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
+  const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [isRawTextModalOpen, setIsRawTextModalOpen] = useState(false);
   const [isGenerateCurriculumModalOpen, setIsGenerateCurriculumModalOpen] =
     useState(false);
@@ -424,6 +426,19 @@ export default function CourseDetailsPage({
   const isInstructor = user?.id === course.createdBy;
   const isDraft = course.status === 'pending';
 
+  const playlistItems: PlaylistItem[] = modules.flatMap((module) =>
+    module.units
+      .filter((unit) => unit.audioUrl || unit.videoUrl)
+      .map((unit) => ({
+        id: unit.id,
+        title: unit.title,
+        moduleTitle: module.title,
+        audioUrl: unit.audioUrl,
+        videoUrl: unit.videoUrl,
+      })),
+  );
+  const hasPlaylist = playlistItems.length > 0;
+
   return (
     <div className='mx-auto max-w-[1400px] px-4 py-8'>
       <div className='grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.65fr)_380px]'>
@@ -434,6 +449,8 @@ export default function CourseDetailsPage({
           modulesCount={modules.length}
           isDraft={isDraft}
           onOpenPdf={() => setIsPdfModalOpen(true)}
+          onOpenPlaylist={() => setIsPlaylistOpen(true)}
+          hasPlaylist={hasPlaylist}
         />
 
         <CourseSidebar
@@ -531,6 +548,12 @@ export default function CourseDetailsPage({
         onCloseModuleRawTextModal={() => setIsModuleRawTextModalOpen(false)}
         onModuleRawTextChange={setEditableModuleRawText}
         onSaveModuleRawText={handleUpdateModuleRawText}
+      />
+
+      <CoursePlaylist
+        items={playlistItems}
+        isOpen={isPlaylistOpen}
+        onClose={() => setIsPlaylistOpen(false)}
       />
     </div>
   );

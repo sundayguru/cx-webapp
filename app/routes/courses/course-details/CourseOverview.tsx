@@ -7,6 +7,7 @@ import {
   FileText,
   Globe,
   Play,
+  Volume2,
   Users,
 } from 'lucide-react';
 import type { SelectAuthor } from '~/db/schemas/authors';
@@ -20,6 +21,8 @@ type CourseOverviewProps = {
   modulesCount: number;
   isDraft: boolean;
   onOpenPdf: () => void;
+  onOpenPlaylist: () => void;
+  hasPlaylist?: boolean;
 };
 
 export const CourseOverview = ({
@@ -29,6 +32,8 @@ export const CourseOverview = ({
   modulesCount,
   isDraft,
   onOpenPdf,
+  onOpenPlaylist,
+  hasPlaylist = false,
 }: CourseOverviewProps) => {
   return (
     <motion.section
@@ -108,8 +113,23 @@ export const CourseOverview = ({
           <p className='text-xs font-bold tracking-[0.18em] text-white/60 uppercase'>
             Source Material
           </p>
-          <p className='mt-2 text-lg font-semibold'>Read Course Content</p>
+          <p className='mt-2 text-lg font-semibold'>Course PDF</p>
         </button>
+
+        {hasPlaylist ? (
+          <button
+            onClick={onOpenPlaylist}
+            className='cursor-pointer rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a]'
+          >
+            <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
+              <Play size={20} />
+            </div>
+            <p className='text-xs font-bold tracking-[0.18em] text-white/60 uppercase'>
+              Course Player
+            </p>
+            <p className='mt-2 text-lg font-semibold'>Listen & Watch</p>
+          </button>
+        ) : null}
       </div>
 
       <div className='mt-8 flex flex-wrap items-center gap-4 border-t border-black/5 pt-8'>
