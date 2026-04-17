@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle, ChevronLeft, ChevronRight, Clock, X } from 'lucide-react';
+import { CheckCircle, ChevronRight, Clock, X } from 'lucide-react';
 import type { SelectQuiz } from '~/db/schemas/quizzes';
 import { getQuizDisplayAnswer } from '~/utils/quiz-session';
 
@@ -12,7 +12,6 @@ type QuizTakerViewProps = {
   userAnswers: (string | null)[];
   onAnswer: (answer: string) => void;
   onNext: () => void;
-  onPrev: () => void;
   onFinish: () => void;
   onClose: () => void;
 };
@@ -40,7 +39,6 @@ export const QuizTakerView = ({
   userAnswers,
   onAnswer,
   onNext,
-  onPrev,
   onFinish,
   onClose,
 }: QuizTakerViewProps) => {
@@ -265,20 +263,7 @@ export const QuizTakerView = ({
         </div>
 
         <div className='border-t border-black/5 bg-white px-4 py-4 md:px-8 md:py-5'>
-          <div className='flex flex-col-reverse gap-3 sm:flex-row sm:flex-wrap sm:items-center sm:justify-between'>
-            {mode === 'learning' ? (
-              <button
-                onClick={onPrev}
-                disabled={currentIndex === 0}
-                className='inline-flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 px-4 py-3 text-sm font-medium text-black/60 transition-all hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto'
-              >
-                <ChevronLeft size={16} />
-                Previous
-              </button>
-            ) : (
-              <div className='hidden sm:block' />
-            )}
-
+          <div className='flex gap-3 justify-end'>
             <button
               onClick={handlePrimaryAction}
               className='inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5A5A40] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#4a4a35] sm:w-auto'

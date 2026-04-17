@@ -38,7 +38,7 @@ import {
 import {
   buildQuizPerformanceMap,
   getQuizDisplayAnswer,
-  getWeightedRandomizedQuizzes,
+  getQuizSessionQuizzes,
   isQuizAnswerCorrect,
   type QuizPerformanceStat,
   type QuizSessionAnswer,
@@ -74,6 +74,7 @@ type LoaderData = {
 const cx = (...classes: Array<string | false | null | undefined>) =>
   classes.filter(Boolean).join(' ');
 const QUIZ_SESSION_SIZE = 10;
+const QUIZ_SESSION_OPEN_TEXT_LIMIT = 3;
 
 const splitIntoParagraphs = (content: string) =>
   content
@@ -413,10 +414,13 @@ const UnitPageContent = ({
       return;
     }
 
-    const randomizedQuizzes = getWeightedRandomizedQuizzes(
+    const randomizedQuizzes = getQuizSessionQuizzes(
       quizzes,
       quizPerformanceState,
-    ).slice(0, QUIZ_SESSION_SIZE);
+      QUIZ_SESSION_SIZE,
+      QUIZ_SESSION_OPEN_TEXT_LIMIT,
+      activeQuizzes.map((quiz) => quiz.id),
+    );
 
     setActiveQuizzes(randomizedQuizzes);
     setCurrentQuizIndex(0);
@@ -521,10 +525,13 @@ const UnitPageContent = ({
   };
 
   const retryQuiz = () => {
-    const randomizedQuizzes = getWeightedRandomizedQuizzes(
+    const randomizedQuizzes = getQuizSessionQuizzes(
       quizzes,
       quizPerformanceState,
-    ).slice(0, QUIZ_SESSION_SIZE);
+      QUIZ_SESSION_SIZE,
+      QUIZ_SESSION_OPEN_TEXT_LIMIT,
+      activeQuizzes.map((quiz) => quiz.id),
+    );
 
     setActiveQuizzes(randomizedQuizzes);
     setCurrentQuizIndex(0);
@@ -987,11 +994,6 @@ const UnitPageContent = ({
                           <h2 className='font-serif text-2xl text-[#1a1a1a]'>
                             Quiz Questions
                           </h2>
-                          <p className='mt-2 max-w-2xl text-sm text-black/50'>
-                            Each run is shuffled so weaker and unattempted
-                            questions surface earlier, while still keeping the
-                            session varied.
-                          </p>
                         </div>
                         <div className='flex flex-wrap items-center gap-2'>
                           {quizzes.length > 0 && isInstructor ? (
@@ -1629,11 +1631,6 @@ const UnitPageContent = ({
                 setCurrentQuizIndex((i) => i + 1);
               } else {
                 completeQuizSession();
-              }
-            }}
-            onPrev={() => {
-              if (currentQuizIndex > 0) {
-                setCurrentQuizIndex((i) => i - 1);
               }
             }}
             onClose={closeQuizExperience}

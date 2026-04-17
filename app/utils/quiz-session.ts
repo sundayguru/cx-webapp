@@ -151,6 +151,56 @@ export const getWeightedRandomizedQuizzes = <T extends { id: string }>(
   return ordered;
 };
 
+export const getQuizSessionQuizzes = <
+  T extends { id: string; questionType: string },
+>(
+  quizzes: T[],
+  performanceMap: Record<string, QuizPerformanceStat>,
+  sessionSize: number,
+  maxOpenTextQuestions: number,
+  previousQuizIds: string[] = [],
+): T[] => {
+  const buildSelection = () => {
+    const ordered = getWeightedRandomizedQuizzes(quizzes, performanceMap);
+    const selected: T[] = [];
+    let openTextCount = 0;
+
+    ordered.forEach((quiz) => {
+      if (selected.length >= sessionSize) {
+        return;
+      }
+
+      if (quiz.questionType === 'openText') {
+        if (openTextCount >= maxOpenTextQuestions) {
+          return;
+        }
+
+        openTextCount += 1;
+      }
+
+      selected.push(quiz);
+    });
+
+    return selected;
+  };
+
+  const hasPreviousOrder = previousQuizIds.length > 1;
+  const previousOrderKey = previousQuizIds.join('|');
+  let selection = buildSelection();
+  let attempts = 0;
+
+  while (
+    hasPreviousOrder &&
+    attempts < 6 &&
+    selection.map((quiz) => quiz.id).join('|') === previousOrderKey
+  ) {
+    selection = buildSelection();
+    attempts += 1;
+  }
+
+  return selection;
+};
+
 export const normalizeQuizAnswer = (answer: string | null) => {
   return answer?.trim().toLowerCase() ?? '';
 };
