@@ -168,3 +168,75 @@ export const getQuizSessionsByUnitAndUser = async (
     return [];
   }
 };
+
+export const getQuizSessionsByUser = async (
+  userId: string,
+): Promise<SelectQuizSession[]> => {
+  try {
+    const db = getDb();
+    return await db
+      .select()
+      .from(quizSessions)
+      .where(eq(quizSessions.userId, userId))
+      .orderBy(asc(quizSessions.startedAt));
+  } catch (e) {
+    logError(e, 'Error getting user quiz sessions');
+    return [];
+  }
+};
+
+export type CourseProgressStats = {
+  totalUnits: number;
+  completedUnits: number;
+  totalQuizzes: number;
+  quizzesTaken: number;
+  correctAnswers: number;
+  totalQuestions: number;
+  averageScore: number;
+  totalTimeSpent: number;
+};
+
+export const getCourseProgressStats = async (
+  userId: string,
+  unitIds: string[],
+): Promise<CourseProgressStats> => {
+  const db = getDb();
+
+  const quizSessionsForUnits = await db
+    .select()
+    .from(quizSessions)
+    .where(and(eq(quizSessions.userId, userId)));
+
+  const relevantSessions = quizSessionsForUnits.filter((s) =>
+    unitIds.includes(s.unitId),
+  );
+
+  const completedUnits = 0;
+  const quizzesTaken = relevantSessions.length;
+  const correctAnswers = relevantSessions.reduce(
+    (sum, s) => sum + s.correctAnswers,
+    0,
+  );
+  const totalQuestions = relevantSessions.reduce(
+    (sum, s) => sum + s.totalQuestions,
+    0,
+  );
+  const totalTimeSpent = relevantSessions.reduce(
+    (sum, s) => sum + s.timeSpentSeconds,
+    0,
+  );
+
+  return {
+    totalUnits: unitIds.length,
+    completedUnits,
+    totalQuizzes: unitIds.length,
+    quizzesTaken,
+    correctAnswers,
+    totalQuestions,
+    averageScore:
+      totalQuestions > 0
+        ? Math.round((correctAnswers / totalQuestions) * 100)
+        : 0,
+    totalTimeSpent,
+  };
+};

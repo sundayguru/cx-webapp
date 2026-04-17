@@ -3,6 +3,7 @@ import { Link, type LoaderFunctionArgs, useFetcher } from 'react-router';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { getCourseById } from '~/db/courses';
+import { getCourseProgressStats } from '~/db/quizzes';
 import { getUserFromRequest } from '~/utils/session.server';
 import {
   CURRICULUM_MODEL_OPTIONS,
@@ -16,23 +17,28 @@ import { CourseModals } from './course-details/CourseModals';
 import { CourseOverview } from './course-details/CourseOverview';
 import { CourseSidebar } from './course-details/CourseSidebar';
 import { CoursePlaylist, type PlaylistItem } from '~/components/CoursePlaylist';
+import { CourseProgress } from '~/components/CourseProgress';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
   if (!user) {
-    return { data: null, user: null };
+    return { data: null, user: null, progressStats: null };
   }
 
   const courseId = (params as Record<string, string>).id;
   const data = await getCourseById(courseId);
 
-  return { data, user };
+  const allUnitIds =
+    data?.modules.flatMap((m) => m.units.map((u) => u.id)) || [];
+  const progressStats = await getCourseProgressStats(user.id, allUnitIds);
+
+  return { data, user, progressStats };
 };
 
 export default function CourseDetailsPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { data, user } = loaderData;
+  const { data, user, progressStats } = loaderData;
   const { showToast } = useToast();
   const curriculumFetcher = useFetcher();
   const unitGenerationFetcher = useFetcher();
@@ -451,6 +457,7 @@ export default function CourseDetailsPage({
           onOpenPdf={() => setIsPdfModalOpen(true)}
           onOpenPlaylist={() => setIsPlaylistOpen(true)}
           hasPlaylist={hasPlaylist}
+          progressStats={progressStats}
         />
 
         <CourseSidebar

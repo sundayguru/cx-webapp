@@ -4,15 +4,19 @@ import {
   BarChart,
   BookOpen,
   ChevronRight,
+  Clock,
   FileText,
   Globe,
   Play,
+  Target,
   Volume2,
   Users,
+  Zap,
 } from 'lucide-react';
 import type { SelectAuthor } from '~/db/schemas/authors';
 import type { SelectCourse } from '~/db/schemas/courses';
 import type { SelectSchool } from '~/db/schemas/schools';
+import type { CourseProgressStats } from '~/db/quizzes';
 
 type CourseOverviewProps = {
   course: SelectCourse;
@@ -23,6 +27,7 @@ type CourseOverviewProps = {
   onOpenPdf: () => void;
   onOpenPlaylist: () => void;
   hasPlaylist?: boolean;
+  progressStats?: CourseProgressStats | null;
 };
 
 export const CourseOverview = ({
@@ -34,7 +39,15 @@ export const CourseOverview = ({
   onOpenPdf,
   onOpenPlaylist,
   hasPlaylist = false,
+  progressStats,
 }: CourseOverviewProps) => {
+  const formatTime = (seconds: number) => {
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m`;
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return `${hours}h ${mins}m`;
+  };
   return (
     <motion.section
       initial={{ opacity: 0, y: 18 }}
@@ -132,6 +145,61 @@ export const CourseOverview = ({
         ) : null}
       </div>
 
+      {progressStats && progressStats.quizzesTaken > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          className='mt-6 rounded-[24px] border border-black/5 bg-white p-4 sm:p-6'
+        >
+          <h3 className='mb-4 flex items-center gap-2 text-sm font-bold tracking-wider text-black/40 uppercase sm:text-base'>
+            Your Progress
+          </h3>
+          <div className='grid grid-cols-2 gap-3 sm:grid-cols-4'>
+            <StatPill
+              icon={<Target size={14} className='sm:size-4' />}
+              label='Score'
+              value={`${progressStats.averageScore}%`}
+              highlight={progressStats.averageScore >= 70}
+            />
+            <StatPill
+              icon={<Zap size={14} className='sm:size-4' />}
+              label='Correct'
+              value={`${progressStats.correctAnswers}/${progressStats.totalQuestions}`}
+            />
+            <StatPill
+              icon={<BarChart size={14} className='sm:size-4' />}
+              label='Quizzes'
+              value={`${progressStats.quizzesTaken}/${progressStats.totalQuizzes}`}
+            />
+            <StatPill
+              icon={<Clock size={14} className='sm:size-4' />}
+              label='Time'
+              value={formatTime(progressStats.totalTimeSpent)}
+            />
+          </div>
+          <div className='mt-4'>
+            <div className='flex items-center justify-between text-xs sm:text-sm'>
+              <span className='text-black/40'>Quiz Progress</span>
+              <span className='font-medium text-[#1a1a1a]'>
+                {Math.round(
+                  (progressStats.quizzesTaken / progressStats.totalQuizzes) *
+                    100,
+                )}
+                %
+              </span>
+            </div>
+            <div className='mt-1.5 h-2 overflow-hidden rounded-full bg-black/5'>
+              <div
+                className='h-full rounded-full bg-[#5A5A40] transition-all'
+                style={{
+                  width: `${Math.min((progressStats.quizzesTaken / progressStats.totalQuizzes) * 100, 100)}%`,
+                }}
+              />
+            </div>
+          </div>
+        </motion.div>
+      )}
+
       <div className='mt-8 flex flex-wrap items-center gap-4 border-t border-black/5 pt-8'>
         {author ? (
           <div className='flex items-center gap-3 rounded-2xl bg-black/[0.02] px-4 py-3'>
@@ -163,3 +231,36 @@ export const CourseOverview = ({
     </motion.section>
   );
 };
+
+type StatPillProps = {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  highlight?: boolean;
+};
+
+const StatPill = ({ icon, label, value, highlight }: StatPillProps) => (
+  <div
+    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${
+      highlight
+        ? 'border border-green-200 bg-green-50'
+        : 'border border-black/5 bg-[#f7f6ef]'
+    }`}
+  >
+    <div
+      className={`flex shrink-0 ${
+        highlight ? 'text-green-600' : 'text-[#5A5A40]'
+      }`}
+    >
+      {icon}
+    </div>
+    <div className='min-w-0'>
+      <p className='text-[10px] font-bold tracking-[0.18em] text-black/35 uppercase sm:text-xs'>
+        {label}
+      </p>
+      <p className='truncate text-sm font-semibold text-[#1a1a1a] sm:text-base'>
+        {value}
+      </p>
+    </div>
+  </div>
+);
