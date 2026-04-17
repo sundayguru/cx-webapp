@@ -148,6 +148,13 @@
       "when": 1776431515646,
       "tag": "0020_ancient_whiplash",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "6",
+      "when": 1776437516961,
+      "tag": "0021_jazzy_imperial_guard",
+      "breakpoints": true
     }
   ]
 }

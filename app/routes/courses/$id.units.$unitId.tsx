@@ -12,6 +12,7 @@ import type { User } from '~/types';
 import { useToast } from '~/utils/useToast';
 import { QuizResultsView } from '~/components/quiz/QuizResultsView';
 import { QuizTakerView } from '~/components/quiz/QuizTakerView';
+import { ChatWindow } from '~/components/ChatWindow';
 import {
   Bookmark,
   CheckCircle,
@@ -1467,80 +1468,12 @@ const UnitPageContent = ({
               </div>
             </div>
 
-            <AnimatePresence>
-              {showChat ? (
-                <motion.aside
-                  initial={{ x: 320 }}
-                  animate={{ x: 0 }}
-                  exit={{ x: 320 }}
-                  className='hidden w-[24rem] border-l border-black/5 bg-white xl:flex xl:flex-col'
-                >
-                  <div className='flex items-center justify-between border-b border-black/5 bg-[#f5f5f0]/70 p-6'>
-                    <div className='flex items-center gap-2'>
-                      <Sparkles size={20} className='text-[#5A5A40]' />
-                      <h2 className='font-bold text-[#1a1a1a]'>
-                        Course Assistant
-                      </h2>
-                    </div>
-                    <button
-                      onClick={() => setShowChat(false)}
-                      className='text-black/40 transition-colors hover:text-black'
-                    >
-                      <ChevronRight size={20} />
-                    </button>
-                  </div>
-
-                  <div className='flex-1 space-y-4 overflow-y-auto p-4'>
-                    <div className='rounded-2xl bg-[#f5f5f0] p-4 text-sm text-black/60 italic'>
-                      I am grounded in this unit&apos;s content. Ask me anything
-                      about &quot;{currentUnit.title}&quot;.
-                    </div>
-
-                    {chatHistory.map((message, index) => (
-                      <div
-                        key={`${message.role}-${index}`}
-                        className={cx(
-                          'flex flex-col',
-                          message.role === 'user' ? 'items-end' : 'items-start',
-                        )}
-                      >
-                        <div
-                          className={cx(
-                            'max-w-[85%] rounded-2xl px-4 py-3 text-sm',
-                            message.role === 'user'
-                              ? 'bg-[#5A5A40] text-white'
-                              : 'bg-black/5 text-[#1a1a1a]',
-                          )}
-                        >
-                          {message.text}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  <form
-                    onSubmit={handleAskQuestion}
-                    className='border-t border-black/5 p-4'
-                  >
-                    <div className='relative'>
-                      <input
-                        type='text'
-                        value={question}
-                        onChange={(event) => setQuestion(event.target.value)}
-                        placeholder='Ask a question about this unit...'
-                        className='w-full rounded-xl bg-black/5 py-3 pr-12 pl-4 text-sm transition-all outline-none focus:ring-2 focus:ring-[#5A5A40]/20'
-                      />
-                      <button
-                        type='submit'
-                        className='absolute top-1/2 right-2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-lg bg-[#5A5A40] text-white transition-colors hover:bg-[#4a4a35]'
-                      >
-                        <ChevronRight size={18} />
-                      </button>
-                    </div>
-                  </form>
-                </motion.aside>
-              ) : null}
-            </AnimatePresence>
+            <ChatWindow
+              unitId={currentUnit.id}
+              courseId={course?.course.id ?? ''}
+              isOpen={showChat}
+              onClose={() => setShowChat(false)}
+            />
           </div>
         </div>
       </div>

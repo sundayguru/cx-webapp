@@ -90,5 +90,9 @@ export default [
       'api/courses/:id/units/:unitId/clear-quizzes',
       'routes/api/courses/$id.units.$unitId.clear-quizzes.tsx',
     ),
+    route(
+      'api/courses/:id/units/:unitId/chat',
+      'routes/api/courses/$id.units.$unitId.chat.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;
