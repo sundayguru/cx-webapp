@@ -263,7 +263,7 @@ export const QuizTakerView = ({
         </div>
 
         <div className='border-t border-black/5 bg-white px-4 py-4 md:px-8 md:py-5'>
-          <div className='flex gap-3 justify-end'>
+          <div className='flex justify-end gap-3'>
             <button
               onClick={handlePrimaryAction}
               className='inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5A5A40] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#4a4a35] sm:w-auto'
