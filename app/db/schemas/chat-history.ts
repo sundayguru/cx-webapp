@@ -7,6 +7,7 @@ export const chatMessages = sqliteTable('chat_messages', {
   unitId: text('unit_id')
     .notNull()
     .references(() => units.id, { onDelete: 'cascade' }),
+  userId: text('user_id'),
   role: text('role', { length: 20 }).notNull(),
   content: text('content').notNull(),
   provider: text('provider', { length: 20 }),

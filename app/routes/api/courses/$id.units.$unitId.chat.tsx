@@ -8,14 +8,21 @@ import {
   buildChatSystemPrompt,
   buildChatUserPrompt,
 } from '~/utils/chat.server';
+import { getUserFromRequest } from '~/utils/session.server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Groq } from 'groq-sdk';
 import type { CurriculumAiProvider } from '~/utils/curriculum-options';
 
 export const action = async ({ params, request }: ActionFunctionArgs) => {
   const { unitId } = params;
+  const user = await getUserFromRequest(request);
+
   if (!unitId) {
     return data({ error: 'Unit ID is required' }, { status: 400 });
+  }
+
+  if (!user) {
+    return data({ error: 'Authentication required' }, { status: 401 });
   }
 
   const formData = await request.formData();
@@ -48,7 +55,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     );
   }
 
-  const chatHistory = await getChatHistoryByUnitId(unitId);
+  const chatHistory = await getChatHistoryByUnitId(unitId, user.id);
   const systemPrompt = buildChatSystemPrompt(unit.title, unit.rawText);
   const userPrompt = buildChatUserPrompt(message, chatHistory);
 
@@ -102,6 +109,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   await createChatMessage({
     id: crypto.randomUUID(),
     unitId,
+    userId: user.id,
     role: 'user',
     content: message,
     provider,
@@ -112,6 +120,7 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     createChatMessage({
       id: crypto.randomUUID(),
       unitId,
+      userId: user.id,
       role: 'assistant',
       content: responseText,
       provider,
@@ -122,12 +131,18 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
   return data({ message: assistantMessage });
 };
 
-export const loader = async ({ params }: ActionFunctionArgs) => {
+export const loader = async ({ params, request }: ActionFunctionArgs) => {
   const { unitId } = params;
+  const user = await getUserFromRequest(request);
+
   if (!unitId) {
     return data({ error: 'Unit ID is required' }, { status: 400 });
   }
 
-  const chatHistory = await getChatHistoryByUnitId(unitId);
+  if (!user) {
+    return data({ error: 'Authentication required' }, { status: 401 });
+  }
+
+  const chatHistory = await getChatHistoryByUnitId(unitId, user.id);
   return data({ history: chatHistory });
 };

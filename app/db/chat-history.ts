@@ -1,15 +1,18 @@
-import { eq, desc } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { getDb } from './connection';
 import { chatMessages, type SelectChatMessage } from './schemas';
 
 export const getChatHistoryByUnitId = async (
   unitId: string,
+  userId: string,
 ): Promise<SelectChatMessage[]> => {
   const db = getDb();
   return db
     .select()
     .from(chatMessages)
-    .where(eq(chatMessages.unitId, unitId))
+    .where(
+      and(eq(chatMessages.unitId, unitId), eq(chatMessages.userId, userId)),
+    )
     .orderBy(desc(chatMessages.createdAt));
 };
 
@@ -21,7 +24,14 @@ export const createChatMessage = async (
   return message;
 };
 
-export const clearChatHistory = async (unitId: string): Promise<void> => {
+export const clearChatHistory = async (
+  unitId: string,
+  userId: string,
+): Promise<void> => {
   const db = getDb();
-  await db.delete(chatMessages).where(eq(chatMessages.unitId, unitId));
+  await db
+    .delete(chatMessages)
+    .where(
+      and(eq(chatMessages.unitId, unitId), eq(chatMessages.userId, userId)),
+    );
 };

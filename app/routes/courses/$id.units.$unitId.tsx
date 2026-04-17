@@ -60,7 +60,6 @@ type FlattenedUnit = SelectUnit & {
   unitIndex: number;
 };
 
-
 type LoaderData = {
   course: Awaited<ReturnType<typeof getCourseById>>;
   modules: CourseModuleWithUnits[];
@@ -70,7 +69,7 @@ type LoaderData = {
   quizzes: SelectQuiz[];
   quizPerformance: Record<string, QuizPerformanceStat>;
   user: User | null;
-  chatHistory: SelectChatMessage[]
+  chatHistory: SelectChatMessage[];
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
@@ -150,7 +149,7 @@ export const loader = async ({
     quizSessions,
   );
 
-  const chatHistory = await getChatHistoryByUnitId(unitId);
+  const chatHistory = user ? await getChatHistoryByUnitId(unitId, user.id) : [];
 
   return {
     course: courseData,
@@ -161,7 +160,7 @@ export const loader = async ({
     quizzes,
     quizPerformance,
     user,
-    chatHistory
+    chatHistory,
   };
 };
 
@@ -188,7 +187,7 @@ const UnitPageContent = ({
   quizzes,
   quizPerformance,
   user,
-  chatHistory
+  chatHistory,
 }: LoaderData) => {
   const [mode, setMode] = useState<'text' | 'audio' | 'video' | 'quiz'>('text');
   const [showChat, setShowChat] = useState(false);
@@ -778,7 +777,6 @@ const UnitPageContent = ({
       },
     );
   };
-
 
   return (
     <div className='min-h-[calc(100vh-8rem)] overflow-hidden rounded-[24px] border border-black/5 bg-white shadow-[0_30px_80px_-30px_rgba(0,0,0,0.25)] md:h-[calc(100vh-8rem)] md:rounded-[36px]'>
@@ -1456,7 +1454,7 @@ const UnitPageContent = ({
               onClose={() => setShowChat(false)}
               initialMessages={chatHistory.map((message) => ({
                 content: message.content,
-                role: message.role as 'user' | 'assistant'
+                role: message.role as 'user' | 'assistant',
               }))}
             />
           </div>
