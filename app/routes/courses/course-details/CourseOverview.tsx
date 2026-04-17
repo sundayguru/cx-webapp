@@ -100,7 +100,7 @@ export const CourseOverview = ({
 
         <button
           onClick={onOpenPdf}
-          className='rounded-[24px] border border-black/5 bg-[#5A5A40] p-5 text-left text-white shadow-lg shadow-[#5A5A40]/20 transition-all hover:bg-[#4a4a35]'
+          className='cursor-pointer rounded-[24px] border border-black/5 bg-[#5A5A40] p-5 text-left text-white shadow-lg shadow-[#5A5A40]/20 transition-all hover:bg-[#4a4a35]'
         >
           <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
             <FileText size={20} />

@@ -9,6 +9,9 @@ import {
   parseCurriculumResponse,
   type CurriculumResponse,
   type GeneratedModuleResponse,
+  buildModuleUnitPrompt,
+  parseModuleUnitResponse,
+  type CurriculumUnit,
 } from './curriculum-generation.server';
 
 export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
@@ -81,5 +84,35 @@ export const generateModuleUnits = async (
 
   throw new Error(
     `Failed to generate module units. Last error: ${errorMessage}`,
+  );
+};
+
+export const generateModuleUnit = async (
+  text: string,
+  apiKey: string,
+  preferredModel: string,
+): Promise<CurriculumUnit> => {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const prompt = buildModuleUnitPrompt(text);
+
+  let lastError: unknown;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: preferredModel });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseModuleUnitResponse(response.text());
+  } catch (e: unknown) {
+    lastError = e;
+    logError(e, `Error generating unit with model ${preferredModel}`);
+  }
+
+  const errorMessage =
+    lastError instanceof Error
+      ? lastError.message
+      : 'Unknown AI generation error';
+
+  throw new Error(
+    `Failed to generate unit. Last error: ${errorMessage}`,
   );
 };

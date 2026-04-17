@@ -1,8 +1,12 @@
 import type { Route } from './+types/$id.units.$unitId';
-import { data, Link } from 'react-router';
+import { data, Link, useFetcher, useLoaderData } from 'react-router';
 import { getCourseById } from '~/db/courses';
+import { getUserFromRequest } from '~/utils/session.server';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
+import type { SelectModule } from '~/db/schemas/modules';
+import type { SelectUnit } from '~/db/schemas/units';
+import type { User } from '~/types';
 import {
   Bookmark,
   CheckCircle,
@@ -11,13 +15,18 @@ import {
   FileText,
   HelpCircle,
   MessageCircle,
+  MoreVertical,
   Play,
   Sparkles,
   Volume2,
 } from 'lucide-react';
 import { useMemo, useRef, useState } from 'react';
-import type { SelectModule } from '~/db/schemas/modules';
-import type { SelectUnit } from '~/db/schemas/units';
+import {
+  CURRICULUM_MODEL_OPTIONS,
+  DEFAULT_CURRICULUM_MODELS,
+  DEFAULT_CURRICULUM_PROVIDER,
+  type CurriculumAiProvider,
+} from '~/utils/curriculum-options';
 
 type CourseModuleWithUnits = SelectModule & {
   units: SelectUnit[];
@@ -47,6 +56,7 @@ type LoaderData = {
   currentUnit: FlattenedUnit;
   previousUnit: FlattenedUnit | null;
   nextUnit: FlattenedUnit | null;
+  user: User | null;
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
@@ -91,9 +101,11 @@ const answerFromContent = (content: string, question: string) => {
 
 export const loader = async ({
   params,
+  request,
 }: Route.LoaderArgs): Promise<LoaderData> => {
   const courseId = params.id;
   const unitId = params.unitId;
+  const user = await getUserFromRequest(request);
 
   if (!courseId || !unitId) {
     throw data({ error: 'Course and unit are required' }, { status: 400 });
@@ -130,6 +142,7 @@ export const loader = async ({
     currentUnit: flattenedUnits[currentUnitIndex],
     previousUnit: flattenedUnits[currentUnitIndex - 1] ?? null,
     nextUnit: flattenedUnits[currentUnitIndex + 1] ?? null,
+    user,
   };
 };
 
@@ -153,11 +166,25 @@ const UnitPageContent = ({
   currentUnit,
   previousUnit,
   nextUnit,
+  user,
 }: LoaderData) => {
   const [mode, setMode] = useState<'text' | 'audio' | 'video'>('text');
   const [showChat, setShowChat] = useState(false);
   const [showSummary, setShowSummary] = useState(false);
   const [showQuiz, setShowQuiz] = useState(false);
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [selectedProvider, setSelectedProvider] =
+    useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
+  const [selectedModel, setSelectedModel] = useState(
+    DEFAULT_CURRICULUM_MODELS[DEFAULT_CURRICULUM_PROVIDER],
+  );
+  const generateContentFetcher = useFetcher();
+  const isGenerating = generateContentFetcher.state !== 'idle';
+
+  const isInstructor = user?.id === course?.course.createdBy;
+  const hasRawText = Boolean(currentUnit.rawText?.trim());
+
   const [isBookmarked, setIsBookmarked] = useState(() =>
     readStoredUnitIds('coursex:bookmarked-units').includes(currentUnit.id),
   );
@@ -167,6 +194,21 @@ const UnitPageContent = ({
   const [question, setQuestion] = useState('');
   const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
   const audioRef = useRef<HTMLAudioElement>(null);
+
+  const handleProviderChange = (provider: CurriculumAiProvider) => {
+    setSelectedProvider(provider);
+    setSelectedModel(DEFAULT_CURRICULUM_MODELS[provider]);
+  };
+
+  const handleGenerateContent = () => {
+    generateContentFetcher.submit(
+      { provider: selectedProvider, model: selectedModel },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-content`,
+      },
+    );
+  };
 
   const quizQuestions = useMemo(
     () => buildQuiz(currentUnit.content ?? ''),
@@ -399,6 +441,32 @@ const UnitPageContent = ({
                 <CheckCircle size={18} />
                 {isCompleted ? 'Completed' : 'Complete'}
               </button>
+              {isInstructor && (
+                <div className='relative'>
+                  <button
+                    onClick={() => setShowMoreMenu(!showMoreMenu)}
+                    className='flex h-10 w-10 items-center justify-center rounded-full border border-black/10 text-black/60 transition-all hover:bg-black/5'
+                  >
+                    <MoreVertical size={18} />
+                  </button>
+                  {showMoreMenu && (
+                    <div className='absolute top-12 right-0 z-20 min-w-[180px] rounded-xl border border-black/10 bg-white py-1 shadow-lg'>
+                      {hasRawText && (
+                        <button
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            setShowGenerateModal(true);
+                          }}
+                          className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                        >
+                          <Sparkles size={16} />
+                          Generate Content
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
@@ -424,9 +492,7 @@ const UnitPageContent = ({
                       Module {currentUnit.moduleIndex + 1} • Unit{' '}
                       {currentUnit.unitIndex + 1}
                     </p>
-                    <h1 className='max-w-3xl font-serif text-4xl leading-tight text-[#1a1a1a] md:text-5xl'>
-                      {currentUnit.title}
-                    </h1>
+                    
                   </div>
                 </div>
 
@@ -716,6 +782,90 @@ const UnitPageContent = ({
               >
                 Back to Lesson
               </button>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showGenerateModal ? (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className='w-full max-w-md rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6 flex items-center justify-between'>
+                <div>
+                  <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                    Generate Unit Content
+                  </h2>
+                  <p className='mt-2 text-sm text-black/55'>
+                    Choose an AI provider and model to generate content for this
+                    unit.
+                  </p>
+                </div>
+              </div>
+
+              <div className='space-y-5'>
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    AI Provider
+                  </label>
+                  <select
+                    value={selectedProvider}
+                    onChange={(e) =>
+                      handleProviderChange(
+                        e.target.value as CurriculumAiProvider,
+                      )
+                    }
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    <option value='google'>Google</option>
+                    <option value='groq'>Groq</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    Model
+                  </label>
+                  <select
+                    value={selectedModel}
+                    onChange={(e) => setSelectedModel(e.target.value)}
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    {CURRICULUM_MODEL_OPTIONS[selectedProvider].map(
+                      (option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ),
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              <div className='mt-8 flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => setShowGenerateModal(false)}
+                  disabled={isGenerating}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => {
+                    setShowGenerateModal(false);
+                    handleGenerateContent();
+                  }}
+                  disabled={isGenerating}
+                  className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+                >
+                  {isGenerating ? 'Generating...' : 'Generate'}
+                </button>
+              </div>
             </motion.div>
           </div>
         ) : null}

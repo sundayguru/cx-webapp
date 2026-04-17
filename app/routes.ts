@@ -59,5 +59,9 @@ export default [
       'api/courses/:id/update-module-raw-text',
       'routes/api/courses/update-module-raw-text.tsx',
     ),
+    route(
+      'api/courses/:id/units/:unitId/generate-content',
+      'routes/api/courses/$id.units.$unitId.generate-content.tsx',
+    ),
   ]),
 ] satisfies RouteConfig;
