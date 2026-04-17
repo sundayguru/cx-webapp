@@ -17,6 +17,7 @@ import {
   CheckCircle,
   ChevronLeft,
   ChevronRight,
+  Copy,
   FileText,
   HelpCircle,
   MessageCircle,
@@ -191,6 +192,8 @@ const UnitPageContent = ({
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showSidebarDrawer, setShowSidebarDrawer] = useState(false);
   const [showCourseMaterialModal, setShowCourseMaterialModal] = useState(false);
+  const [showViewAudioScriptModal, setShowViewAudioScriptModal] =
+    useState(false);
   const [showUploadMediaModal, setShowUploadMediaModal] = useState(false);
   const [showGenerateAudioScriptModal, setShowGenerateAudioScriptModal] =
     useState(false);
@@ -645,6 +648,25 @@ const UnitPageContent = ({
     startQuiz();
   };
 
+  const handleCopyAudioScript = async () => {
+    if (!currentUnit.audioScript?.trim()) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(currentUnit.audioScript);
+      showToast({
+        tone: 'success',
+        message: 'Audio script copied to clipboard',
+      });
+    } catch {
+      showToast({
+        tone: 'error',
+        message: 'Failed to copy audio script',
+      });
+    }
+  };
+
   const renderUnitSidebar = (isMobile = false) => (
     <div className='flex h-full min-h-0 flex-col'>
       <div className='border-b border-black/5 p-6'>
@@ -939,6 +961,18 @@ const UnitPageContent = ({
                     {isInstructor ? (
                       <>
                         <div className='my-1 border-t border-black/5' />
+                        {currentUnit.audioScript?.trim() ? (
+                          <button
+                            onClick={() => {
+                              setShowMoreMenu(false);
+                              setShowViewAudioScriptModal(true);
+                            }}
+                            className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                          >
+                            <FileText size={16} />
+                            View Audio Script
+                          </button>
+                        ) : null}
                         <button
                           onClick={() => {
                             setShowMoreMenu(false);
@@ -1579,6 +1613,60 @@ const UnitPageContent = ({
               {renderUnitSidebar(true)}
             </motion.aside>
           </>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showViewAudioScriptModal && currentUnit.audioScript?.trim() ? (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className='flex max-h-[90vh] w-full max-w-3xl flex-col overflow-hidden rounded-[32px] bg-white shadow-2xl'
+            >
+              <div className='flex items-center justify-between border-b border-black/5 p-6'>
+                <div>
+                  <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                    Unit Audio Script
+                  </h2>
+                  <p className='mt-2 text-sm text-black/55'>
+                    Review or copy the narration script prepared for this unit.
+                  </p>
+                </div>
+                <button
+                  onClick={() => setShowViewAudioScriptModal(false)}
+                  className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10'
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className='flex-1 overflow-y-auto p-6'>
+                <div className='rounded-[28px] border border-black/5 bg-[#faf9f4] p-6'>
+                  <p className='text-sm leading-7 whitespace-pre-wrap text-[#1a1a1a]'>
+                    {currentUnit.audioScript}
+                  </p>
+                </div>
+              </div>
+
+              <div className='flex items-center justify-end gap-3 border-t border-black/5 p-6'>
+                <button
+                  onClick={() => setShowViewAudioScriptModal(false)}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5'
+                >
+                  Close
+                </button>
+                <button
+                  onClick={handleCopyAudioScript}
+                  className='inline-flex items-center gap-2 rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35]'
+                >
+                  <Copy size={16} />
+                  Copy
+                </button>
+              </div>
+            </motion.div>
+          </div>
         ) : null}
       </AnimatePresence>
 
