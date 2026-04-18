@@ -1,6 +1,6 @@
 import { eq } from 'drizzle-orm';
 import { getDb } from './connection';
-import { profile, users, enrollments, quizSessions } from './schemas';
+import { profile, enrollments, quizSessions } from './schemas';
 import type { InsertProfile } from './schemas';
 import { logError } from '../utils/logger';
 
