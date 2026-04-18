@@ -1,5 +1,13 @@
 import { Link } from 'react-router';
-import { BookOpen, Clock, Edit3, FileText, Sparkles, Send } from 'lucide-react';
+import {
+  BookOpen,
+  Clock,
+  Edit3,
+  FileText,
+  Sparkles,
+  Send,
+  XCircle,
+} from 'lucide-react';
 import type { SidebarProps } from './types';
 
 export const CourseSidebar = ({
@@ -18,6 +26,7 @@ export const CourseSidebar = ({
   onOpenGenerateWarning,
   onOpenGenerateUnitsModal,
   onPublish,
+  onUnpublish,
 }: SidebarProps) => {
   return (
     <aside className='space-y-6'>
@@ -106,6 +115,14 @@ export const CourseSidebar = ({
               >
                 <Send size={20} />
                 Publish Course
+              </button>
+            ) : course.status === 'published' && onUnpublish ? (
+              <button
+                onClick={onUnpublish}
+                className='flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-lg font-bold text-white shadow-md shadow-orange-500/25 transition-all hover:bg-orange-600'
+              >
+                <XCircle size={20} />
+                Unpublish Course
               </button>
             ) : null}
           </div>

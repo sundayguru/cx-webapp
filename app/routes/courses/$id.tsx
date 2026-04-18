@@ -154,7 +154,17 @@ export default function CourseDetailsPage({
 
   const handlePublish = () => {
     publishFetcher.submit(
-      {},
+      { intent: 'publish' },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/publish`,
+      },
+    );
+  };
+
+  const handleUnpublish = () => {
+    publishFetcher.submit(
+      { intent: 'unpublish' },
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/publish`,
@@ -466,6 +476,7 @@ export default function CourseDetailsPage({
       const result = publishFetcher.data as {
         success?: boolean;
         error?: string;
+        message?: string;
       };
       const resultKey = JSON.stringify(result);
 
@@ -473,7 +484,7 @@ export default function CourseDetailsPage({
         handledPublishResult.current = resultKey;
         showToast({
           tone: 'success',
-          message: 'Course published successfully!',
+          message: result.message || 'Course updated successfully!',
         });
         window.location.reload();
       } else if (result.error && handledPublishResult.current !== resultKey) {
@@ -574,6 +585,7 @@ export default function CourseDetailsPage({
           onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
           onPublish={handlePublish}
+          onUnpublish={handleUnpublish}
         />
       </div>
 

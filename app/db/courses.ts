@@ -45,6 +45,20 @@ export const publishCourse = async (courseId: string): Promise<boolean> => {
   }
 };
 
+export const unpublishCourse = async (courseId: string): Promise<boolean> => {
+  try {
+    const db = getDb();
+    await db
+      .update(courses)
+      .set({ status: 'pending', updatedAt: new Date().toISOString() })
+      .where(eq(courses.id, courseId));
+    return true;
+  } catch (e) {
+    logError(e, 'Error unpublishing course');
+    return false;
+  }
+};
+
 export const getCourseById = async (id: string) => {
   try {
     const db = getDb();
