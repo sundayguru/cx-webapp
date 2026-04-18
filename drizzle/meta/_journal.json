@@ -176,6 +176,13 @@
       "when": 1776450400739,
       "tag": "0024_shocking_rockslide",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "6",
+      "when": 1776499359490,
+      "tag": "0025_public_queen_noir",
+      "breakpoints": true
     }
   ]
 }

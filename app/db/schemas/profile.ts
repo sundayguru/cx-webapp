@@ -1,6 +1,6 @@
 import { relations, sql } from 'drizzle-orm';
 import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
-import { users } from './users';
+import { users, type SelectUser } from './users';
 
 export const profile = sqliteTable('profile', {
   id: text('id', { length: 36 }).primaryKey(),
@@ -8,6 +8,7 @@ export const profile = sqliteTable('profile', {
     .notNull()
     .references(() => users.id),
   bio: text({ length: 255 }).notNull(),
+  avatarUrl: text('avatar_url'),
   createdAt: text('created_at')
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),
@@ -23,5 +24,7 @@ export const profileRelations = relations(profile, ({ one }) => ({
   }),
 }));
 
-export type SelectProfile = typeof profile.$inferSelect;
+export type SelectProfile = typeof profile.$inferSelect & {
+  user?: SelectUser
+};
 export type InsertProfile = typeof profile.$inferInsert;

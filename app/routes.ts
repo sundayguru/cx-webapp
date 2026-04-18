@@ -20,6 +20,7 @@ export default [
   // Protected routes
   layout('./routes/layouts/ProtectedLayout.tsx', [
     route('dashboard', 'routes/dashboard.tsx'),
+    route('profile', 'routes/profile.tsx'),
     route('courses', 'routes/courses.tsx'),
     route('courses/:id', 'routes/courses/$id.tsx'),
     route('courses/:id/edit', 'routes/courses/$id.edit.tsx'),
