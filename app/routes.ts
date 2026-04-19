@@ -20,6 +20,7 @@ export default [
   // Protected routes
   layout('./routes/layouts/ProtectedLayout.tsx', [
     route('dashboard', 'routes/dashboard.tsx'),
+    route('admin/users', 'routes/admin/users.tsx'),
     route('profile/:userId?', 'routes/profile.tsx'),
     route('settings', 'routes/settings.tsx'),
     route('notifications', 'routes/notifications.tsx'),

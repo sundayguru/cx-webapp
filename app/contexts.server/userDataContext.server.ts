@@ -10,4 +10,6 @@ export const userDataContext = createContext<User>({
   email: '',
   avatarUrl: null,
   unreadNotifications: 0,
+  isDeactivated: false,
+  isBanned: false,
 });

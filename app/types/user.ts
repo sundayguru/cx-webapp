@@ -7,4 +7,6 @@ export type User = {
   email: string;
   avatarUrl: string | null;
   unreadNotifications: number;
+  isDeactivated: boolean;
+  isBanned: boolean;
 };

@@ -45,6 +45,10 @@ export const getUserFromRequest = async (
   const profile = await getProfileByUserId(dbUser.id);
   const unreadNotifications = await getUnreadNotificationCount(dbUser.id);
 
+  if (dbUser.isDeactivated) {
+    return null;
+  }
+
   // Map DB user to User type
   const user: User = {
     id: dbUser.id,
@@ -55,6 +59,8 @@ export const getUserFromRequest = async (
     email: dbUser.email,
     avatarUrl: profile?.avatarUrl ?? null,
     unreadNotifications,
+    isDeactivated: dbUser.isDeactivated || false,
+    isBanned: dbUser.isBanned || false,
   };
 
   return user;

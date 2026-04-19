@@ -11,6 +11,12 @@ export const users = sqliteTable('users', {
     .default(false),
   image: text({ length: 511 }),
   passwordHash: text({ length: 511 }),
+  isDeactivated: integer('is_deactivated', { mode: 'boolean' })
+    .notNull()
+    .default(false),
+  isBanned: integer('is_banned', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   createdAt: text('created_at')
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),
