@@ -9,4 +9,5 @@ export type User = {
   unreadNotifications: number;
   isDeactivated: boolean;
   isBanned: boolean;
+  isAdmin: boolean;
 };

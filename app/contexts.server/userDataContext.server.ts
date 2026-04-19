@@ -12,4 +12,5 @@ export const userDataContext = createContext<User>({
   unreadNotifications: 0,
   isDeactivated: false,
   isBanned: false,
+  isAdmin: false,
 });

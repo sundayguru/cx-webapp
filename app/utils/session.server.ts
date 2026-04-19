@@ -61,6 +61,7 @@ export const getUserFromRequest = async (
     unreadNotifications,
     isDeactivated: dbUser.isDeactivated || false,
     isBanned: dbUser.isBanned || false,
+    isAdmin: dbUser.isAdmin || false,
   };
 
   return user;

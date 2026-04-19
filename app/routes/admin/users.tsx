@@ -10,7 +10,7 @@ import { useEffect } from 'react';
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await getUserFromRequest(request);
-  if (!user) {
+  if (!user || !user.isAdmin) {
     throw data({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -24,7 +24,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
 
 export const action = async ({ request }: Route.ActionArgs) => {
   const user = await getUserFromRequest(request);
-  if (!user) {
+  if (!user || !user.isAdmin) {
     return data({ error: 'Unauthorized' }, { status: 401 });
   }
 

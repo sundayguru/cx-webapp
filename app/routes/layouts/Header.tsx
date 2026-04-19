@@ -7,6 +7,7 @@ import {
   BookOpen,
   PlusCircle,
   Bell,
+  Settings,
 } from 'lucide-react';
 import { useState } from 'react';
 
@@ -20,6 +21,10 @@ const navItems: NavItem[] = [
   { to: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { to: '/courses', label: 'Courses', icon: BookOpen },
   { to: '/create', label: 'Create', icon: PlusCircle },
+];
+
+const adminNavItems: NavItem[] = [
+  { to: '/admin/users', label: 'Admin', icon: Settings },
 ];
 
 export const Header = () => {
@@ -75,6 +80,28 @@ export const Header = () => {
                 </Link>
               );
             })}
+            {user?.isAdmin && (
+              <>
+                {adminNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.to);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                        active
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'text-purple-600 hover:bg-purple-50 hover:text-purple-700'
+                      }`}
+                    >
+                      <Icon size={18} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </>
+            )}
           </nav>
 
           {/* Right Section */}
