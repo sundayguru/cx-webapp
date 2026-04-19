@@ -12,7 +12,6 @@ import {
   GraduationCap,
   Target,
   Calendar,
-  Mail,
   ChevronRight,
   Settings,
 } from 'lucide-react';
@@ -23,30 +22,32 @@ type LoaderData = {
   isOwner: boolean;
 };
 
-export const loader = async ({ request }: Route.LoaderArgs) => {
+export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const currentUser = await getUserFromRequest(request);
 
   if (!currentUser) {
     return redirect('/login');
   }
 
-  const profile = await getPublicProfile(currentUser.id);
+  const targetUserId = params.userId || currentUser.id;
+  const isOwner = !params.userId || params.userId === currentUser.id;
+
+  const profile = await getPublicProfile(targetUserId);
   if (!profile) {
     return redirect('/dashboard');
   }
 
-  const enrolledCourses = await getUserEnrollments(currentUser.id);
+  const enrolledCourses = await getUserEnrollments(targetUserId);
 
   return {
     profile,
     enrolledCourses: enrolledCourses.slice(0, 6),
-    isOwner: true,
+    isOwner,
   };
 };
 
 export default function ProfilePage({ loaderData }: Route.ComponentProps) {
-  const { profile, enrolledCourses } = loaderData;
-console.log("profile", profile)
+  const { profile, enrolledCourses, isOwner } = loaderData;
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'long',
@@ -82,17 +83,19 @@ console.log("profile", profile)
               <h1 className='font-serif text-4xl text-[#1a1a1a]'>
                 {profile.name || 'Anonymous User'}
               </h1>
-              <Link
-                to='/settings'
-                className='rounded-full border border-black/10 p-2 text-black/40 transition-colors hover:bg-black/5 hover:text-black/60'
-              >
-                <Settings size={20} />
-              </Link>
+              {isOwner && (
+                <Link
+                  to='/settings'
+                  className='rounded-full border border-black/10 p-2 text-black/40 transition-colors hover:bg-black/5 hover:text-black/60'
+                >
+                  <Settings size={20} />
+                </Link>
+              )}
             </div>
-            <div className='mb-4 flex items-center justify-center gap-2 text-black/50 md:justify-start'>
+            {/* <div className='mb-4 flex items-center justify-center gap-2 text-black/50 md:justify-start'>
               <Mail size={16} />
               <span>{profile.email}</span>
-            </div>
+            </div> */}
 
             {profile.bio && (
               <p className='mb-6 text-lg text-black/60'>{profile.bio}</p>

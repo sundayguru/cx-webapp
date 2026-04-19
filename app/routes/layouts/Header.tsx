@@ -100,6 +100,7 @@ export const Header = () => {
                 <ProfileMenu
                   userName={user.name}
                   userEmail={user.email}
+                  userId={user.id}
                   onClose={() => setShowProfileMenu(false)}
                 />
               )}

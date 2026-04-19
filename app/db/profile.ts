@@ -116,7 +116,7 @@ export const getPublicProfile = async (
       bio: userProfile.bio,
       avatarUrl: userProfile.avatarUrl,
       stats: {
-        coursesEnrolled: Number(enrollmentCount[0]?.count) ?? 0,
+        coursesEnrolled: Number(enrollmentCount[0]?.count ?? 0) ,
         quizzesTaken,
         averageScore,
       },

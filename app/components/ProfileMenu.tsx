@@ -5,12 +5,14 @@ import { LogOut, Settings, User as UserIcon } from 'lucide-react';
 type ProfileMenuProps = {
   userName: string;
   userEmail: string;
+  userId: string;
   onClose: () => void;
 };
 
 export const ProfileMenu = ({
   userName,
   userEmail,
+  userId,
   onClose,
 }: ProfileMenuProps) => {
   const logoutFetcher = useFetcher();
@@ -39,7 +41,7 @@ export const ProfileMenu = ({
         {/* Menu Items */}
         <div className='py-1'>
           <Link
-            to='/profile'
+            to={`/profile/${userId}`}
             onClick={onClose}
             className='flex items-center gap-3 px-4 py-2.5 text-sm text-black/70 transition-colors hover:bg-black/5'
           >
