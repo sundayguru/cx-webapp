@@ -183,6 +183,13 @@
       "when": 1776499359490,
       "tag": "0025_public_queen_noir",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "6",
+      "when": 1776595770723,
+      "tag": "0026_great_nova",
+      "breakpoints": true
     }
   ]
 }

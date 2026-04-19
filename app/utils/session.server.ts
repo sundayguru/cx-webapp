@@ -1,5 +1,6 @@
 import { getUserById } from '~/db/auth';
 import { getProfileByUserId } from '~/db/profile';
+import { getUnreadNotificationCount } from '~/db/notifications';
 import { verifySessionToken } from '~/utils/auth.server';
 import type { User } from '~/types';
 
@@ -42,6 +43,7 @@ export const getUserFromRequest = async (
 
   // Fetch the profile to get the avatar URL
   const profile = await getProfileByUserId(dbUser.id);
+  const unreadNotifications = await getUnreadNotificationCount(dbUser.id);
 
   // Map DB user to User type
   const user: User = {
@@ -52,6 +54,7 @@ export const getUserFromRequest = async (
     username: dbUser.email,
     email: dbUser.email,
     avatarUrl: profile?.avatarUrl ?? null,
+    unreadNotifications,
   };
 
   return user;

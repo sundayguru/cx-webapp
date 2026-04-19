@@ -80,10 +80,19 @@ export const Header = () => {
           {/* Right Section */}
           <div className='flex items-center gap-2'>
             {/* Notifications */}
-            <button className='relative rounded-lg p-2 text-black/60 transition-colors hover:bg-black/5 hover:text-black/80'>
+            <Link
+              to='/notifications'
+              className='relative rounded-lg p-2 text-black/60 transition-colors hover:bg-black/5 hover:text-black/80'
+            >
               <Bell size={20} />
-              <span className='absolute top-1 right-1 h-2 w-2 rounded-full bg-red-500'></span>
-            </button>
+              {user && user.unreadNotifications > 0 && (
+                <span className='absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[9px] font-bold text-white'>
+                  {user.unreadNotifications > 9
+                    ? '9+'
+                    : user.unreadNotifications}
+                </span>
+              )}
+            </Link>
 
             {/* Profile Menu */}
             <div className='relative'>

@@ -9,4 +9,5 @@ export const userDataContext = createContext<User>({
   username: '',
   email: '',
   avatarUrl: null,
+  unreadNotifications: 0,
 });

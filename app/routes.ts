@@ -22,6 +22,7 @@ export default [
     route('dashboard', 'routes/dashboard.tsx'),
     route('profile/:userId?', 'routes/profile.tsx'),
     route('settings', 'routes/settings.tsx'),
+    route('notifications', 'routes/notifications.tsx'),
     route('courses', 'routes/courses.tsx'),
     route('courses/:id', 'routes/courses/$id.tsx'),
     route('courses/:id/edit', 'routes/courses/$id.edit.tsx'),
