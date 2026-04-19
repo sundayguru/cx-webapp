@@ -5,4 +5,5 @@ export type User = {
   givenName: string;
   username: string;
   email: string;
+  avatarUrl: string | null;
 };

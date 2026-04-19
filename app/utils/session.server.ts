@@ -1,4 +1,5 @@
 import { getUserById } from '~/db/auth';
+import { getProfileByUserId } from '~/db/profile';
 import { verifySessionToken } from '~/utils/auth.server';
 import type { User } from '~/types';
 
@@ -39,6 +40,9 @@ export const getUserFromRequest = async (
     return null;
   }
 
+  // Fetch the profile to get the avatar URL
+  const profile = await getProfileByUserId(dbUser.id);
+
   // Map DB user to User type
   const user: User = {
     id: dbUser.id,
@@ -47,6 +51,7 @@ export const getUserFromRequest = async (
     givenName: dbUser.firstName,
     username: dbUser.email,
     email: dbUser.email,
+    avatarUrl: profile?.avatarUrl ?? null,
   };
 
   return user;

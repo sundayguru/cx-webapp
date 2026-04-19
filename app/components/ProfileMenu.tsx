@@ -6,6 +6,7 @@ type ProfileMenuProps = {
   userName: string;
   userEmail: string;
   userId: string;
+  avatarUrl: string | null;
   onClose: () => void;
 };
 
@@ -13,6 +14,7 @@ export const ProfileMenu = ({
   userName,
   userEmail,
   userId,
+  avatarUrl,
   onClose,
 }: ProfileMenuProps) => {
   const logoutFetcher = useFetcher();
@@ -22,6 +24,14 @@ export const ProfileMenu = ({
       action: href('/auth/logout'),
     });
   };
+
+  const initials = userName
+    .split(' ')
+    .map((n) => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
+
   return (
     <>
       {/* Backdrop to close menu */}
@@ -33,9 +43,24 @@ export const ProfileMenu = ({
         className='absolute right-0 z-50 mt-2 w-56 rounded-xl border border-black/5 bg-white py-2 shadow-lg'
       >
         {/* User Info */}
-        <div className='border-b border-black/5 px-4 py-3'>
-          <p className='text-sm font-medium text-[#1a1a1a]'>{userName}</p>
-          <p className='truncate text-xs text-black/50'>{userEmail}</p>
+        <div className='flex items-center gap-3 border-b border-black/5 px-4 py-3'>
+          {avatarUrl ? (
+            <img
+              src={avatarUrl}
+              alt={userName}
+              className='h-8 w-8 rounded-full object-cover'
+            />
+          ) : (
+            <div className='flex h-8 w-8 items-center justify-center rounded-full bg-[#5A5A40] text-xs font-semibold text-white'>
+              {initials}
+            </div>
+          )}
+          <div className='min-w-0'>
+            <p className='truncate text-sm font-medium text-[#1a1a1a]'>
+              {userName}
+            </p>
+            <p className='truncate text-xs text-black/50'>{userEmail}</p>
+          </div>
         </div>
 
         {/* Menu Items */}

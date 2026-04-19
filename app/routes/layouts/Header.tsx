@@ -91,9 +91,17 @@ export const Header = () => {
                 onClick={() => setShowProfileMenu(!showProfileMenu)}
                 className='flex items-center gap-2 rounded-lg p-1.5 transition-colors hover:bg-black/5'
               >
-                <div className='flex h-8 w-8 items-center justify-center rounded-full bg-[#5A5A40] text-sm font-medium text-white'>
-                  {user?.name ? getInitials(user.name) : 'U'}
-                </div>
+                {user?.avatarUrl ? (
+                  <img
+                    src={user.avatarUrl}
+                    alt={user.name}
+                    className='h-8 w-8 rounded-full object-cover ring-2 ring-[#5A5A40]/20'
+                  />
+                ) : (
+                  <div className='flex h-8 w-8 items-center justify-center rounded-full bg-[#5A5A40] text-sm font-medium text-white'>
+                    {user?.name ? getInitials(user.name) : 'U'}
+                  </div>
+                )}
               </button>
 
               {showProfileMenu && user && (
@@ -101,6 +109,7 @@ export const Header = () => {
                   userName={user.name}
                   userEmail={user.email}
                   userId={user.id}
+                  avatarUrl={user.avatarUrl}
                   onClose={() => setShowProfileMenu(false)}
                 />
               )}

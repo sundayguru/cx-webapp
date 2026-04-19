@@ -8,4 +8,5 @@ export const userDataContext = createContext<User>({
   givenName: '',
   username: '',
   email: '',
+  avatarUrl: null,
 });
