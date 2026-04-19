@@ -244,7 +244,7 @@ const UnitPageContent = ({
           ?.sessionId
       : null;
 
-  const isInstructor = user?.id === course?.course.createdBy;
+  const isInstructor = user?.isAdmin === true;
   const hasRawText = Boolean(currentUnit.rawText?.trim());
 
   const isCompleted = currentUnit.isComplete === 1;

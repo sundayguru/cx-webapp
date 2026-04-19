@@ -552,7 +552,7 @@ export default function CourseDetailsPage({
   }
 
   const { course, school, author, modules } = data;
-  const isInstructor = user?.id === course.createdBy;
+  const isInstructor = user?.isAdmin === true;
   const isDraft = course.status === 'pending';
 
   const playlistItems: PlaylistItem[] = modules.flatMap((module) =>
