@@ -28,6 +28,7 @@ import {
   Sparkles,
   Trash2,
   Upload,
+  Users,
   Volume2,
   X,
 } from 'lucide-react';
@@ -885,6 +886,13 @@ const UnitPageContent = ({
                   PDF
                 </button>
               ) : null}
+              <Link
+                to={`/courses/${course?.course.id}/community`}
+                className='inline-flex items-center gap-2 rounded-xl border border-black/10 px-4 py-2 text-sm font-medium text-black/60 transition-all hover:bg-black/5'
+              >
+                <Users size={18} />
+                Community
+              </Link>
               <div className='relative'>
                 <button
                   onClick={() => setShowMoreMenu(!showMoreMenu)}

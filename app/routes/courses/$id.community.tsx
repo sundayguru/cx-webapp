@@ -36,6 +36,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     return {
       enrolled: false,
       courseId,
+      course: courseData.course,
       currentUser: user,
       posts: [],
       reactions: [],
@@ -47,6 +48,7 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
   return {
     enrolled: true,
     courseId,
+    course: courseData.course,
     currentUser: user,
     posts: communityData?.allPosts || [],
     reactions: communityData?.reactions || [],
@@ -159,10 +161,20 @@ export default function CourseCommunity({ loaderData }: Route.ComponentProps) {
   const posts = loaderData.posts || [];
   const reactions = loaderData.reactions || [];
   const currentUser = loaderData.currentUser;
+  const course = loaderData.course;
   const topLevelPosts = posts.filter((p: any) => !p.post.parentId);
 
   return (
     <div className='mx-auto max-w-4xl px-4 py-8'>
+      <div className='mb-6'>
+        <h1 className='font-serif text-3xl font-medium text-[#1a1a1a]'>
+          {course.title} Community
+        </h1>
+        <p className='mt-2 text-black/50'>
+          Discuss course material, ask questions, and share insights.
+        </p>
+      </div>
+
       <motion.div
         initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
