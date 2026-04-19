@@ -13,3 +13,4 @@ export * from './quizzes';
 export * from './chat-history';
 export * from './enrollments';
 export * from './notifications';
+export * from './community';

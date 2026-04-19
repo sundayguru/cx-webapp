@@ -12,6 +12,7 @@ import {
   Target,
   Users,
   Zap,
+  MessageSquare,
 } from 'lucide-react';
 import type { SelectAuthor } from '~/db/schemas/authors';
 import type { SelectCourse } from '~/db/schemas/courses';
@@ -138,6 +139,19 @@ export const CourseOverview = ({
           </p>
           <p className='mt-2 text-lg font-semibold'>Course PDF</p>
         </button>
+
+        <Link
+          to={`/courses/${course.id}/community`}
+          className='rounded-[24px] border border-black/5 bg-white p-5 text-left text-[#1a1a1a] shadow-lg shadow-black/5 transition-all hover:bg-black/5'
+        >
+          <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#5A5A40]/10 text-[#5A5A40]'>
+            <MessageSquare size={20} />
+          </div>
+          <p className='text-xs font-bold tracking-[0.18em] text-black/40 uppercase'>
+            Discussion
+          </p>
+          <p className='mt-2 text-lg font-semibold'>Community</p>
+        </Link>
 
         {!hasPlaylist && (
           <button

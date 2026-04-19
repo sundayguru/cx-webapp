@@ -25,6 +25,7 @@ export default [
     route('notifications', 'routes/notifications.tsx'),
     route('courses', 'routes/courses.tsx'),
     route('courses/:id', 'routes/courses/$id.tsx'),
+    route('courses/:id/community', 'routes/courses/$id.community.tsx'),
     route('courses/:id/edit', 'routes/courses/$id.edit.tsx'),
     route('courses/:id/units/:unitId', 'routes/courses/$id.units.$unitId.tsx'),
     route('create', 'routes/create.tsx'),
