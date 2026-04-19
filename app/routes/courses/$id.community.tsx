@@ -1,8 +1,8 @@
 import type { Route } from './+types/$id.community';
 import { data, useFetcher } from 'react-router';
 import { motion } from 'motion/react';
-import { MessageSquare, Reply, Smile, Trash2 } from 'lucide-react';
-import { useState } from 'react';
+import { MessageSquare, Reply, Smile, Trash2, Pencil } from 'lucide-react';
+import { useState, useEffect } from 'react';
 import { ConfirmModal } from '~/components/WarningModal';
 import { getUserFromRequest } from '~/utils/session.server';
 import { isUserEnrolled } from '~/db/enrollments';
@@ -12,6 +12,7 @@ import {
   getAllCommunityPostsForCourse,
   toggleCommunityReaction,
   deleteCommunityPost,
+  editCommunityPost,
 } from '~/db/community';
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -112,6 +113,18 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     }
 
     await deleteCommunityPost(postId, user.id);
+    return data({ success: true });
+  }
+
+  if (intent === 'editPost') {
+    const postId = formData.get('postId') as string;
+    const content = formData.get('content') as string;
+
+    if (!postId || !content || content.trim().length === 0) {
+      return data({ error: 'Post ID and content are required' }, { status: 400 });
+    }
+
+    await editCommunityPost(postId, user.id, content.trim());
     return data({ success: true });
   }
 
@@ -243,6 +256,19 @@ function PostThread({
 }: any) {
   const [showReplyForm, setShowReplyForm] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+
+  const checkEditWindow = () => {
+    // SQLite CURRENT_TIMESTAMP returns "YYYY-MM-DD HH:MM:SS" which parses as local time.
+    // Convert to ISO 8601 UTC format by replacing space and appending Z.
+    const utcString = postData.post.createdAt.replace(' ', 'T') + 'Z';
+    const ageMs = Date.now() - new Date(utcString).getTime();
+    return ageMs < 1000 * 60 * 10;
+  };
+
+  const canEdit = checkEditWindow();
+
+
   const replies = allPosts.filter(
     (p: any) => p.post.parentId === postData.post.id,
   );
@@ -291,16 +317,27 @@ function PostThread({
           <div className='flex items-center gap-2'>
             <span className='font-medium text-[#1a1a1a]'>{authorName}</span>
             <span className='text-xs text-black/40'>
-              {new Date(postData.post.createdAt).toLocaleDateString()}
+              {new Date(postData.post.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString()}
             </span>
             {postData.post.userId === currentUser.id && !postData.post.isDeleted && (
-              <button
-                onClick={() => setIsDeleteModalOpen(true)}
-                className='ml-auto text-black/30 hover:text-red-500 transition-colors'
-                title='Delete post'
-              >
-                <Trash2 size={14} />
-              </button>
+              <div className='ml-auto flex items-center gap-2'>
+                {canEdit && (
+                  <button
+                    onClick={() => setIsEditing(!isEditing)}
+                    className='text-black/30 hover:text-[#5A5A40] transition-colors'
+                    title='Edit post'
+                  >
+                    <Pencil size={14} />
+                  </button>
+                )}
+                <button
+                  onClick={() => setIsDeleteModalOpen(true)}
+                  className='text-black/30 hover:text-red-500 transition-colors'
+                  title='Delete post'
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
             )}
           </div>
 
@@ -308,10 +345,43 @@ function PostThread({
             <p className='mt-1 text-sm italic text-black/40'>
               [This message was deleted]
             </p>
+          ) : isEditing ? (
+            <div className='mt-3'>
+              <fetcher.Form method='post' className='flex flex-col gap-3' onSubmit={() => setTimeout(() => setIsEditing(false), 100)}>
+                <input type='hidden' name='intent' value='editPost' />
+                <input type='hidden' name='postId' value={postData.post.id} />
+                <textarea
+                  name='content'
+                  rows={3}
+                  defaultValue={postData.post.content}
+                  className='w-full resize-none rounded-xl border border-black/10 p-3 text-sm focus:border-[#5A5A40] focus:outline-none'
+                  required
+                />
+                <div className='flex justify-end gap-2'>
+                  <button
+                    type='button'
+                    onClick={() => setIsEditing(false)}
+                    className='rounded-lg border border-black/10 px-4 py-2 text-sm font-medium text-black/60 transition-colors hover:bg-black/5'
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type='submit'
+                    disabled={fetcher.state !== 'idle'}
+                    className='rounded-lg bg-[#5A5A40] px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-[#4a4a35] disabled:opacity-50'
+                  >
+                    Save
+                  </button>
+                </div>
+              </fetcher.Form>
+            </div>
           ) : (
             <>
               <p className='mt-1 text-sm whitespace-pre-wrap text-black/80'>
                 {postData.post.content}
+                {postData.post.updatedAt !== postData.post.createdAt && (
+                  <span className='ml-2 text-xs italic text-black/40'>(edited)</span>
+                )}
               </p>
 
               <div className='mt-3 flex flex-wrap items-center gap-2'>
@@ -330,11 +400,10 @@ function PostThread({
                         key={emoji}
                         onClick={() => handleReaction(emoji)}
                         title={tooltipNames}
-                        className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs transition-colors ${
-                          hasReacted
-                            ? 'bg-blue-50 text-blue-600'
-                            : 'bg-black/5 text-black/60 hover:bg-black/10'
-                        }`}
+                        className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs transition-colors ${hasReacted
+                          ? 'bg-blue-50 text-blue-600'
+                          : 'bg-black/5 text-black/60 hover:bg-black/10'
+                          }`}
                       >
                         <span>{emoji}</span>
                         <span className='font-medium'>{usersArr.length}</span>
