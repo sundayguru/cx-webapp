@@ -21,6 +21,7 @@ export default [
   layout('./routes/layouts/ProtectedLayout.tsx', [
     route('dashboard', 'routes/dashboard.tsx'),
     route('profile/:userId?', 'routes/profile.tsx'),
+    route('settings', 'routes/settings.tsx'),
     route('courses', 'routes/courses.tsx'),
     route('courses/:id', 'routes/courses/$id.tsx'),
     route('courses/:id/edit', 'routes/courses/$id.edit.tsx'),
@@ -28,6 +29,7 @@ export default [
     route('create', 'routes/create.tsx'),
     route('auth/logout', 'routes/auth/logout.tsx'),
     route('api/user', 'routes/api/user.ts'),
+    route('api/user/avatar', 'routes/api/user.avatar.tsx'),
     route('api/schools', 'routes/api/schools.ts'),
     route('api/authors', 'routes/api/authors.ts'),
     route('api/course/serve/*', 'routes/api/course/serve.$.tsx'),

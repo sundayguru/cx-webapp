@@ -35,6 +35,19 @@ export const getProfileById = async (id: string) => {
   }
 };
 
+export const getProfileByUserId = async (userId: string) => {
+  try {
+    const db = getDb();
+    const [userProfile] = await db
+      .select()
+      .from(profile)
+      .where(eq(profile.userId, userId));
+    return userProfile;
+  } catch (e) {
+    logError(e, 'Error getting profile by user id');
+  }
+};
+
 export const getAllProfiles = async () => {
   try {
     const db = getDb();
@@ -66,23 +79,23 @@ export const getPublicProfile = async (
     const userProfile = await db.query.profile.findFirst({
       where: eq(profile.userId, userId),
       with: {
-        user: true
-      }
-    })
-
-    if(!userProfile) {
-      return  {
-      id: '',
-      name: '',
-      email: '',
-      bio: '',
-      avatarUrl: '',
-      stats: {
-        coursesEnrolled: 0,
-        quizzesTaken: 0,
-        averageScore: 0,
+        user: true,
       },
-    };
+    });
+
+    if (!userProfile) {
+      return {
+        id: '',
+        name: '',
+        email: '',
+        bio: '',
+        avatarUrl: '',
+        stats: {
+          coursesEnrolled: 0,
+          quizzesTaken: 0,
+          averageScore: 0,
+        },
+      };
     }
 
     const enrollmentCount = await db
@@ -116,7 +129,7 @@ export const getPublicProfile = async (
       bio: userProfile.bio,
       avatarUrl: userProfile.avatarUrl,
       stats: {
-        coursesEnrolled: Number(enrollmentCount[0]?.count ?? 0) ,
+        coursesEnrolled: Number(enrollmentCount[0]?.count ?? 0),
         quizzesTaken,
         averageScore,
       },

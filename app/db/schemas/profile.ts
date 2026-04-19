@@ -25,6 +25,6 @@ export const profileRelations = relations(profile, ({ one }) => ({
 }));
 
 export type SelectProfile = typeof profile.$inferSelect & {
-  user?: SelectUser
+  user?: SelectUser;
 };
 export type InsertProfile = typeof profile.$inferInsert;

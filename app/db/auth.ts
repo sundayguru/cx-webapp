@@ -63,8 +63,8 @@ export const createUserWithPassword = async (
     await insertProfile({
       id: uuidv4(),
       userId: userId,
-      bio: ''
-    })
+      bio: '',
+    });
     return newUser;
   } catch (e) {
     logError(e, 'Error creating user with password');
