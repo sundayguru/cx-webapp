@@ -211,6 +211,13 @@
       "when": 1776606519727,
       "tag": "0029_swift_jane_foster",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "6",
+      "when": 1776606972259,
+      "tag": "0030_add_is_admin_to_users",
+      "breakpoints": true
     }
   ]
 }

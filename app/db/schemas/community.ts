@@ -15,7 +15,9 @@ export const communityPosts = sqliteTable('community_posts', {
   // and points to another post/reply ID for replies.
   parentId: text('parent_id'),
   content: text('content').notNull(),
-  isDeleted: integer('is_deleted', { mode: 'boolean' }).notNull().default(false),
+  isDeleted: integer('is_deleted', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   createdAt: text('created_at')
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),

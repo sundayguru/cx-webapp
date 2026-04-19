@@ -1,7 +1,14 @@
 import type { Route } from './+types/$id.community';
 import { data, useFetcher, Link } from 'react-router';
 import { motion } from 'motion/react';
-import { MessageSquare, Reply, Smile, Trash2, Pencil, ChevronLeft } from 'lucide-react';
+import {
+  MessageSquare,
+  Reply,
+  Smile,
+  Trash2,
+  Pencil,
+  ChevronLeft,
+} from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ConfirmModal } from '~/components/WarningModal';
 import { getUserFromRequest } from '~/utils/session.server';
@@ -123,7 +130,10 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     const content = formData.get('content') as string;
 
     if (!postId || !content || content.trim().length === 0) {
-      return data({ error: 'Post ID and content are required' }, { status: 400 });
+      return data(
+        { error: 'Post ID and content are required' },
+        { status: 400 },
+      );
     }
 
     await editCommunityPost(postId, user.id, content.trim());
@@ -288,7 +298,6 @@ function PostThread({
 
   const canEdit = checkEditWindow();
 
-
   const replies = allPosts.filter(
     (p: any) => p.post.parentId === postData.post.id,
   );
@@ -337,37 +346,44 @@ function PostThread({
           <div className='flex items-center gap-2'>
             <span className='font-medium text-[#1a1a1a]'>{authorName}</span>
             <span className='text-xs text-black/40'>
-              {new Date(postData.post.createdAt.replace(' ', 'T') + 'Z').toLocaleDateString()}
+              {new Date(
+                postData.post.createdAt.replace(' ', 'T') + 'Z',
+              ).toLocaleDateString()}
             </span>
-            {postData.post.userId === currentUser.id && !postData.post.isDeleted && (
-              <div className='ml-auto flex items-center gap-2'>
-                {canEdit && (
+            {postData.post.userId === currentUser.id &&
+              !postData.post.isDeleted && (
+                <div className='ml-auto flex items-center gap-2'>
+                  {canEdit && (
+                    <button
+                      onClick={() => setIsEditing(!isEditing)}
+                      className='text-black/30 transition-colors hover:text-[#5A5A40]'
+                      title='Edit post'
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  )}
                   <button
-                    onClick={() => setIsEditing(!isEditing)}
-                    className='text-black/30 hover:text-[#5A5A40] transition-colors'
-                    title='Edit post'
+                    onClick={() => setIsDeleteModalOpen(true)}
+                    className='text-black/30 transition-colors hover:text-red-500'
+                    title='Delete post'
                   >
-                    <Pencil size={14} />
+                    <Trash2 size={14} />
                   </button>
-                )}
-                <button
-                  onClick={() => setIsDeleteModalOpen(true)}
-                  className='text-black/30 hover:text-red-500 transition-colors'
-                  title='Delete post'
-                >
-                  <Trash2 size={14} />
-                </button>
-              </div>
-            )}
+                </div>
+              )}
           </div>
 
           {postData.post.isDeleted ? (
-            <p className='mt-1 text-sm italic text-black/40'>
+            <p className='mt-1 text-sm text-black/40 italic'>
               [This message was deleted]
             </p>
           ) : isEditing ? (
             <div className='mt-3'>
-              <fetcher.Form method='post' className='flex flex-col gap-3' onSubmit={() => setTimeout(() => setIsEditing(false), 100)}>
+              <fetcher.Form
+                method='post'
+                className='flex flex-col gap-3'
+                onSubmit={() => setTimeout(() => setIsEditing(false), 100)}
+              >
                 <input type='hidden' name='intent' value='editPost' />
                 <input type='hidden' name='postId' value={postData.post.id} />
                 <textarea
@@ -400,7 +416,9 @@ function PostThread({
               <p className='mt-1 text-sm whitespace-pre-wrap text-black/80'>
                 {postData.post.content}
                 {postData.post.updatedAt !== postData.post.createdAt && (
-                  <span className='ml-2 text-xs italic text-black/40'>(edited)</span>
+                  <span className='ml-2 text-xs text-black/40 italic'>
+                    (edited)
+                  </span>
                 )}
               </p>
 
@@ -420,10 +438,11 @@ function PostThread({
                         key={emoji}
                         onClick={() => handleReaction(emoji)}
                         title={tooltipNames}
-                        className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs transition-colors ${hasReacted
-                          ? 'bg-blue-50 text-blue-600'
-                          : 'bg-black/5 text-black/60 hover:bg-black/10'
-                          }`}
+                        className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs transition-colors ${
+                          hasReacted
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'bg-black/5 text-black/60 hover:bg-black/10'
+                        }`}
                       >
                         <span>{emoji}</span>
                         <span className='font-medium'>{usersArr.length}</span>

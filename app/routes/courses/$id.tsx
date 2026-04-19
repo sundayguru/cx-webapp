@@ -60,7 +60,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
 
   const communityData = await getAllCommunityPostsForCourse(courseId);
   const communityPosts = communityData?.allPosts || [];
-  
+
   const uniqueUsersMap = new Map();
   communityPosts.forEach((postItem: any) => {
     if (!uniqueUsersMap.has(postItem.user.id)) {
@@ -73,13 +73,27 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
   const communityUsers = Array.from(uniqueUsersMap.values()).slice(0, 5);
 
-  return { data, user, progressStats, isEnrolled, enrollmentCount, communityUsers };
+  return {
+    data,
+    user,
+    progressStats,
+    isEnrolled,
+    enrollmentCount,
+    communityUsers,
+  };
 };
 
 export default function CourseDetailsPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { data, user, progressStats, isEnrolled, enrollmentCount, communityUsers } = loaderData;
+  const {
+    data,
+    user,
+    progressStats,
+    isEnrolled,
+    enrollmentCount,
+    communityUsers,
+  } = loaderData;
   const { showToast } = useToast();
   const curriculumFetcher = useFetcher();
   const unitGenerationFetcher = useFetcher();

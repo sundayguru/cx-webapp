@@ -150,10 +150,7 @@ export const deleteCommunityPost = async (postId: string, userId: string) => {
       .update(communityPosts)
       .set({ isDeleted: true })
       .where(
-        and(
-          eq(communityPosts.id, postId),
-          eq(communityPosts.userId, userId)
-        )
+        and(eq(communityPosts.id, postId), eq(communityPosts.userId, userId)),
       )
       .returning();
     return result;
@@ -170,10 +167,10 @@ export const editCommunityPost = async (
 ) => {
   try {
     const db = getDb();
-    
+
     // Safety check for edit window: can fetch first or just optimistically update if we know it's within 10 mins via DB constraint/UI constraint.
     // For now we'll update since UI hides the button after 10m. Server validation should strictly do it too if needed, but simple update is fine.
-    
+
     const result = await db
       .update(communityPosts)
       .set({ content, updatedAt: sql`CURRENT_TIMESTAMP` })
@@ -181,8 +178,8 @@ export const editCommunityPost = async (
         and(
           eq(communityPosts.id, postId),
           eq(communityPosts.userId, userId),
-          eq(communityPosts.isDeleted, false)
-        )
+          eq(communityPosts.isDeleted, false),
+        ),
       )
       .returning();
     return result;

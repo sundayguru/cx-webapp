@@ -1,8 +1,8 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "22152816-410e-4841-bfb5-0b2dea70625b",
-  "prevId": "5841558a-71f2-4432-a3cd-15597ac32891",
+  "id": "3ce8a6d4-5720-459b-b0b9-0446b6bd71b2",
+  "prevId": "22152816-410e-4841-bfb5-0b2dea70625b",
   "tables": {
     "users": {
       "name": "users",
@@ -67,6 +67,14 @@
         },
         "is_banned": {
           "name": "is_banned",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": false
+        },
+        "is_admin": {
+          "name": "is_admin",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,

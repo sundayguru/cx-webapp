@@ -14,9 +14,8 @@ export const users = sqliteTable('users', {
   isDeactivated: integer('is_deactivated', { mode: 'boolean' })
     .notNull()
     .default(false),
-  isBanned: integer('is_banned', { mode: 'boolean' })
-    .notNull()
-    .default(false),
+  isBanned: integer('is_banned', { mode: 'boolean' }).notNull().default(false),
+  isAdmin: integer('is_admin', { mode: 'boolean' }).notNull().default(false),
   createdAt: text('created_at')
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),

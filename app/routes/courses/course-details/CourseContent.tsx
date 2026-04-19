@@ -163,7 +163,7 @@ export const CourseContent = ({
           <div className='mb-6 flex items-center gap-4'>
             {communityUsers.length > 0 && (
               <div className='flex -space-x-2'>
-                {communityUsers.slice(0, 3).map((user) => (
+                {communityUsers.slice(0, 3).map((user) =>
                   user.avatarUrl ? (
                     <img
                       key={user.id}
@@ -178,17 +178,19 @@ export const CourseContent = ({
                     >
                       {user.firstName?.charAt(0) || '?'}
                     </div>
-                  )
-                ))}
+                  ),
+                )}
               </div>
             )}
             <span className='text-sm font-medium text-black/60'>
-              {communityUsers.length > 0 ? 'Join active discussions' : 'Be the first to join the discussion'}
+              {communityUsers.length > 0
+                ? 'Join active discussions'
+                : 'Be the first to join the discussion'}
             </span>
           </div>
           <Link
             to={`/courses/${courseId}/community`}
-            className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 font-bold transition-all hover:bg-black/5 text-[#1a1a1a]'
+            className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 font-bold text-[#1a1a1a] transition-all hover:bg-black/5'
           >
             <MessageSquare size={18} />
             Open Community Space
