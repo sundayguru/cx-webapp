@@ -197,6 +197,13 @@
       "when": 1776597153478,
       "tag": "0027_light_ser_duncan",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "6",
+      "when": 1776601358891,
+      "tag": "0028_futuristic_bucky",
+      "breakpoints": true
     }
   ]
 }

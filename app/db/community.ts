@@ -142,3 +142,23 @@ export const toggleCommunityReaction = async (
     return null;
   }
 };
+
+export const deleteCommunityPost = async (postId: string, userId: string) => {
+  try {
+    const db = getDb();
+    const result = await db
+      .update(communityPosts)
+      .set({ isDeleted: true })
+      .where(
+        and(
+          eq(communityPosts.id, postId),
+          eq(communityPosts.userId, userId)
+        )
+      )
+      .returning();
+    return result;
+  } catch (e) {
+    logError(e, 'Error deleting community post');
+    return null;
+  }
+};

@@ -1,8 +1,9 @@
 import type { Route } from './+types/$id.community';
-import { data, useFetcher, Form, Link } from 'react-router';
+import { data, useFetcher } from 'react-router';
 import { motion } from 'motion/react';
-import { MessageSquare, Reply, ThumbsUp, Heart, Smile } from 'lucide-react';
+import { MessageSquare, Reply, Smile, Trash2 } from 'lucide-react';
 import { useState } from 'react';
+import { ConfirmModal } from '~/components/WarningModal';
 import { getUserFromRequest } from '~/utils/session.server';
 import { isUserEnrolled } from '~/db/enrollments';
 import { getCourseById } from '~/db/courses';
@@ -10,6 +11,7 @@ import {
   createCommunityPost,
   getAllCommunityPostsForCourse,
   toggleCommunityReaction,
+  deleteCommunityPost,
 } from '~/db/community';
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
@@ -103,6 +105,16 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     return data({ success: true });
   }
 
+  if (intent === 'deletePost') {
+    const postId = formData.get('postId') as string;
+    if (!postId) {
+      return data({ error: 'Post ID is required' }, { status: 400 });
+    }
+
+    await deleteCommunityPost(postId, user.id);
+    return data({ success: true });
+  }
+
   return data({ error: 'Invalid intent' }, { status: 400 });
 };
 
@@ -134,7 +146,6 @@ export default function CourseCommunity({ loaderData }: Route.ComponentProps) {
   const posts = loaderData.posts || [];
   const reactions = loaderData.reactions || [];
   const currentUser = loaderData.currentUser;
-  const courseId = loaderData.courseId;
   const topLevelPosts = posts.filter((p: any) => !p.post.parentId);
 
   return (
@@ -231,6 +242,7 @@ function PostThread({
   depth = 0,
 }: any) {
   const [showReplyForm, setShowReplyForm] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const replies = allPosts.filter(
     (p: any) => p.post.parentId === postData.post.id,
   );
@@ -281,76 +293,94 @@ function PostThread({
             <span className='text-xs text-black/40'>
               {new Date(postData.post.createdAt).toLocaleDateString()}
             </span>
-          </div>
-          <p className='mt-1 text-sm whitespace-pre-wrap text-black/80'>
-            {postData.post.content}
-          </p>
-
-          <div className='mt-3 flex flex-wrap items-center gap-2'>
-            {/* Display grouped reactions */}
-            {Object.entries(groupedReactions).map(
-              ([emoji, usersArr]: [string, any]) => {
-                const hasReacted = usersArr.some(
-                  (u: any) => u.id === currentUser.id,
-                );
-                const tooltipNames = usersArr
-                  .map((u: any) => `${u.firstName} ${u.lastName}`)
-                  .join(', ');
-
-                return (
-                  <button
-                    key={emoji}
-                    onClick={() => handleReaction(emoji)}
-                    title={tooltipNames}
-                    className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs transition-colors ${
-                      hasReacted
-                        ? 'bg-blue-50 text-blue-600'
-                        : 'bg-black/5 text-black/60 hover:bg-black/10'
-                    }`}
-                  >
-                    <span>{emoji}</span>
-                    <span className='font-medium'>{usersArr.length}</span>
-                  </button>
-                );
-              },
-            )}
-
-            {/* Reaction picker trigger */}
-            <div className='group relative'>
-              <button className='flex h-6 w-6 items-center justify-center rounded-full text-black/40 transition-colors hover:bg-black/5 hover:text-black/60'>
-                <Smile size={14} />
+            {postData.post.userId === currentUser.id && !postData.post.isDeleted && (
+              <button
+                onClick={() => setIsDeleteModalOpen(true)}
+                className='ml-auto text-black/30 hover:text-red-500 transition-colors'
+                title='Delete post'
+              >
+                <Trash2 size={14} />
               </button>
-              <div className='absolute bottom-full left-0 z-10 hidden pb-1 group-hover:block'>
-                <div className='flex rounded-lg border border-black/5 bg-white p-1 shadow-md'>
-                  {ALLOWED_EMOJIS.map((e) => (
-                    <button
-                      key={e}
-                      onClick={() => handleReaction(e)}
-                      className='flex h-8 w-8 items-center justify-center rounded transition-colors hover:bg-black/5'
-                    >
-                      {e}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowReplyForm(!showReplyForm)}
-              className='ml-2 flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-black/50 transition-colors hover:bg-black/5 hover:text-black/80'
-            >
-              <Reply size={14} /> Reply
-            </button>
+            )}
           </div>
 
-          {showReplyForm && (
-            <div className='mt-4'>
-              <PostForm
-                intent='createPost'
-                parentId={postData.post.id}
-                placeholder='Write a reply...'
-              />
-            </div>
+          {postData.post.isDeleted ? (
+            <p className='mt-1 text-sm italic text-black/40'>
+              [This message was deleted]
+            </p>
+          ) : (
+            <>
+              <p className='mt-1 text-sm whitespace-pre-wrap text-black/80'>
+                {postData.post.content}
+              </p>
+
+              <div className='mt-3 flex flex-wrap items-center gap-2'>
+                {/* Display grouped reactions */}
+                {Object.entries(groupedReactions).map(
+                  ([emoji, usersArr]: [string, any]) => {
+                    const hasReacted = usersArr.some(
+                      (u: any) => u.id === currentUser.id,
+                    );
+                    const tooltipNames = usersArr
+                      .map((u: any) => `${u.firstName} ${u.lastName}`)
+                      .join(', ');
+
+                    return (
+                      <button
+                        key={emoji}
+                        onClick={() => handleReaction(emoji)}
+                        title={tooltipNames}
+                        className={`flex items-center gap-1.5 rounded-full px-2 py-1 text-xs transition-colors ${
+                          hasReacted
+                            ? 'bg-blue-50 text-blue-600'
+                            : 'bg-black/5 text-black/60 hover:bg-black/10'
+                        }`}
+                      >
+                        <span>{emoji}</span>
+                        <span className='font-medium'>{usersArr.length}</span>
+                      </button>
+                    );
+                  },
+                )}
+
+                {/* Reaction picker trigger */}
+                <div className='group relative'>
+                  <button className='flex h-6 w-6 items-center justify-center rounded-full text-black/40 transition-colors hover:bg-black/5 hover:text-black/60'>
+                    <Smile size={14} />
+                  </button>
+                  <div className='absolute bottom-full left-0 z-10 hidden pb-1 group-hover:block'>
+                    <div className='flex rounded-lg border border-black/5 bg-white p-1 shadow-md'>
+                      {ALLOWED_EMOJIS.map((e) => (
+                        <button
+                          key={e}
+                          onClick={() => handleReaction(e)}
+                          className='flex h-8 w-8 items-center justify-center rounded transition-colors hover:bg-black/5'
+                        >
+                          {e}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setShowReplyForm(!showReplyForm)}
+                  className='ml-2 flex items-center gap-1 rounded-md px-2 py-1 text-xs font-medium text-black/50 transition-colors hover:bg-black/5 hover:text-black/80'
+                >
+                  <Reply size={14} /> Reply
+                </button>
+              </div>
+
+              {showReplyForm && (
+                <div className='mt-4'>
+                  <PostForm
+                    intent='createPost'
+                    parentId={postData.post.id}
+                    placeholder='Write a reply...'
+                  />
+                </div>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -369,6 +399,22 @@ function PostThread({
           ))}
         </div>
       )}
+
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title='Delete Post'
+        description='Are you sure you want to delete this post? This action cannot be undone.'
+        confirmVariant='danger'
+        isLoading={fetcher.state !== 'idle'}
+        onConfirm={() => {
+          fetcher.submit(
+            { intent: 'deletePost', postId: postData.post.id },
+            { method: 'post' },
+          );
+          setIsDeleteModalOpen(false);
+        }}
+        onClose={() => setIsDeleteModalOpen(false)}
+      />
     </motion.div>
   );
 }
