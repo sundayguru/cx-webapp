@@ -8,6 +8,7 @@ type CourseContentProps = {
   modules: CourseModuleWithUnits[];
   isInstructor: boolean;
   isEnrolled: boolean;
+  communityUsers: any[];
   isSplittingModuleRawText: boolean;
   onSplitModuleRawText: (moduleId: string) => void;
   onOpenModuleRawTextModal: (moduleId: string, rawText: string) => void;
@@ -18,6 +19,7 @@ export const CourseContent = ({
   modules,
   isInstructor,
   isEnrolled,
+  communityUsers,
   isSplittingModuleRawText,
   onSplitModuleRawText,
   onOpenModuleRawTextModal,
@@ -159,24 +161,38 @@ export const CourseContent = ({
         <section className='rounded-[32px] border border-black/5 bg-white p-8 shadow-[0_25px_70px_-35px_rgba(0,0,0,0.18)]'>
           <h2 className='mb-6 font-serif text-3xl text-[#1a1a1a]'>Community</h2>
           <div className='mb-6 flex items-center gap-4'>
-            <div className='flex -space-x-2'>
-              {[1, 2, 3].map((i) => (
-                <img
-                  key={i}
-                  src={`https://i.pravatar.cc/100?u=${i + 10}`}
-                  className='h-10 w-10 rounded-full border-2 border-white shadow-sm'
-                  alt='User'
-                />
-              ))}
-            </div>
+            {communityUsers.length > 0 && (
+              <div className='flex -space-x-2'>
+                {communityUsers.slice(0, 3).map((user) => (
+                  user.avatarUrl ? (
+                    <img
+                      key={user.id}
+                      src={user.avatarUrl}
+                      className='h-10 w-10 shrink-0 rounded-full border-2 border-white object-cover shadow-sm'
+                      alt={user.firstName}
+                    />
+                  ) : (
+                    <div
+                      key={user.id}
+                      className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border-2 border-white bg-[#5A5A40]/10 font-bold text-[#5A5A40] shadow-sm'
+                    >
+                      {user.firstName?.charAt(0) || '?'}
+                    </div>
+                  )
+                ))}
+              </div>
+            )}
             <span className='text-sm font-medium text-black/60'>
-              Join active discussions
+              {communityUsers.length > 0 ? 'Join active discussions' : 'Be the first to join the discussion'}
             </span>
           </div>
-          <button className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 font-bold transition-all hover:bg-black/5'>
+          <Link
+            to={`/courses/${courseId}/community`}
+            className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 font-bold transition-all hover:bg-black/5 text-[#1a1a1a]'
+          >
             <MessageSquare size={18} />
             Open Community Space
-          </button>
+          </Link>
         </section>
       </aside>
     </div>

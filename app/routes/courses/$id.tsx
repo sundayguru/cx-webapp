@@ -6,6 +6,7 @@ import { getCourseById } from '~/db/courses';
 import { getCourseProgressStats } from '~/db/quizzes';
 import { getEnrollmentCount, isUserEnrolled } from '~/db/enrollments';
 import { getUserFromRequest } from '~/utils/session.server';
+import { getAllCommunityPostsForCourse } from '~/db/community';
 import {
   CURRICULUM_MODEL_OPTIONS,
   DEFAULT_CURRICULUM_MODELS,
@@ -31,6 +32,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       progressStats: null,
       isEnrolled: false,
       enrollmentCount: 0,
+      communityUsers: [],
     };
   }
 
@@ -44,6 +46,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       progressStats: null,
       isEnrolled: false,
       enrollmentCount,
+      communityUsers: [],
     };
   }
 
@@ -55,13 +58,28 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     ? await getCourseProgressStats(user.id, allUnitIds)
     : null;
 
-  return { data, user, progressStats, isEnrolled, enrollmentCount };
+  const communityData = await getAllCommunityPostsForCourse(courseId);
+  const communityPosts = communityData?.allPosts || [];
+  
+  const uniqueUsersMap = new Map();
+  communityPosts.forEach((postItem: any) => {
+    if (!uniqueUsersMap.has(postItem.user.id)) {
+      uniqueUsersMap.set(postItem.user.id, {
+        id: postItem.user.id,
+        firstName: postItem.user.firstName,
+        avatarUrl: postItem.profile?.avatarUrl,
+      });
+    }
+  });
+  const communityUsers = Array.from(uniqueUsersMap.values()).slice(0, 5);
+
+  return { data, user, progressStats, isEnrolled, enrollmentCount, communityUsers };
 };
 
 export default function CourseDetailsPage({
   loaderData,
 }: Route.ComponentProps) {
-  const { data, user, progressStats, isEnrolled, enrollmentCount } = loaderData;
+  const { data, user, progressStats, isEnrolled, enrollmentCount, communityUsers } = loaderData;
   const { showToast } = useToast();
   const curriculumFetcher = useFetcher();
   const unitGenerationFetcher = useFetcher();
@@ -595,6 +613,7 @@ export default function CourseDetailsPage({
           modules={modules}
           isInstructor={isInstructor}
           isEnrolled={isEnrolled}
+          communityUsers={communityUsers}
           isSplittingModuleRawText={isSplittingModuleRawText}
           onSplitModuleRawText={handleSplitModuleRawTextIntoUnits}
           onOpenModuleRawTextModal={openModuleRawTextModal}

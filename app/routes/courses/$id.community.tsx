@@ -1,7 +1,7 @@
 import type { Route } from './+types/$id.community';
-import { data, useFetcher } from 'react-router';
+import { data, useFetcher, Link } from 'react-router';
 import { motion } from 'motion/react';
-import { MessageSquare, Reply, Smile, Trash2, Pencil } from 'lucide-react';
+import { MessageSquare, Reply, Smile, Trash2, Pencil, ChevronLeft } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { ConfirmModal } from '~/components/WarningModal';
 import { getUserFromRequest } from '~/utils/session.server';
@@ -162,11 +162,19 @@ export default function CourseCommunity({ loaderData }: Route.ComponentProps) {
   const reactions = loaderData.reactions || [];
   const currentUser = loaderData.currentUser;
   const course = loaderData.course;
+  const courseId = loaderData.courseId;
   const topLevelPosts = posts.filter((p: any) => !p.post.parentId);
 
   return (
     <div className='mx-auto max-w-4xl px-4 py-8'>
       <div className='mb-6'>
+        <Link
+          to={`/courses/${courseId}`}
+          className='mb-4 inline-flex items-center gap-2 text-sm text-black/40 transition-colors hover:text-[#5A5A40]'
+        >
+          <ChevronLeft size={16} />
+          Back to Course
+        </Link>
         <h1 className='font-serif text-3xl font-medium text-[#1a1a1a]'>
           {course.title} Community
         </h1>

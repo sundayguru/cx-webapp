@@ -24,7 +24,6 @@ export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
   try {
     const { text } = await extractText(buffer, { mergePages: true });
     // text is a string when mergePages is true
-    console.log('EXTRACTED TEXT LENGTH:', text?.length || 0);
     return (text as string) || '';
   } catch (e: unknown) {
     const message =
