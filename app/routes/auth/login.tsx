@@ -60,7 +60,7 @@ export default function LoginPage({ loaderData }: Route.ComponentProps) {
           <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#5A5A40]'>
             <GraduationCap className='h-10 w-10 text-white' />
           </div>
-          <h1 className='font-serif text-3xl text-[#1a1a1a]'>CourseX</h1>
+          <img src="/logo.svg" className='w-30' />
           <p className='font-serif text-black/60 italic'>
             {resetSuccess ? 'Password reset successful!' : 'Welcome back'}
           </p>

@@ -78,7 +78,7 @@ export default function DashboardPage() {
       <div className='flex min-h-[50vh] items-center justify-center'>
         <div className='text-center'>
           <h2 className='mb-4 text-2xl font-bold text-[#1a1a1a]'>
-            Welcome to CourseX
+            Welcome to CourseXQuiz
           </h2>
           <p className='mb-6 text-black/60'>
             Sign in to access your personalized learning dashboard
