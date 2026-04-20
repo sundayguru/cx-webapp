@@ -1,7 +1,8 @@
 import { eq } from 'drizzle-orm';
 import { getDb } from './connection';
-import { profile, enrollments, quizSessions } from './schemas';
+import { profile, quizSessions } from './schemas';
 import type { InsertProfile } from './schemas';
+import { getUserEnrollmentsCount } from './enrollments';
 import { logError } from '../utils/logger';
 
 export const insertProfile = async (data: InsertProfile) => {
@@ -98,10 +99,7 @@ export const getPublicProfile = async (
       };
     }
 
-    const enrollmentCount = await db
-      .select({ count: enrollments.id })
-      .from(enrollments)
-      .where(eq(enrollments.userId, userId));
+    const coursesEnrolled = await getUserEnrollmentsCount(userId);
 
     const userSessions = await db
       .select()
@@ -129,7 +127,7 @@ export const getPublicProfile = async (
       bio: userProfile.bio,
       avatarUrl: userProfile.avatarUrl,
       stats: {
-        coursesEnrolled: Number(enrollmentCount[0]?.count ?? 0),
+        coursesEnrolled,
         quizzesTaken,
         averageScore,
       },

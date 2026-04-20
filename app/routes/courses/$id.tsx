@@ -14,6 +14,7 @@ import {
   type CurriculumAiProvider,
 } from '~/utils/curriculum-options';
 import { useToast } from '~/utils/useToast';
+import { ConfirmModal } from '~/components/ConfirmModal';
 import { CourseContent } from './course-details/CourseContent';
 import { CourseModals } from './course-details/CourseModals';
 import { CourseOverview } from './course-details/CourseOverview';
@@ -106,6 +107,7 @@ export default function CourseDetailsPage({
   const splitModuleRawTextFetcher = useFetcher();
   const moduleRawTextUpdateFetcher = useFetcher();
   const publishFetcher = useFetcher();
+  const deleteFetcher = useFetcher();
 
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
@@ -119,6 +121,7 @@ export default function CourseDetailsPage({
   const [isSplitWarningOpen, setIsSplitWarningOpen] = useState(false);
   const [isModuleRawTextModalOpen, setIsModuleRawTextModalOpen] =
     useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [editableRawText, setEditableRawText] = useState(
     data?.course.rawText || '',
@@ -153,6 +156,7 @@ export default function CourseDetailsPage({
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
   const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
+  const isDeletingCourse = deleteFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
     setSelectedProvider(provider);
@@ -202,6 +206,16 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/publish`,
+      },
+    );
+  };
+
+  const handleDeleteCourse = () => {
+    deleteFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/delete`,
       },
     );
   };
@@ -528,6 +542,30 @@ export default function CourseDetailsPage({
     }
   }, [showToast, publishFetcher]);
 
+  const handledDeleteResult = useRef<string | null>(null);
+  useEffect(() => {
+    if (deleteFetcher.state === 'idle' && deleteFetcher.data) {
+      const result = deleteFetcher.data as {
+        success?: boolean;
+        error?: string;
+        message?: string;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledDeleteResult.current !== resultKey) {
+        handledDeleteResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: result.message || 'Course deleted successfully!',
+        });
+        window.location.assign('/courses');
+      } else if (result.error && handledDeleteResult.current !== resultKey) {
+        handledDeleteResult.current = resultKey;
+        showToast({ tone: 'error', message: result.error });
+      }
+    }
+  }, [deleteFetcher, showToast]);
+
   const handleEnroll = () => {
     enrollFetcher.submit(
       {},
@@ -564,6 +602,7 @@ export default function CourseDetailsPage({
   const isInstructor = user?.isAdmin === true;
   const isCourseCreator = user?.id === course.createdBy;
   const isDraft = course.status === 'pending';
+  const canDeleteCourse = isInstructor || (isCourseCreator && isDraft);
 
   const playlistItems: PlaylistItem[] = modules.flatMap((module) =>
     module.units
@@ -601,6 +640,7 @@ export default function CourseDetailsPage({
           onEnroll={handleEnroll}
           isEnrolled={isEnrolled}
           isInstructor={isInstructor}
+          canDeleteCourse={canDeleteCourse}
           isGenerating={isGenerating}
           isGeneratingUnits={isGeneratingUnits}
           isExtractingRawText={isExtractingRawText}
@@ -623,8 +663,10 @@ export default function CourseDetailsPage({
           onOpenSplitWarning={() => setIsSplitWarningOpen(true)}
           onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
+          onOpenDeleteModal={() => setIsDeleteModalOpen(true)}
           onPublish={handlePublish}
           onUnpublish={handleUnpublish}
+          isDeletingCourse={isDeletingCourse}
         />
       </div>
 
@@ -703,6 +745,15 @@ export default function CourseDetailsPage({
         items={playlistItems}
         isOpen={isPlaylistOpen}
         onClose={() => setIsPlaylistOpen(false)}
+      />
+      <ConfirmModal
+        isOpen={isDeleteModalOpen}
+        title='Delete this course?'
+        description='This will permanently delete the course and its associated content. This action cannot be undone.'
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={handleDeleteCourse}
+        isLoading={isDeletingCourse}
+        confirmVariant='danger'
       />
     </div>
   );

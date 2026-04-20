@@ -67,6 +67,17 @@ export const unpublishCourse = async (courseId: string): Promise<boolean> => {
   }
 };
 
+export const deleteCourse = async (courseId: string): Promise<boolean> => {
+  try {
+    const db = getDb();
+    await db.delete(courses).where(eq(courses.id, courseId));
+    return true;
+  } catch (e) {
+    logError(e, 'Error deleting course');
+    return false;
+  }
+};
+
 export const getCourseById = async (id: string) => {
   try {
     const db = getDb();

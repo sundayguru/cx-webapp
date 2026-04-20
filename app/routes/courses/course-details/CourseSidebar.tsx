@@ -6,6 +6,7 @@ import {
   FileText,
   Sparkles,
   Send,
+  Trash2,
   XCircle,
 } from 'lucide-react';
 import type { SidebarProps } from './types';
@@ -13,6 +14,7 @@ import type { SidebarProps } from './types';
 export const CourseSidebar = ({
   course,
   isInstructor,
+  canDeleteCourse,
   isGenerating,
   isGeneratingUnits,
   isExtractingRawText,
@@ -25,11 +27,25 @@ export const CourseSidebar = ({
   onOpenSplitWarning,
   onOpenGenerateWarning,
   onOpenGenerateUnitsModal,
+  onOpenDeleteModal,
   onPublish,
   onUnpublish,
+  isDeletingCourse = false,
   isEnrolled,
   onEnroll,
 }: SidebarProps) => {
+  const deleteButton =
+    canDeleteCourse && onOpenDeleteModal ? (
+      <button
+        onClick={onOpenDeleteModal}
+        disabled={isDeletingCourse}
+        className='flex w-full items-center justify-center gap-2 rounded-2xl border border-red-200 bg-red-50 py-4 text-lg font-bold text-red-600 transition-all hover:bg-red-100 disabled:opacity-50'
+      >
+        <Trash2 size={20} />
+        {isDeletingCourse ? 'Deleting Course...' : 'Delete Course'}
+      </button>
+    ) : null;
+
   return (
     <aside className='space-y-6'>
       <div className='sticky top-8 overflow-hidden rounded-[32px] border border-black/5 bg-white p-6 shadow-[0_30px_80px_-35px_rgba(0,0,0,0.2)]'>
@@ -127,10 +143,11 @@ export const CourseSidebar = ({
                 Unpublish Course
               </button>
             ) : null}
+            {deleteButton}
           </div>
         ) : (
           <div className='space-y-3'>
-            {!isEnrolled && (
+            {!isEnrolled && course.status === 'published' && (
               <button
                 onClick={onEnroll}
                 className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'
@@ -145,6 +162,7 @@ export const CourseSidebar = ({
               <FileText size={20} />
               Course Pdf
             </button>
+            {deleteButton}
           </div>
         )}
 

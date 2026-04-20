@@ -29,6 +29,7 @@ export type CurriculumModelOption = {
 export type SidebarProps = {
   course: SelectCourse;
   isInstructor: boolean;
+  canDeleteCourse: boolean;
   isGenerating: boolean;
   isGeneratingUnits: boolean;
   isExtractingRawText: boolean;
@@ -48,8 +49,10 @@ export type SidebarProps = {
   onOpenSplitWarning: () => void;
   onOpenGenerateWarning: () => void;
   onOpenGenerateUnitsModal: () => void;
+  onOpenDeleteModal?: () => void;
   onPublish?: () => void;
   onUnpublish?: () => void;
+  isDeletingCourse?: boolean;
   isEnrolled?: boolean;
   onEnroll?: () => void;
 };

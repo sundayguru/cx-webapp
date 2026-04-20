@@ -101,6 +101,7 @@ export default [
       'routes/api/courses/$id.units.$unitId.chat.tsx',
     ),
     route('api/courses/:id/enroll', 'routes/api/courses/$id.enroll.tsx'),
+    route('api/courses/:id/delete', 'routes/api/courses/$id.delete.tsx'),
     route('api/courses/:id/publish', 'routes/api/courses/$id.publish.tsx'),
   ]),
 ] satisfies RouteConfig;

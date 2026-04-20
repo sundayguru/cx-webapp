@@ -84,8 +84,15 @@ export const CourseOverview = ({
         </p>
         {isDraft && isCourseCreator ? (
           <div className='mt-6 max-w-3xl rounded-[24px] border border-orange-200 bg-orange-50 px-5 py-4 text-sm text-orange-900'>
-            We&apos;ve received your course and will process it as soon as
-            possible.
+            <p>
+              We&apos;ve received your course and will process it as soon as
+              possible.
+            </p>
+            <p className='mt-2'>
+              Once it&apos;s published, this course will be available to
+              everyone. If any uploaded material should not be made public,
+              please delete the course before we start processing it.
+            </p>
           </div>
         ) : null}
       </div>
