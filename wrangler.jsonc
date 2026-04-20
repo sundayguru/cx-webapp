@@ -24,7 +24,7 @@
   ],
   "env": {
     "production": {
-      "name": "CourseXQuiz",
+      "name": "prod-coursexquiz",
       "d1_databases": [
         {
           "binding": "DB",
