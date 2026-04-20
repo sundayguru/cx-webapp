@@ -63,6 +63,11 @@ export const CourseOverview = ({
             Pending Review
           </span>
         ) : null}
+        {course.status === "processing" && (
+          <span className='ml-4 rounded-full bg-yellow-100 px-3 py-1 text-[10px] font-bold tracking-[0.18em] text-orange-600 uppercase'>
+           Processing
+          </span>
+        )}
       </nav>
 
       <div className='mb-8'>
