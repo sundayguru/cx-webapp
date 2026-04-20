@@ -18,9 +18,7 @@ worker-configuration.d.ts
 node_modules/
 
 # Environment
-.env
 .env.local
-.env.*
 
 # Cache
 .cache/
