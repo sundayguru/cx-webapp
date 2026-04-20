@@ -485,7 +485,7 @@ const UnitPageContent = ({
         message: result.error,
       });
     }
-    bookmarkFetcher.reset()
+    bookmarkFetcher.reset();
   }, [bookmarkFetcher.data, bookmarkFetcher.state, showToast]);
 
   const isBookmarked =

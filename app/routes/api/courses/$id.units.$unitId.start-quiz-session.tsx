@@ -47,6 +47,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   }
 
   const session = await createQuizSession(
+    id,
     unitId,
     user.id,
     mode,

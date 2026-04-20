@@ -81,7 +81,10 @@ export default function LandingPage() {
                 {user?.id ? 'Go to Dashboard' : 'Start Learning for Free'}
                 <ArrowRight className='transition-transform group-hover:translate-x-1' />
               </Link>
-              <Link to={"/auth/login"} className='flex items-center gap-3 font-bold text-[#1a1a1a] transition-colors hover:text-[#5A5A40]'>
+              <Link
+                to={'/auth/login'}
+                className='flex items-center gap-3 font-bold text-[#1a1a1a] transition-colors hover:text-[#5A5A40]'
+              >
                 <User size={24} />
                 Login
               </Link>
@@ -138,7 +141,7 @@ export default function LandingPage() {
                 icon: Brain,
                 color: 'bg-red-50 text-red-600',
               },
-               {
+              {
                 title: 'Progress Tracking',
                 desc: 'Monitor your improvement with detailed analytics and AI-powered performance insights.',
                 icon: ChartLine,

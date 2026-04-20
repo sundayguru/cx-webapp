@@ -1,8 +1,11 @@
 import { and, asc, desc, eq, inArray } from 'drizzle-orm';
 import { getDb } from './connection';
 import {
+  courses,
+  modules,
   quizzes,
   quizSessions,
+  units,
   type InsertQuiz,
   type SelectQuiz,
   type SelectQuizSession,
@@ -83,6 +86,7 @@ export const createManyQuizzes = async (
 };
 
 export const createQuizSession = async (
+  courseId: string,
   unitId: string,
   userId: string,
   mode: 'learning' | 'exam',
@@ -93,6 +97,7 @@ export const createQuizSession = async (
     const db = getDb();
     const session = {
       id: uuidv4(),
+      courseId,
       unitId,
       userId,
       mode,
@@ -214,6 +219,84 @@ export type CourseProgressStats = {
   totalQuestions: number;
   averageScore: number;
   totalTimeSpent: number;
+};
+
+export type UnitAccuracyPoint = {
+  unitId: string;
+  courseId: string;
+  courseTitle: string;
+  unitTitle: string;
+  accuracy: number;
+  correctAnswers: number;
+  totalQuestions: number;
+};
+
+export const getUnitAccuracyHistory = async (
+  userId: string,
+  courseId?: string,
+): Promise<UnitAccuracyPoint[]> => {
+  try {
+    const db = getDb();
+    const conditions = [eq(quizSessions.userId, userId)];
+
+    if (courseId) {
+      conditions.push(eq(courses.id, courseId));
+    }
+
+    const results = await db
+      .select({
+        unitId: units.id,
+        courseId: courses.id,
+        courseTitle: courses.title,
+        unitTitle: units.title,
+        correctAnswers: quizSessions.correctAnswers,
+        totalQuestions: quizSessions.totalQuestions,
+      })
+      .from(quizSessions)
+      .innerJoin(units, eq(quizSessions.unitId, units.id))
+      .innerJoin(modules, eq(units.moduleId, modules.id))
+      .innerJoin(courses, eq(modules.courseId, courses.id))
+      .where(and(...conditions))
+      .orderBy(desc(quizSessions.startedAt));
+
+    const groupedResults = new Map<
+      string,
+      {
+        unitId: string;
+        courseId: string;
+        courseTitle: string;
+        unitTitle: string;
+        correctAnswers: number;
+        totalQuestions: number;
+      }
+    >();
+
+    results.forEach((result) => {
+      const existingResult = groupedResults.get(result.unitId);
+
+      if (existingResult) {
+        existingResult.correctAnswers += result.correctAnswers;
+        existingResult.totalQuestions += result.totalQuestions;
+        return;
+      }
+
+      groupedResults.set(result.unitId, { ...result });
+    });
+
+    return Array.from(groupedResults.values())
+      .slice(0, 12)
+      .reverse()
+      .map((result) => ({
+        ...result,
+        accuracy:
+          result.totalQuestions > 0
+            ? Math.round((result.correctAnswers / result.totalQuestions) * 100)
+            : 0,
+      }));
+  } catch (e) {
+    logError(e, 'Error getting unit accuracy history');
+    return [];
+  }
 };
 
 export const getCourseProgressStats = async (
