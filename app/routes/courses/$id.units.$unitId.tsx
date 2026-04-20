@@ -1,5 +1,6 @@
 import type { Route } from './+types/$id.units.$unitId';
 import { data, Link, useFetcher } from 'react-router';
+import { isUnitBookmarked } from '~/db/bookmarks';
 import { getCourseById } from '~/db/courses';
 import { getQuizzesByUnitId, getQuizSessionsByUnitAndUser } from '~/db/quizzes';
 import { getUserFromRequest } from '~/utils/session.server';
@@ -71,38 +72,13 @@ type LoaderData = {
   quizPerformance: Record<string, QuizPerformanceStat>;
   user: User | null;
   chatHistory: SelectChatMessage[];
+  isBookmarked: boolean;
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
   classes.filter(Boolean).join(' ');
 const QUIZ_SESSION_SIZE = 10;
 const QUIZ_SESSION_OPEN_TEXT_LIMIT = 3;
-
-const splitIntoParagraphs = (content: string) =>
-  content
-    .split(/\n\s*\n/g)
-    .map((paragraph) => paragraph.replace(/\s+/g, ' ').trim())
-    .filter(Boolean);
-
-const answerFromContent = (content: string, question: string) => {
-  const paragraphs = splitIntoParagraphs(content);
-  const keywords = question
-    .toLowerCase()
-    .split(/[^a-z0-9]+/g)
-    .map((word) => word.trim())
-    .filter((word) => word.length > 3);
-
-  const relevantParagraph =
-    paragraphs.find((paragraph) =>
-      keywords.some((word) => paragraph.toLowerCase().includes(word)),
-    ) || paragraphs[0];
-
-  if (!relevantParagraph) {
-    return "I couldn't find enough material in this unit yet. Try asking about a concept or section title from the page.";
-  }
-
-  return `Based on this unit, the most relevant section is: ${relevantParagraph}`;
-};
 
 export const loader = async ({
   params,
@@ -151,6 +127,7 @@ export const loader = async ({
   );
 
   const chatHistory = user ? await getChatHistoryByUnitId(unitId, user.id) : [];
+  const bookmarked = user ? await isUnitBookmarked(user.id, unitId) : false;
 
   return {
     course: courseData,
@@ -162,22 +139,13 @@ export const loader = async ({
     quizPerformance,
     user,
     chatHistory,
+    isBookmarked: bookmarked,
   };
 };
 
 export default function UnitPage({ loaderData }: Route.ComponentProps) {
   return <UnitPageContent key={loaderData.currentUnit.id} {...loaderData} />;
 }
-
-const readStoredUnitIds = (storageKey: string) => {
-  if (typeof window === 'undefined') {
-    return [] as string[];
-  }
-
-  return JSON.parse(
-    window.localStorage.getItem(storageKey) ?? '[]',
-  ) as string[];
-};
 
 const UnitPageContent = ({
   course,
@@ -189,6 +157,7 @@ const UnitPageContent = ({
   quizPerformance,
   user,
   chatHistory,
+  isBookmarked: initialIsBookmarked,
 }: LoaderData) => {
   const [mode, setMode] = useState<'text' | 'audio' | 'video' | 'quiz'>('text');
   const [showChat, setShowChat] = useState(false);
@@ -225,6 +194,7 @@ const UnitPageContent = ({
   const completeFetcher = useFetcher();
   const clearQuizzesFetcher = useFetcher();
   const uploadMediaFetcher = useFetcher();
+  const bookmarkFetcher = useFetcher();
   const startQuizSessionFetcher = useFetcher();
   const saveQuizSessionFetcher = useFetcher();
   const isGenerating = generateContentFetcher.state !== 'idle';
@@ -248,9 +218,6 @@ const UnitPageContent = ({
   const hasRawText = Boolean(currentUnit.rawText?.trim());
 
   const isCompleted = currentUnit.isComplete === 1;
-  const [isBookmarked, setIsBookmarked] = useState(() =>
-    readStoredUnitIds('coursex:bookmarked-units').includes(currentUnit.id),
-  );
   const audioRef = useRef<HTMLAudioElement>(null);
   const [quizPerformanceState, setQuizPerformanceState] =
     useState(quizPerformance);
@@ -495,6 +462,36 @@ const UnitPageContent = ({
       });
     }
   }, [saveQuizSessionFetcher.data, saveQuizSessionFetcher.state, showToast]);
+
+  useEffect(() => {
+    if (bookmarkFetcher.state !== 'idle' || !bookmarkFetcher.data) {
+      return;
+    }
+
+    const result = bookmarkFetcher.data as {
+      success?: boolean;
+      error?: string;
+      message?: string;
+    };
+
+    if (result.success) {
+      showToast({
+        tone: 'success',
+        message: result.message || 'Bookmark updated',
+      });
+    } else if (result.error) {
+      showToast({
+        tone: 'error',
+        message: result.error,
+      });
+    }
+    bookmarkFetcher.reset()
+  }, [bookmarkFetcher.data, bookmarkFetcher.state, showToast]);
+
+  const isBookmarked =
+    bookmarkFetcher.state !== 'idle'
+      ? !initialIsBookmarked
+      : initialIsBookmarked;
 
   const paginatedQuizzes = quizzes.slice(
     (quizPage - 1) * QUIZZES_PER_PAGE,
@@ -753,19 +750,21 @@ const UnitPageContent = ({
   );
 
   const toggleBookmark = () => {
-    const bookmarks = JSON.parse(
-      window.localStorage.getItem('coursex:bookmarked-units') ?? '[]',
-    ) as string[];
+    if (!user) {
+      showToast({
+        tone: 'error',
+        message: 'Sign in to bookmark units',
+      });
+      return;
+    }
 
-    const nextBookmarks = isBookmarked
-      ? bookmarks.filter((id) => id !== currentUnit.id)
-      : [...bookmarks, currentUnit.id];
-
-    window.localStorage.setItem(
-      'coursex:bookmarked-units',
-      JSON.stringify(nextBookmarks),
+    bookmarkFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/units/${currentUnit.id}/bookmark`,
+      },
     );
-    setIsBookmarked(!isBookmarked);
   };
 
   const markAsComplete = () => {

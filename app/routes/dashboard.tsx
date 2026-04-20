@@ -1,4 +1,6 @@
 import { Link, useLoaderData } from 'react-router';
+import { BookmarkedUnitCard } from '~/components/BookmarkedUnitCard';
+import { getBookmarkedUnitsByUser, type BookmarkedUnit } from '~/db/bookmarks';
 import { getUserFromRequest } from '~/utils/session.server';
 import {
   getUserStats,
@@ -25,6 +27,7 @@ type LoaderData = {
   createdCourses: {
     course: SelectCourse;
   }[];
+  bookmarkedUnits: BookmarkedUnit[];
 };
 
 export const loader = async ({ request }: { request: Request }) => {
@@ -40,25 +43,29 @@ export const loader = async ({ request }: { request: Request }) => {
       },
       enrolledCourses: [],
       createdCourses: [],
+      bookmarkedUnits: [],
     };
   }
 
-  const [stats, enrolledCourses, createdCourses] = await Promise.all([
-    getUserStats(user.id),
-    getUserEnrollments(user.id),
-    getCourses({ createdBy: user.id }),
-  ]);
+  const [stats, enrolledCourses, createdCourses, bookmarkedUnits] =
+    await Promise.all([
+      getUserStats(user.id),
+      getUserEnrollments(user.id),
+      getCourses({ createdBy: user.id }),
+      getBookmarkedUnitsByUser(user.id),
+    ]);
 
   return {
     user,
     stats,
     enrolledCourses,
     createdCourses,
+    bookmarkedUnits,
   };
 };
 
 export default function DashboardPage() {
-  const { user, stats, enrolledCourses, createdCourses } =
+  const { user, stats, enrolledCourses, createdCourses, bookmarkedUnits } =
     useLoaderData<LoaderData>();
 
   const formatTime = (seconds: number) => {
@@ -238,7 +245,34 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {enrolledCourses.length === 0 && createdCourses.length === 0 && (
+      {bookmarkedUnits.length > 0 && (
+        <section>
+          <div className='mb-4 flex items-center justify-between'>
+            <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+              Bookmarked Units
+            </h2>
+            <Link
+              to='/courses'
+              className='flex items-center gap-1 text-sm font-medium text-[#5A5A40] transition-colors hover:text-[#4a4a35]'
+            >
+              Explore Courses <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            {bookmarkedUnits.slice(0, 6).map((bookmarkedUnit) => (
+              <BookmarkedUnitCard
+                key={bookmarkedUnit.bookmark.id}
+                bookmarkedUnit={bookmarkedUnit}
+                formatDate={formatTimeLabel}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {enrolledCourses.length === 0 &&
+        createdCourses.length === 0 &&
+        bookmarkedUnits.length === 0 && (
         <div className='rounded-2xl border border-black/5 bg-[#f7f6ef] p-8 text-center'>
           <GraduationCap size={48} className='mx-auto mb-4 text-black/20' />
           <h3 className='mb-2 text-xl font-bold text-[#1a1a1a]'>
@@ -258,6 +292,13 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+const formatTimeLabel = (dateStr: string) =>
+  new Date(dateStr).toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+  });
 
 type StatCardProps = {
   icon: React.ReactNode;

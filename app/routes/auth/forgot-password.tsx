@@ -62,7 +62,7 @@ export default function ForgotPasswordPage({
           <div className='mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#5A5A40]'>
             <GraduationCap className='h-10 w-10 text-white' />
           </div>
-          <img src="/logo.svg" className='w-30' />
+          <img src='/logo.svg' className='w-30' />
           <p className='font-serif text-black/60 italic'>Reset your password</p>
         </div>
 

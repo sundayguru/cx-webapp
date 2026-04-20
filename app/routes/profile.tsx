@@ -1,5 +1,7 @@
 import { Link, redirect } from 'react-router';
 import type { Route } from './+types/profile';
+import { BookmarkedUnitCard } from '~/components/BookmarkedUnitCard';
+import { getBookmarkedUnitsByUser } from '~/db/bookmarks';
 import { getPublicProfile } from '~/db/profile';
 import { getUserEnrollments } from '~/db/enrollments';
 import { getCourses } from '~/db/courses';
@@ -30,21 +32,24 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     return redirect('/dashboard');
   }
 
-  const [enrolledCourses, createdCourses] = await Promise.all([
+  const [enrolledCourses, createdCourses, bookmarkedUnits] = await Promise.all([
     getUserEnrollments(targetUserId),
     isOwner ? getCourses({ createdBy: targetUserId }) : [],
+    isOwner ? getBookmarkedUnitsByUser(targetUserId) : [],
   ]);
 
   return {
     profile,
     enrolledCourses: enrolledCourses.slice(0, 6),
     createdCourses: createdCourses.slice(0, 6),
+    bookmarkedUnits: bookmarkedUnits.slice(0, 6),
     isOwner,
   };
 };
 
 export default function ProfilePage({ loaderData }: Route.ComponentProps) {
-  const { profile, enrolledCourses, createdCourses, isOwner } = loaderData;
+  const { profile, enrolledCourses, createdCourses, bookmarkedUnits, isOwner } =
+    loaderData;
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'long',
@@ -220,6 +225,23 @@ export default function ProfilePage({ loaderData }: Route.ComponentProps) {
                   </div>
                 </div>
               </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {isOwner && bookmarkedUnits.length > 0 && (
+        <section className='mt-8'>
+          <h2 className='mb-6 font-serif text-2xl text-[#1a1a1a]'>
+            Bookmarked Units
+          </h2>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            {bookmarkedUnits.map((bookmarkedUnit) => (
+              <BookmarkedUnitCard
+                key={bookmarkedUnit.bookmark.id}
+                bookmarkedUnit={bookmarkedUnit}
+                formatDate={formatDate}
+              />
             ))}
           </div>
         </section>

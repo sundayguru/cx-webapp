@@ -29,8 +29,8 @@ export const links: Route.LinksFunction = () => [
 
 export const meta = () => {
   return [
-    { title: 'Rallyard ' },
-    { name: 'description', content: `Smart Reply from Rallyard` },
+    { title: 'CourseXQuiz' },
+    { name: 'description', content: `Interactive learning platform` },
   ];
 };
 

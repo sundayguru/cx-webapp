@@ -14,3 +14,4 @@ export * from './chat-history';
 export * from './enrollments';
 export * from './notifications';
 export * from './community';
+export * from './bookmarks';

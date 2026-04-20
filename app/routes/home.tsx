@@ -5,12 +5,13 @@ import {
   Sparkles,
   BookOpen,
   Zap,
-  Shield,
   ChevronRight,
   ArrowRight,
   PlayCircle,
   Users,
-  Globe,
+  Brain,
+  ChartLine,
+  User,
 } from 'lucide-react';
 import { useUser } from '~/utils/useUser';
 import { Link } from 'react-router';
@@ -64,9 +65,9 @@ export default function LandingPage() {
               variants={itemVariants}
               className='mx-auto mb-12 max-w-2xl font-serif text-xl leading-relaxed text-black/60'
             >
-              Lumina transforms raw materials into immersive learning
+              CourseXQuiz transforms raw materials into immersive learning
               experiences. Upload a PDF, and watch as our AI crafts a
-              personalized curriculum, quizzes, and narrations just for you.
+              personalized curriculum, quizzes, and narrations.
             </motion.p>
 
             <motion.div
@@ -74,16 +75,16 @@ export default function LandingPage() {
               className='flex flex-col items-center justify-center gap-6 sm:flex-row'
             >
               <Link
-                to={user ? '/dashboard' : '/auth'}
+                to={user?.id ? '/dashboard' : '/auth/register'}
                 className='group flex items-center gap-3 rounded-2xl bg-[#5A5A40] px-10 py-5 text-lg font-bold text-white shadow-2xl shadow-[#5A5A40]/30 transition-all hover:bg-[#4a4a35]'
               >
-                {user ? 'Go to Dashboard' : 'Start Learning for Free'}
+                {user?.id ? 'Go to Dashboard' : 'Start Learning for Free'}
                 <ArrowRight className='transition-transform group-hover:translate-x-1' />
               </Link>
-              <button className='flex items-center gap-3 font-bold text-[#1a1a1a] transition-colors hover:text-[#5A5A40]'>
-                <PlayCircle size={24} />
-                Watch Demo
-              </button>
+              <Link to={"/auth/login"} className='flex items-center gap-3 font-bold text-[#1a1a1a] transition-colors hover:text-[#5A5A40]'>
+                <User size={24} />
+                Login
+              </Link>
             </motion.div>
           </motion.div>
         </div>
@@ -132,16 +133,16 @@ export default function LandingPage() {
                 color: 'bg-green-50 text-green-600',
               },
               {
-                title: 'Global Access',
-                desc: 'Learn anywhere, anytime. Your progress is synced across all your devices.',
-                icon: Globe,
-                color: 'bg-indigo-50 text-indigo-600',
-              },
-              {
-                title: 'Secure & Private',
-                desc: 'Your data and materials are protected with enterprise-grade security.',
-                icon: Shield,
+                title: 'Learning & Exam mode',
+                desc: 'Practice at your own pace with instant feedback and test your knowledge under exam conditions with timed assessments and realistic simulation.',
+                icon: Brain,
                 color: 'bg-red-50 text-red-600',
+              },
+               {
+                title: 'Progress Tracking',
+                desc: 'Monitor your improvement with detailed analytics and AI-powered performance insights.',
+                icon: ChartLine,
+                color: 'bg-indigo-50 text-indigo-600',
               },
             ].map((feature, i) => (
               <motion.div
@@ -240,7 +241,7 @@ export default function LandingPage() {
             </h2>
             <p className='mx-auto mb-12 max-w-2xl font-serif text-xl text-white/60 italic'>
               Join thousands of learners who are already illuminating their path
-              to knowledge with Lumina.
+              to knowledge with CourseXQuiz.
             </p>
             <Link
               to='/auth/register'
