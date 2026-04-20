@@ -192,7 +192,7 @@ export default function LandingPage() {
                 'Extract key concepts automatically',
                 'Generate summaries and takeaways',
                 'Chat with your course material',
-                'Track progress and earn certificates',
+                'Track progress',
               ].map((item, i) => (
                 <div key={i} className='flex items-center gap-4'>
                   <div className='flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[#5A5A40]'>
