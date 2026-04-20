@@ -80,6 +80,26 @@ const cx = (...classes: Array<string | false | null | undefined>) =>
 const QUIZ_SESSION_SIZE = 10;
 const QUIZ_SESSION_OPEN_TEXT_LIMIT = 3;
 
+const buildQuizSessionAnswers = (
+  quizzes: SelectQuiz[],
+  userAnswers: (string | null)[],
+  submittedCount: number,
+) => {
+  return quizzes.slice(0, submittedCount).map((quiz, index) => {
+    const answerValue = userAnswers[index];
+    const normalizedAnswer =
+      typeof answerValue === 'string' && answerValue.trim().length > 0
+        ? answerValue
+        : null;
+
+    return {
+      quizId: quiz.id,
+      answer: normalizedAnswer,
+      isCorrect: isQuizAnswerCorrect(quiz, normalizedAnswer),
+    } satisfies QuizSessionAnswer;
+  });
+};
+
 export const loader = async ({
   params,
   request,
@@ -206,7 +226,8 @@ const UnitPageContent = ({
   const handledGenerateContentResult = useRef<string | null>(null);
   const handledGenerateQuizResult = useRef<string | null>(null);
   const handledGenerateAudioScriptResult = useRef<string | null>(null);
-  const quizSessionId =
+  const completedSessionSyncRef = useRef<string | null>(null);
+  const currentQuizSessionId =
     startQuizSessionFetcher.state === 'idle' &&
     (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
       ?.sessionId
@@ -486,7 +507,7 @@ const UnitPageContent = ({
       });
     }
     bookmarkFetcher.reset();
-  }, [bookmarkFetcher.data, bookmarkFetcher.state, showToast]);
+  }, [bookmarkFetcher, bookmarkFetcher.data, bookmarkFetcher.state, showToast]);
 
   const isBookmarked =
     bookmarkFetcher.state !== 'idle'
@@ -497,6 +518,101 @@ const UnitPageContent = ({
     (quizPage - 1) * QUIZZES_PER_PAGE,
     quizPage * QUIZZES_PER_PAGE,
   );
+
+  const syncQuizSession = ({
+    completed,
+    submittedCount,
+  }: {
+    completed: boolean;
+    submittedCount: number;
+  }) => {
+    if (!currentQuizSessionId || submittedCount <= 0) {
+      return;
+    }
+
+    const answers = buildQuizSessionAnswers(
+      activeQuizzes,
+      userAnswers,
+      submittedCount,
+    );
+
+    if (answers.length === 0) {
+      return;
+    }
+
+    const correctAnswers = answers.filter((answer) => answer.isCorrect).length;
+    const timeSpent = Math.max(
+      1,
+      Math.round((Date.now() - quizStartTime) / 1000),
+    );
+
+    saveQuizSessionFetcher.submit(
+      {
+        sessionId: currentQuizSessionId,
+        correctAnswers: String(correctAnswers),
+        timeSpent: String(timeSpent),
+        answers: JSON.stringify(answers),
+        completed: String(completed),
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/save-quiz-session`,
+      },
+    );
+  };
+
+  useEffect(() => {
+    if (
+      !showQuizTaker ||
+      !showResults ||
+      !currentQuizSessionId ||
+      completedSessionSyncRef.current === currentQuizSessionId
+    ) {
+      return;
+    }
+
+    const answers = buildQuizSessionAnswers(
+      activeQuizzes,
+      userAnswers,
+      activeQuizzes.length,
+    );
+
+    if (answers.length === 0) {
+      return;
+    }
+
+    const correctAnswers = answers.filter((answer) => answer.isCorrect).length;
+    const timeSpent = Math.max(
+      1,
+      Math.round((Date.now() - quizStartTime) / 1000),
+    );
+
+    saveQuizSessionFetcher.submit(
+      {
+        sessionId: currentQuizSessionId,
+        correctAnswers: String(correctAnswers),
+        timeSpent: String(timeSpent),
+        answers: JSON.stringify(answers),
+        completed: 'true',
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/save-quiz-session`,
+      },
+    );
+    completedSessionSyncRef.current = currentQuizSessionId;
+  }, [
+    activeQuizzes.length,
+    activeQuizzes,
+    course?.course.id,
+    currentQuizSessionId,
+    currentUnit.id,
+    quizStartTime,
+    saveQuizSessionFetcher,
+    showQuizTaker,
+    showResults,
+    userAnswers,
+  ]);
 
   const startQuiz = () => {
     if (quizzes.length === 0) {
@@ -517,6 +633,7 @@ const UnitPageContent = ({
     setShowResults(false);
     setShowQuizTaker(true);
     setQuizStartTime(Date.now());
+    completedSessionSyncRef.current = null;
 
     startQuizSessionFetcher.submit(
       {
@@ -538,12 +655,6 @@ const UnitPageContent = ({
       answer: userAnswers[index] ?? null,
       isCorrect: isQuizAnswerCorrect(quiz, userAnswers[index] ?? null),
     }));
-    const correctAnswers = answers.filter((answer) => answer.isCorrect).length;
-    const timeSpent = Math.max(
-      1,
-      Math.round((Date.now() - quizStartTime) / 1000),
-    );
-
     setQuizPerformanceState((current) => {
       const next = { ...current };
 
@@ -587,21 +698,6 @@ const UnitPageContent = ({
       return next;
     });
 
-    if (quizSessionId) {
-      saveQuizSessionFetcher.submit(
-        {
-          sessionId: quizSessionId,
-          correctAnswers: String(correctAnswers),
-          timeSpent: String(timeSpent),
-          answers: JSON.stringify(answers),
-        },
-        {
-          method: 'post',
-          action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/save-quiz-session`,
-        },
-      );
-    }
-
     setShowResults(true);
   };
 
@@ -611,6 +707,7 @@ const UnitPageContent = ({
     setCurrentQuizIndex(0);
     setUserAnswers([]);
     setActiveQuizzes([]);
+    completedSessionSyncRef.current = null;
   };
 
   const retryQuiz = () => {
@@ -627,6 +724,7 @@ const UnitPageContent = ({
     setUserAnswers(new Array(randomizedQuizzes.length).fill(null));
     setShowResults(false);
     setQuizStartTime(Date.now());
+    completedSessionSyncRef.current = null;
 
     startQuizSessionFetcher.submit(
       {
@@ -2041,7 +2139,7 @@ const UnitPageContent = ({
       <AnimatePresence>
         {showQuizTaker && !showResults && (
           <QuizTakerView
-            key={`${quizSessionId ?? 'quiz-session'}-${currentQuizIndex}-${quizTimerEnabled ? 'timed' : 'untimed'}`}
+            key={`${currentQuizSessionId ?? 'quiz-session'}-${currentQuizIndex}-${quizTimerEnabled ? 'timed' : 'untimed'}`}
             quizzes={activeQuizzes}
             mode={quizMode}
             timerEnabled={quizTimerEnabled}
@@ -2053,6 +2151,10 @@ const UnitPageContent = ({
               setUserAnswers(newAnswers);
             }}
             onNext={() => {
+              syncQuizSession({
+                completed: false,
+                submittedCount: currentQuizIndex + 1,
+              });
               if (currentQuizIndex < activeQuizzes.length - 1) {
                 setCurrentQuizIndex((i) => i + 1);
               } else {

@@ -1,1 +1,0 @@
-ALTER TABLE `quiz_sessions` ADD `course_id` text REFERENCES courses(id);

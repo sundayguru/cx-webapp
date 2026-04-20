@@ -119,6 +119,7 @@ export const updateQuizSession = async (
   correctAnswers: number,
   timeSpentSeconds: number,
   answers: string,
+  completed: boolean = false,
 ): Promise<boolean> => {
   try {
     const db = getDb();
@@ -128,7 +129,7 @@ export const updateQuizSession = async (
         correctAnswers,
         timeSpentSeconds,
         answers,
-        completedAt: new Date().toISOString(),
+        ...(completed ? { completedAt: new Date().toISOString() } : {}),
       })
       .where(eq(quizSessions.id, sessionId));
     return true;

@@ -39,6 +39,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const correctAnswers = Number(formData.get('correctAnswers'));
   const timeSpent = Number(formData.get('timeSpent'));
   const answersValue = formData.get('answers');
+  const completedValue = formData.get('completed');
 
   if (typeof sessionId !== 'string' || !sessionId) {
     return data({ error: 'Session ID is required' }, { status: 400 });
@@ -71,11 +72,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return data({ error: 'Answers payload is invalid' }, { status: 400 });
   }
 
+  const completed = completedValue === 'true' || completedValue === '1';
+
   const updated = await updateQuizSession(
     sessionId,
     correctAnswers,
     Math.round(timeSpent),
     answersValue,
+    completed,
   );
 
   if (!updated) {

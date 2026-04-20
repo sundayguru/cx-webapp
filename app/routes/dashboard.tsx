@@ -52,6 +52,9 @@ export const loader = async ({ request }: { request: Request }) => {
         quizzesTaken: 0,
         totalTimeSpent: 0,
         averageScore: 0,
+        totalSessions: 0,
+        completedSessions: 0,
+        sessionCompletionRate: 0,
       },
       enrolledCourses: [],
       createdCourses: [],
@@ -187,7 +190,7 @@ export default function DashboardPage() {
         Continue your learning journey
       </p>
 
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4'>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7'>
         <StatCard
           icon={<GraduationCap size={22} />}
           label='Enrolled Courses'
@@ -212,6 +215,25 @@ export default function DashboardPage() {
           value={`${stats.averageScore}%`}
           color={stats.averageScore >= 70 ? '#059669' : '#dc2626'}
           highlight={stats.averageScore >= 70}
+        />
+        <StatCard
+          icon={<BarChart3 size={22} />}
+          label='Total Sessions'
+          value={stats.totalSessions.toString()}
+          color='#7c3aed'
+        />
+        <StatCard
+          icon={<BookOpen size={22} />}
+          label='Completed Sessions'
+          value={stats.completedSessions.toString()}
+          color='#0f766e'
+        />
+        <StatCard
+          icon={<BarChart3 size={22} />}
+          label='Session Completion'
+          value={`${stats.sessionCompletionRate}%`}
+          color={stats.sessionCompletionRate >= 70 ? '#059669' : '#dc2626'}
+          highlight={stats.sessionCompletionRate >= 70}
         />
       </div>
 

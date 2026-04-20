@@ -115,6 +115,9 @@ export type UserStats = {
   quizzesTaken: number;
   totalTimeSpent: number;
   averageScore: number;
+  totalSessions: number;
+  completedSessions: number;
+  sessionCompletionRate: number;
 };
 
 export const getUserStats = async (userId: string): Promise<UserStats> => {
@@ -131,22 +134,30 @@ export const getUserStats = async (userId: string): Promise<UserStats> => {
       .from(quizSessions)
       .where(eq(quizSessions.userId, userId));
 
+    const totalSessions = userSessions.length;
     const quizzesTaken = userSessions.length;
+    const completedSessions = userSessions.filter((session) =>
+      Boolean(session.completedAt),
+    ).length;
     const totalTimeSpent = userSessions.reduce(
-      (sum, s) => sum + s.timeSpentSeconds,
+      (sum, session) => sum + session.timeSpentSeconds,
       0,
     );
     const totalQuestions = userSessions.reduce(
-      (sum, s) => sum + s.totalQuestions,
+      (sum, session) => sum + session.totalQuestions,
       0,
     );
     const correctAnswers = userSessions.reduce(
-      (sum, s) => sum + s.correctAnswers,
+      (sum, session) => sum + session.correctAnswers,
       0,
     );
     const averageScore =
       totalQuestions > 0
         ? Math.round((correctAnswers / totalQuestions) * 100)
+        : 0;
+    const sessionCompletionRate =
+      totalSessions > 0
+        ? Math.round((completedSessions / totalSessions) * 100)
         : 0;
 
     return {
@@ -154,6 +165,9 @@ export const getUserStats = async (userId: string): Promise<UserStats> => {
       quizzesTaken,
       totalTimeSpent,
       averageScore,
+      totalSessions,
+      completedSessions,
+      sessionCompletionRate,
     };
   } catch (e) {
     logError(e, 'Error getting user stats');
@@ -162,6 +176,9 @@ export const getUserStats = async (userId: string): Promise<UserStats> => {
       quizzesTaken: 0,
       totalTimeSpent: 0,
       averageScore: 0,
+      totalSessions: 0,
+      completedSessions: 0,
+      sessionCompletionRate: 0,
     };
   }
 };

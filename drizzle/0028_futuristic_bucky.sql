@@ -1,1 +1,0 @@
-ALTER TABLE `community_posts` ADD `is_deleted` integer DEFAULT false NOT NULL;
