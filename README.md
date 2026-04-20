@@ -1,6 +1,6 @@
-# Smart Reply
+# CourseXQuiz
 
-Smart Reply for generating replies to emails using AI.
+Interactive learning platform
 
 ## Features
 
