@@ -2,8 +2,7 @@ import { data } from 'react-router';
 import type { ActionFunctionArgs } from 'react-router';
 import { publishCourse, unpublishCourse, getCourseById } from '~/db/courses';
 import { getUserFromRequest } from '~/utils/session.server';
-import { getAllUsers } from '~/db/users';
-import { createNotification } from '~/db/notifications';
+import { notifyAllUsers } from '~/db/notifications';
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -37,20 +36,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   // Trigger notification to users
   const courseData = await getCourseById(courseId);
   if (courseData) {
-    const allUsers = await getAllUsers();
-    if (allUsers) {
-      for (const u of allUsers) {
-        if (u.users.id !== user.id) {
-          await createNotification({
-            userId: u.users.id,
-            title: 'New Course Published',
-            message: `A new course "${courseData.course.title}" is now available.`,
-            actionUrl: `/courses/${courseId}`,
-            isRead: false,
-          });
-        }
-      }
-    }
+    await notifyAllUsers({
+      title: 'New Course Published',
+      message: `A new course "${courseData.course.title}" is now available.`,
+      actionUrl: `/courses/${courseId}`,
+    });
   }
 
   return data({ success: true, message: 'Course published' });

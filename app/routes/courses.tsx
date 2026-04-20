@@ -1,5 +1,5 @@
 import type { Route } from './+types/courses';
-import { Link, useSubmit, useNavigation } from 'react-router';
+import { Link, useSubmit } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
 import { getCourses, getAllCourseMetadata } from '~/db/courses';
 import { motion, AnimatePresence } from 'motion/react';
@@ -13,10 +13,9 @@ import {
   User,
   School,
   UserCircle,
-  ToggleLeft,
-  ToggleRight,
 } from 'lucide-react';
 import { useState } from 'react';
+import { CourseContributorBadge } from '~/components/CourseContributorBadge';
 
 export const loader = async ({ request }: Route.LoaderArgs) => {
   const user = await getUserFromRequest(request);
@@ -39,7 +38,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     publishedOnly: !mine || !user,
   };
 
-  const courses = await getCourses(filters);
+  const courses = await getCourses(filters, user?.isAdmin);
   const metadata = await getAllCourseMetadata();
 
   return {
@@ -201,7 +200,7 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
                     className='w-full rounded-xl border border-black/5 bg-black/[0.02] px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#5A5A40]'
                   >
                     <option value=''>All Institutions</option>
-                    {metadata.schools.map((s: any) => (
+                    {metadata.schools.map((s) => (
                       <option key={s.id} value={s.id}>
                         {s.name}
                       </option>
@@ -220,7 +219,7 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
                     className='w-full rounded-xl border border-black/5 bg-black/[0.02] px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#5A5A40]'
                   >
                     <option value=''>All Authors</option>
-                    {metadata.authors.map((a: any) => (
+                    {metadata.authors.map((a) => (
                       <option key={a.id} value={a.id}>
                         {a.name}
                       </option>
@@ -316,19 +315,13 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
           {filters.schoolId && (
             <div className='flex items-center gap-2 rounded-full border border-black/5 bg-black/[0.02] px-4 py-1.5 text-xs font-bold text-black/60'>
               <School size={12} />
-              {
-                metadata.schools.find((s: any) => s.id === filters.schoolId)
-                  ?.name
-              }
+              {metadata.schools.find((s) => s.id === filters.schoolId)?.name}
             </div>
           )}
           {filters.authorId && (
             <div className='flex items-center gap-2 rounded-full border border-black/5 bg-black/[0.02] px-4 py-1.5 text-xs font-bold text-black/60'>
               <UserCircle size={12} />
-              {
-                metadata.authors.find((a: any) => a.id === filters.authorId)
-                  ?.name
-              }
+              {metadata.authors.find((a) => a.id === filters.authorId)?.name}
             </div>
           )}
         </div>
@@ -355,7 +348,7 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
         </div>
       ) : (
         <div className='grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-          {courses.map(({ course, school, author }) => (
+          {courses.map(({ course, school, author, contributor }) => (
             <motion.div
               key={course.id}
               layout
@@ -420,6 +413,10 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
                       </span>
                     </div>
                   </div>
+                  <CourseContributorBadge
+                    contributor={contributor}
+                    variant='card'
+                  />
                   {school && (
                     <div className='flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-black/20 uppercase'>
                       <School size={12} />

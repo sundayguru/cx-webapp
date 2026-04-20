@@ -3,6 +3,7 @@ import { getDb } from './connection';
 import { notifications, type InsertNotification } from './schemas';
 import { logError } from '../utils/logger';
 import { v4 as uuidv4 } from 'uuid';
+import { getAllUsers } from './users';
 
 export const createNotification = async (
   notification: Omit<InsertNotification, 'id'>,
@@ -14,6 +15,33 @@ export const createNotification = async (
       .insert(notifications)
       .values({ ...notification, id })
       .returning();
+  } catch (e) {
+    logError(e, 'Error creating notification');
+    return null;
+  }
+};
+
+export const notifyAllUsers = async (
+  notification: Partial<InsertNotification>,
+) => {
+  try {
+    const db = getDb();
+    const allUsers = await getAllUsers();
+    if (allUsers) {
+      const notificationsInsert = allUsers.map((u) => {
+        return {
+          ...notification,
+          userId: u.users.id,
+          isRead: false,
+          id: uuidv4(),
+        } as InsertNotification;
+      });
+
+      return await db
+        .insert(notifications)
+        .values(notificationsInsert)
+        .returning();
+    }
   } catch (e) {
     logError(e, 'Error creating notification');
     return null;

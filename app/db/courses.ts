@@ -5,13 +5,21 @@ import {
   schools,
   authors,
   modules,
+  profile,
   units,
+  users,
   type InsertCourse,
-  type InsertModule,
-  type InsertUnit,
 } from './schemas';
 import { v4 as uuidv4 } from 'uuid';
 import { logError } from '~/utils/logger';
+import type { CourseContributor } from '~/types/course';
+
+type CourseWithRelations = {
+  course: typeof courses.$inferSelect;
+  school: typeof schools.$inferSelect | null;
+  author: typeof authors.$inferSelect | null;
+  contributor: CourseContributor;
+};
 
 export const createCourse = async (
   courseData: Omit<InsertCourse, 'id' | 'createdAt' | 'updatedAt'>,
@@ -69,10 +77,18 @@ export const getCourseById = async (id: string) => {
         course: courses,
         school: schools,
         author: authors,
+        contributor: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          avatarUrl: profile.avatarUrl,
+        },
       })
       .from(courses)
       .leftJoin(schools, eq(courses.schoolId, schools.id))
       .leftJoin(authors, eq(courses.authorId, authors.id))
+      .innerJoin(users, eq(courses.createdBy, users.id))
+      .leftJoin(profile, eq(profile.userId, users.id))
       .where(eq(courses.id, id))
       .limit(1);
 
@@ -80,7 +96,7 @@ export const getCourseById = async (id: string) => {
       return null;
     }
 
-    const courseData = results[0];
+    const courseData = results[0] as CourseWithRelations;
 
     // Get modules for the course
     const courseModules = await db
@@ -91,7 +107,7 @@ export const getCourseById = async (id: string) => {
 
     // Get units for all modules in this course
     const moduleIds = courseModules.map((m) => m.id);
-    let courseUnits: any[] = [];
+    let courseUnits: Array<typeof units.$inferSelect> = [];
     if (moduleIds.length > 0) {
       courseUnits = await db
         .select()
@@ -140,7 +156,7 @@ type CourseFilters = {
   publishedOnly?: boolean;
 };
 
-export const getCourses = async (filters?: CourseFilters) => {
+export const getCourses = async (filters?: CourseFilters, isAdmin = false) => {
   try {
     const db = getDb();
     const conditions: SQL[] = [];
@@ -149,7 +165,7 @@ export const getCourses = async (filters?: CourseFilters) => {
       conditions.push(eq(courses.createdBy, filters.createdBy));
     }
 
-    if (filters?.publishedOnly) {
+    if (filters?.publishedOnly && !isAdmin) {
       conditions.push(eq(courses.status, 'published'));
     }
 
@@ -184,16 +200,24 @@ export const getCourses = async (filters?: CourseFilters) => {
         course: courses,
         school: schools,
         author: authors,
+        contributor: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          avatarUrl: profile.avatarUrl,
+        },
       })
       .from(courses)
       .leftJoin(schools, eq(courses.schoolId, schools.id))
-      .leftJoin(authors, eq(courses.authorId, authors.id));
+      .leftJoin(authors, eq(courses.authorId, authors.id))
+      .innerJoin(users, eq(courses.createdBy, users.id))
+      .leftJoin(profile, eq(profile.userId, users.id));
 
     if (conditions.length > 0) {
       query.where(and(...conditions));
     }
 
-    return query.orderBy(courses.createdAt);
+    return await query.orderBy(courses.createdAt);
   } catch (e) {
     logError(e, 'Error getting courses');
     return [];

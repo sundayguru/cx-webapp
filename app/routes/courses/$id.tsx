@@ -19,7 +19,6 @@ import { CourseModals } from './course-details/CourseModals';
 import { CourseOverview } from './course-details/CourseOverview';
 import { CourseSidebar } from './course-details/CourseSidebar';
 import { CoursePlaylist, type PlaylistItem } from '~/components/CoursePlaylist';
-import { CourseProgress } from '~/components/CourseProgress';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -61,8 +60,11 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const communityData = await getAllCommunityPostsForCourse(courseId);
   const communityPosts = communityData?.allPosts || [];
 
-  const uniqueUsersMap = new Map();
-  communityPosts.forEach((postItem: any) => {
+  const uniqueUsersMap = new Map<
+    string,
+    { id: string; firstName: string; avatarUrl: string | null }
+  >();
+  communityPosts.forEach((postItem) => {
     if (!uniqueUsersMap.has(postItem.user.id)) {
       uniqueUsersMap.set(postItem.user.id, {
         id: postItem.user.id,
@@ -558,7 +560,7 @@ export default function CourseDetailsPage({
     );
   }
 
-  const { course, school, author, modules } = data;
+  const { course, school, author, contributor, modules } = data;
   const isInstructor = user?.isAdmin === true;
   const isDraft = course.status === 'pending';
 
@@ -582,6 +584,7 @@ export default function CourseDetailsPage({
           course={course}
           school={school}
           author={author}
+          contributor={contributor}
           modulesCount={modules.length}
           isDraft={isDraft}
           onOpenPlaylist={() => setIsPlaylistOpen(true)}

@@ -5,24 +5,25 @@ import {
   BookOpen,
   ChevronRight,
   Clock,
-  FileText,
   Globe,
-  Lock,
   Play,
   Target,
   Users,
   Zap,
-  MessageSquare,
+  UserCircle2,
 } from 'lucide-react';
 import type { SelectAuthor } from '~/db/schemas/authors';
 import type { SelectCourse } from '~/db/schemas/courses';
 import type { SelectSchool } from '~/db/schemas/schools';
 import type { CourseProgressStats } from '~/db/quizzes';
+import { CourseContributorBadge } from '~/components/CourseContributorBadge';
+import type { CourseContributor } from '~/types/course';
 
 type CourseOverviewProps = {
   course: SelectCourse;
   school: SelectSchool | null;
   author: SelectAuthor | null;
+  contributor: CourseContributor;
   modulesCount: number;
   isDraft: boolean;
   onOpenPlaylist: () => void;
@@ -36,6 +37,7 @@ export const CourseOverview = ({
   course,
   school,
   author,
+  contributor,
   modulesCount,
   isDraft,
   onOpenPlaylist,
@@ -187,20 +189,21 @@ export const CourseOverview = ({
         {author ? (
           <div className='flex items-center gap-3 rounded-2xl bg-black/[0.02] px-4 py-3'>
             <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[#5A5A40]/10 text-[#5A5A40]'>
-              <Globe size={20} />
+              <UserCircle2 size={20} />
             </div>
             <div>
               <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
-                Created by
+                Author
               </p>
               <p className='font-medium text-[#1a1a1a]'>{author.name}</p>
             </div>
           </div>
         ) : null}
+        <CourseContributorBadge contributor={contributor} />
         {school ? (
           <div className='flex items-center gap-3 rounded-2xl bg-black/[0.02] px-4 py-3'>
             <div className='flex h-10 w-10 items-center justify-center rounded-full bg-[#5A5A40]/10 text-[#5A5A40]'>
-              <Play size={18} />
+              <Globe size={18} />
             </div>
             <div>
               <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
