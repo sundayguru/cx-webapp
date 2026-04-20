@@ -48,6 +48,8 @@ export type SidebarProps = {
   onOpenGenerateUnitsModal: () => void;
   onPublish?: () => void;
   onUnpublish?: () => void;
+  isEnrolled?: boolean;
+  onEnroll?: () => void;
 };
 
 export type CourseContentProps = {

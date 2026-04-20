@@ -27,6 +27,8 @@ export const CourseSidebar = ({
   onOpenGenerateUnitsModal,
   onPublish,
   onUnpublish,
+  isEnrolled,
+  onEnroll,
 }: SidebarProps) => {
   return (
     <aside className='space-y-6'>
@@ -128,15 +130,20 @@ export const CourseSidebar = ({
           </div>
         ) : (
           <div className='space-y-3'>
-            <button className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'>
-              Go to Course
-            </button>
+            {!isEnrolled && (
+              <button
+                onClick={onEnroll}
+                className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'
+              >
+                Enroll Now
+              </button>
+            )}
             <button
               onClick={onOpenPdf}
               className='flex w-full items-center justify-center gap-2 rounded-2xl border border-[#5A5A40] py-4 text-lg font-bold text-[#5A5A40] transition-all hover:bg-[#5A5A40]/5'
             >
               <FileText size={20} />
-              View Syllabus
+              Course Pdf
             </button>
           </div>
         )}

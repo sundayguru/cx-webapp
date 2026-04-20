@@ -526,6 +526,13 @@ export default function CourseDetailsPage({
     }
   }, [showToast, publishFetcher]);
 
+  const handleEnroll = () => {
+    enrollFetcher.submit(
+      {},
+      { method: 'post', action: `/api/courses/${course.id}/enroll` },
+    );
+  };
+
   if (!data) {
     return (
       <div className='mx-auto max-w-4xl px-4 py-12'>
@@ -577,22 +584,17 @@ export default function CourseDetailsPage({
           author={author}
           modulesCount={modules.length}
           isDraft={isDraft}
-          onOpenPdf={() => setIsPdfModalOpen(true)}
           onOpenPlaylist={() => setIsPlaylistOpen(true)}
           hasPlaylist={hasPlaylist && isEnrolled}
           progressStats={progressStats}
           isEnrolled={isEnrolled}
           learnerCount={enrollmentCount}
-          onEnroll={() => {
-            enrollFetcher.submit(
-              {},
-              { method: 'post', action: `/api/courses/${course.id}/enroll` },
-            );
-          }}
         />
 
         <CourseSidebar
           course={course}
+          onEnroll={handleEnroll}
+          isEnrolled={isEnrolled}
           isInstructor={isInstructor}
           isGenerating={isGenerating}
           isGeneratingUnits={isGeneratingUnits}

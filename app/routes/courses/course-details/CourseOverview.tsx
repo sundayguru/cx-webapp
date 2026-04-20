@@ -25,13 +25,11 @@ type CourseOverviewProps = {
   author: SelectAuthor | null;
   modulesCount: number;
   isDraft: boolean;
-  onOpenPdf: () => void;
   onOpenPlaylist: () => void;
   hasPlaylist?: boolean;
   progressStats?: CourseProgressStats | null;
-  isEnrolled?: boolean;
   learnerCount?: number;
-  onEnroll?: () => void;
+  isEnrolled?: boolean;
 };
 
 export const CourseOverview = ({
@@ -40,25 +38,12 @@ export const CourseOverview = ({
   author,
   modulesCount,
   isDraft,
-  onOpenPdf,
   onOpenPlaylist,
   hasPlaylist = false,
   progressStats,
   isEnrolled = true,
   learnerCount = 0,
-  onEnroll,
 }: CourseOverviewProps) => {
-  const formatTime = (seconds: number) => {
-    if (seconds < 60) {
-      return `${seconds}s`;
-    }
-    if (seconds < 3600) {
-      return `${Math.floor(seconds / 60)}m`;
-    }
-    const hours = Math.floor(seconds / 3600);
-    const mins = Math.floor((seconds % 3600) / 60);
-    return `${hours}h ${mins}m`;
-  };
   return (
     <motion.section
       initial={{ opacity: 0, y: 18 }}
@@ -127,37 +112,11 @@ export const CourseOverview = ({
           </p>
         </div>
 
-        <button
-          onClick={onOpenPdf}
-          className='cursor-pointer rounded-[24px] border border-black/5 bg-[#5A5A40] p-5 text-left text-white shadow-lg shadow-[#5A5A40]/20 transition-all hover:bg-[#4a4a35]'
-        >
-          <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
-            <FileText size={20} />
-          </div>
-          <p className='text-xs font-bold tracking-[0.18em] text-white/60 uppercase'>
-            Source Material
-          </p>
-          <p className='mt-2 text-lg font-semibold'>Course PDF</p>
-        </button>
-
-        <Link
-          to={`/courses/${course.id}/community`}
-          className='rounded-[24px] border border-black/5 bg-white p-5 text-left text-[#1a1a1a] shadow-lg shadow-black/5 transition-all hover:bg-black/5'
-        >
-          <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-[#5A5A40]/10 text-[#5A5A40]'>
-            <MessageSquare size={20} />
-          </div>
-          <p className='text-xs font-bold tracking-[0.18em] text-black/40 uppercase'>
-            Discussion
-          </p>
-          <p className='mt-2 text-lg font-semibold'>Community</p>
-        </Link>
-
-        {!hasPlaylist && (
+        {hasPlaylist && (
           <button
             onClick={onOpenPlaylist}
             disabled={!isEnrolled}
-            className='rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a]'
+            className='cursor-pointer rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a]'
           >
             <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
               <Play size={20} />
@@ -166,21 +125,6 @@ export const CourseOverview = ({
               Course Player
             </p>
             <p className='mt-2 text-lg font-semibold'>Listen & Watch</p>
-          </button>
-        )}
-
-        {!isEnrolled && onEnroll && (
-          <button
-            onClick={onEnroll}
-            className='rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a]'
-          >
-            <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
-              <Lock size={20} />
-            </div>
-            <p className='text-xs font-bold tracking-[0.18em] text-white/60 uppercase'>
-              Not Enrolled
-            </p>
-            <p className='mt-2 text-lg font-semibold'>Enroll Now</p>
           </button>
         )}
       </div>
