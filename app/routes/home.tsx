@@ -1,4 +1,3 @@
-import React from 'react';
 import { motion } from 'motion/react';
 import {
   GraduationCap,
@@ -7,7 +6,6 @@ import {
   Zap,
   ChevronRight,
   ArrowRight,
-  PlayCircle,
   Users,
   Brain,
   ChartLine,
@@ -268,22 +266,25 @@ export default function LandingPage() {
               <GraduationCap className='text-white' size={24} />
             </div>
             <span className='font-serif text-xl font-bold text-[#1a1a1a]'>
-              Lumina
+              CourseXQuiz
             </span>
           </div>
           <div className='flex gap-12 text-sm font-bold tracking-widest text-black/40 uppercase'>
-            <a href='#' className='transition-colors hover:text-[#5A5A40]'>
+            <Link
+              to='/privacy'
+              className='transition-colors hover:text-[#5A5A40]'
+            >
               Privacy
-            </a>
-            <a href='#' className='transition-colors hover:text-[#5A5A40]'>
+            </Link>
+            <Link
+              to='/terms'
+              className='transition-colors hover:text-[#5A5A40]'
+            >
               Terms
-            </a>
-            <a href='#' className='transition-colors hover:text-[#5A5A40]'>
-              Contact
-            </a>
+            </Link>
           </div>
           <p className='text-sm text-black/20'>
-            © 2026 Lumina Learning. All rights reserved.
+            © {new Date().getFullYear()} CourseXQuiz. All rights reserved.
           </p>
         </div>
       </footer>

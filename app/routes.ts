@@ -9,6 +9,8 @@ export default [
   // Public auth routes
   layout('./routes/layouts/PublicLayout.ts', [
     index('routes/home.tsx'),
+    route('privacy', 'routes/privacy.tsx'),
+    route('terms', 'routes/terms.tsx'),
     route('auth/login', 'routes/auth/login.tsx'),
     route('auth/register', 'routes/auth/register.tsx'),
     route('auth/forgot-password', 'routes/auth/forgot-password.tsx'),
