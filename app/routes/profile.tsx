@@ -1,10 +1,8 @@
-import { Link, useLoaderData, redirect } from 'react-router';
+import { Link, redirect } from 'react-router';
 import type { Route } from './+types/profile';
-import { getPublicProfile, type PublicUserProfile } from '~/db/profile';
-import {
-  getUserEnrollments,
-  type UserEnrollmentWithCourse,
-} from '~/db/enrollments';
+import { getPublicProfile } from '~/db/profile';
+import { getUserEnrollments } from '~/db/enrollments';
+import { getCourses } from '~/db/courses';
 import { getUserFromRequest } from '~/utils/session.server';
 import { motion } from 'motion/react';
 import {
@@ -14,13 +12,8 @@ import {
   Calendar,
   ChevronRight,
   Settings,
+  FolderOpen,
 } from 'lucide-react';
-
-type LoaderData = {
-  profile: PublicUserProfile;
-  enrolledCourses: UserEnrollmentWithCourse[];
-  isOwner: boolean;
-};
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const currentUser = await getUserFromRequest(request);
@@ -37,23 +30,28 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     return redirect('/dashboard');
   }
 
-  const enrolledCourses = await getUserEnrollments(targetUserId);
+  const [enrolledCourses, createdCourses] = await Promise.all([
+    getUserEnrollments(targetUserId),
+    isOwner ? getCourses({ createdBy: targetUserId }) : [],
+  ]);
 
   return {
     profile,
     enrolledCourses: enrolledCourses.slice(0, 6),
+    createdCourses: createdCourses.slice(0, 6),
     isOwner,
   };
 };
 
 export default function ProfilePage({ loaderData }: Route.ComponentProps) {
-  const { profile, enrolledCourses, isOwner } = loaderData;
+  const { profile, enrolledCourses, createdCourses, isOwner } = loaderData;
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'long',
       year: 'numeric',
     });
   };
+
 
   return (
     <div className='mx-auto max-w-4xl px-4 py-8'>
@@ -92,10 +90,6 @@ export default function ProfilePage({ loaderData }: Route.ComponentProps) {
                 </Link>
               )}
             </div>
-            {/* <div className='mb-4 flex items-center justify-center gap-2 text-black/50 md:justify-start'>
-              <Mail size={16} />
-              <span>{profile.email}</span>
-            </div> */}
 
             {profile.bio && (
               <p className='mb-6 text-lg text-black/60'>{profile.bio}</p>
@@ -136,6 +130,54 @@ export default function ProfilePage({ loaderData }: Route.ComponentProps) {
           </div>
         </div>
       </motion.section>
+
+      {isOwner && createdCourses.length > 0 && (
+        <section className='mt-8'>
+          <h2 className='mb-6 flex items-center gap-2 font-serif text-2xl text-[#1a1a1a]'>
+            <FolderOpen size={24} className='text-[#5A5A40]' />
+            My Contributions
+          </h2>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2'>
+            {createdCourses.map((courseItem) => (
+              <Link
+                key={courseItem.course.id}
+                to={`/courses/${courseItem.course.id}`}
+                className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
+              >
+                {courseItem.course.thumbnailKey && (
+                  <div className='absolute inset-0 opacity-5'>
+                    <img
+                      src={`/api/course/serve/${courseItem.course.thumbnailKey}`}
+                      alt=''
+                      className='h-full w-full object-cover'
+                    />
+                  </div>
+                )}
+                <div className='relative'>
+                  <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
+                    {courseItem.course.code} • {courseItem.course.category}
+                  </p>
+                  <h3 className='mb-2 line-clamp-2 font-medium text-[#1a1a1a] group-hover:text-[#5A5A40]'>
+                    {courseItem.course.title}
+                  </h3>
+                  <div className='flex items-center justify-between'>
+                    <div className='flex items-center gap-2 text-xs text-black/40'>
+                      <span>{courseItem.course.status}</span>
+                      <span>•</span>
+                      <Calendar size={14} />
+                      <span>Created {formatDate(courseItem.course.createdAt)}</span>
+                    </div>
+                    <ChevronRight
+                      size={16}
+                      className='text-black/20 group-hover:text-[#5A5A40]'
+                    />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
 
       {enrolledCourses.length > 0 && (
         <section className='mt-8'>

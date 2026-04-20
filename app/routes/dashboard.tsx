@@ -6,6 +6,7 @@ import {
   type UserStats,
   type UserEnrollmentWithCourse,
 } from '~/db/enrollments';
+import { getCourses } from '~/db/courses';
 import { motion } from 'motion/react';
 import {
   BookOpen,
@@ -13,12 +14,17 @@ import {
   GraduationCap,
   Target,
   ArrowRight,
+  FolderOpen,
 } from 'lucide-react';
+import type { SelectCourse } from '~/db/schemas';
 
 type LoaderData = {
   user: Awaited<ReturnType<typeof getUserFromRequest>>;
   stats: UserStats;
   enrolledCourses: UserEnrollmentWithCourse[];
+  createdCourses: {
+    course: SelectCourse
+  }[];
 };
 
 export const loader = async ({ request }: { request: Request }) => {
@@ -33,23 +39,27 @@ export const loader = async ({ request }: { request: Request }) => {
         averageScore: 0,
       },
       enrolledCourses: [],
+      createdCourses: [],
     };
   }
 
-  const [stats, enrolledCourses] = await Promise.all([
+  const [stats, enrolledCourses, createdCourses] = await Promise.all([
     getUserStats(user.id),
     getUserEnrollments(user.id),
+    getCourses({ createdBy: user.id }),
   ]);
 
   return {
     user,
     stats,
     enrolledCourses,
+    createdCourses,
   };
 };
 
 export default function DashboardPage() {
-  const { user, stats, enrolledCourses } = useLoaderData<LoaderData>();
+  const { user, stats, enrolledCourses, createdCourses } =
+    useLoaderData<LoaderData>();
 
   const formatTime = (seconds: number) => {
     if (seconds < 60) {
@@ -124,6 +134,64 @@ export default function DashboardPage() {
         />
       </div>
 
+      {createdCourses.length > 0 && (
+        <section>
+          <div className='mb-4 flex items-center justify-between'>
+            <h2 className='flex items-center gap-2 font-serif text-2xl text-[#1a1a1a]'>
+              <FolderOpen size={24} className='text-[#5A5A40]' />
+              My Contributions
+            </h2>
+            <Link
+              to='/create'
+              className='flex items-center gap-1 text-sm font-medium text-[#5A5A40] transition-colors hover:text-[#4a4a35]'
+            >
+              Create New <ArrowRight size={16} />
+            </Link>
+          </div>
+          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+            {createdCourses.slice(0, 6).map((courseItem) => (
+              <Link
+                key={courseItem.course.id}
+                to={`/courses/${courseItem.course.id}`}
+                className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
+              >
+                {courseItem.course.thumbnailKey && (
+                  <div className='absolute inset-0 opacity-5'>
+                    <img
+                      src={`/api/course/serve/${courseItem.course.thumbnailKey}`}
+                      alt=''
+                      className='h-full w-full object-cover'
+                    />
+                  </div>
+                )}
+                <div className='relative'>
+                  <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
+                    {courseItem.course.code} • {courseItem.course.category}
+                  </p>
+                  <h3 className='mb-2 line-clamp-2 font-medium text-[#1a1a1a]'>
+                    {courseItem.course.title}
+                  </h3>
+                  <div className='flex items-center gap-2 text-xs text-black/40'>
+                    <span
+                      className={`rounded-full px-2 py-1 ${
+                        courseItem.course.status === 'published'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                      }`}
+                    >
+                      {courseItem.course.status}
+                    </span>
+                    <span className='rounded-full bg-black/5 px-2 py-1'>
+                      {courseItem.course.level}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {enrolledCourses.length > 0 && (
         <section>
           <div className='mb-4 flex items-center justify-between'>
@@ -170,7 +238,7 @@ export default function DashboardPage() {
         </section>
       )}
 
-      {enrolledCourses.length === 0 && (
+      {enrolledCourses.length === 0 && createdCourses.length === 0 && (
         <div className='rounded-2xl border border-black/5 bg-[#f7f6ef] p-8 text-center'>
           <GraduationCap size={48} className='mx-auto mb-4 text-black/20' />
           <h3 className='mb-2 text-xl font-bold text-[#1a1a1a]'>
