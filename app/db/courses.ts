@@ -365,7 +365,7 @@ export const updateCourseRawText = async (id: string, rawText: string) => {
       .set({
         rawText,
         updatedAt: new Date().toISOString(),
-        status: "processing"
+        status: 'processing',
       })
       .where(eq(courses.id, id));
     return getCourseById(id);

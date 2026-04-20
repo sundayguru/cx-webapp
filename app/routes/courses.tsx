@@ -371,13 +371,15 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
                     <FileText className='h-16 w-16 text-[#5A5A40]/20' />
                   </div>
                 )}
-                {course.status !== "published" && <div className='absolute top-6 left-6'>
-                  <span
-                    className={`rounded-full border border-white/20 px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase shadow-lg backdrop-blur-xl ${getStatusColor(course.status)}`}
-                  >
-                    {course.status}
-                  </span>
-                </div>}
+                {course.status !== 'published' && (
+                  <div className='absolute top-6 left-6'>
+                    <span
+                      className={`rounded-full border border-white/20 px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase shadow-lg backdrop-blur-xl ${getStatusColor(course.status)}`}
+                    >
+                      {course.status}
+                    </span>
+                  </div>
+                )}
               </Link>
 
               <div className='flex flex-1 flex-col p-8'>

@@ -24,6 +24,7 @@ type CourseOverviewProps = {
   school: SelectSchool | null;
   author: SelectAuthor | null;
   contributor: CourseContributor;
+  isCourseCreator: boolean;
   modulesCount: number;
   isDraft: boolean;
   onOpenPlaylist: () => void;
@@ -38,6 +39,7 @@ export const CourseOverview = ({
   school,
   author,
   contributor,
+  isCourseCreator,
   modulesCount,
   isDraft,
   onOpenPlaylist,
@@ -63,9 +65,9 @@ export const CourseOverview = ({
             Pending Review
           </span>
         ) : null}
-        {course.status === "processing" && (
+        {course.status === 'processing' && (
           <span className='ml-4 rounded-full bg-yellow-100 px-3 py-1 text-[10px] font-bold tracking-[0.18em] text-orange-600 uppercase'>
-           Processing
+            Processing
           </span>
         )}
       </nav>
@@ -80,6 +82,12 @@ export const CourseOverview = ({
         <p className='max-w-3xl font-serif text-xl leading-relaxed text-black/55 italic'>
           {course.description}
         </p>
+        {isDraft && isCourseCreator ? (
+          <div className='mt-6 max-w-3xl rounded-[24px] border border-orange-200 bg-orange-50 px-5 py-4 text-sm text-orange-900'>
+            We&apos;ve received your course and will process it as soon as
+            possible.
+          </div>
+        ) : null}
       </div>
 
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>

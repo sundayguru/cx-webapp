@@ -23,7 +23,7 @@ type LoaderData = {
   stats: UserStats;
   enrolledCourses: UserEnrollmentWithCourse[];
   createdCourses: {
-    course: SelectCourse
+    course: SelectCourse;
   }[];
 };
 

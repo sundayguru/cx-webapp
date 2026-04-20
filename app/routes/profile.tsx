@@ -52,7 +52,6 @@ export default function ProfilePage({ loaderData }: Route.ComponentProps) {
     });
   };
 
-
   return (
     <div className='mx-auto max-w-4xl px-4 py-8'>
       <motion.section
@@ -165,7 +164,9 @@ export default function ProfilePage({ loaderData }: Route.ComponentProps) {
                       <span>{courseItem.course.status}</span>
                       <span>•</span>
                       <Calendar size={14} />
-                      <span>Created {formatDate(courseItem.course.createdAt)}</span>
+                      <span>
+                        Created {formatDate(courseItem.course.createdAt)}
+                      </span>
                     </div>
                     <ChevronRight
                       size={16}

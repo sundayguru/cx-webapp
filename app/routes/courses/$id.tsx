@@ -562,6 +562,7 @@ export default function CourseDetailsPage({
 
   const { course, school, author, contributor, modules } = data;
   const isInstructor = user?.isAdmin === true;
+  const isCourseCreator = user?.id === course.createdBy;
   const isDraft = course.status === 'pending';
 
   const playlistItems: PlaylistItem[] = modules.flatMap((module) =>
@@ -585,6 +586,7 @@ export default function CourseDetailsPage({
           school={school}
           author={author}
           contributor={contributor}
+          isCourseCreator={isCourseCreator}
           modulesCount={modules.length}
           isDraft={isDraft}
           onOpenPlaylist={() => setIsPlaylistOpen(true)}
