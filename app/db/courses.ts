@@ -392,7 +392,7 @@ export const splitCourseRawTextIntoModules = async (
 ) => {
   try {
     const parts = rawText
-      .split('--end--')
+      .split(/--endmodule--|--end--/g)
       .map((part) => part.trim())
       .filter(Boolean);
 
@@ -479,14 +479,14 @@ export const splitModuleRawTextIntoUnits = async (moduleId: string) => {
       throw new Error('Module raw text is empty');
     }
 
-    if (!rawText.includes('--end--')) {
+    if (!rawText.includes('--endunit--') && !rawText.includes('--end--')) {
       throw new Error(
-        'Module raw text must include "--end--" separators before splitting into units',
+        'Module raw text must include "--endunit--" separators before splitting into units',
       );
     }
 
     const parts = rawText
-      .split('--end--')
+      .split(/--endunit--|--end--/g)
       .map((part) => part.trim())
       .filter(Boolean);
 

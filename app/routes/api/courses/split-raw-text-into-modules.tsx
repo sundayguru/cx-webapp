@@ -30,11 +30,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return data({ error: 'Course raw text is empty' }, { status: 400 });
   }
 
-  if (!rawText.includes('--end--')) {
+  if (!rawText.includes('--endmodule--') && !rawText.includes('--end--')) {
     return data(
       {
         error:
-          'Course raw text must include "--end--" separators before splitting.',
+          'Course raw text must include "--endmodule--" separators before splitting.',
       },
       { status: 400 },
     );

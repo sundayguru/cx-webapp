@@ -18,11 +18,13 @@ export const CourseSidebar = ({
   isGenerating,
   isGeneratingUnits,
   isExtractingRawText,
+  isTaggingRawText,
   isSplittingRawText,
   hasRawText,
   modulesWithRawText,
   onOpenPdf,
   onOpenExtractWarning,
+  onTagRawText,
   onOpenRawTextEditor,
   onOpenSplitWarning,
   onOpenGenerateWarning,
@@ -88,6 +90,18 @@ export const CourseSidebar = ({
                 ? 'Extracting PDF Text...'
                 : 'Extract PDF Text'}
             </button>
+            {hasRawText ? (
+              <button
+                onClick={onTagRawText}
+                disabled={isTaggingRawText}
+                className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+              >
+                <Sparkles size={20} />
+                {isTaggingRawText
+                  ? 'Tagging Course Text...'
+                  : 'AI Tag Course Text'}
+              </button>
+            ) : null}
             {hasRawText ? (
               <button
                 onClick={onOpenRawTextEditor}

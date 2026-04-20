@@ -18,6 +18,9 @@ import {
   buildUnitAudioScriptPrompt,
   parseUnitAudioScriptResponse,
   type AudioScriptResponse,
+  buildRawTextTaggingPrompt,
+  parseRawTextTaggingResponse,
+  type RawTextTaggingResponse,
 } from './curriculum-generation.server';
 
 export const extractTextFromPdf = async (buffer: Buffer): Promise<string> => {
@@ -180,4 +183,32 @@ export const generateUnitAudioScript = async (
   throw new Error(
     `Failed to generate unit audio script. Last error: ${errorMessage}`,
   );
+};
+
+export const generateRawTextTags = async (
+  rawText: string,
+  apiKey: string,
+  preferredModel: string,
+): Promise<RawTextTaggingResponse> => {
+  const genAI = new GoogleGenerativeAI(apiKey);
+  const prompt = buildRawTextTaggingPrompt(rawText);
+
+  let lastError: unknown;
+
+  try {
+    const model = genAI.getGenerativeModel({ model: preferredModel });
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return parseRawTextTaggingResponse(response.text());
+  } catch (e: unknown) {
+    lastError = e;
+    logError(e, `Error tagging raw text with model ${preferredModel}`);
+  }
+
+  const errorMessage =
+    lastError instanceof Error
+      ? lastError.message
+      : 'Unknown AI generation error';
+
+  throw new Error(`Failed to tag raw text. Last error: ${errorMessage}`);
 };

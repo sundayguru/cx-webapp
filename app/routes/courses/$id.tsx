@@ -103,6 +103,7 @@ export default function CourseDetailsPage({
   const enrollFetcher = useFetcher();
   const rawTextFetcher = useFetcher();
   const rawTextUpdateFetcher = useFetcher();
+  const tagRawTextFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
   const moduleRawTextUpdateFetcher = useFetcher();
@@ -114,6 +115,7 @@ export default function CourseDetailsPage({
   const [isRawTextModalOpen, setIsRawTextModalOpen] = useState(false);
   const [isGenerateCurriculumModalOpen, setIsGenerateCurriculumModalOpen] =
     useState(false);
+  const [isTagRawTextModalOpen, setIsTagRawTextModalOpen] = useState(false);
   const [isGenerateWarningOpen, setIsGenerateWarningOpen] = useState(false);
   const [isGenerateUnitsModalOpen, setIsGenerateUnitsModalOpen] =
     useState(false);
@@ -147,12 +149,14 @@ export default function CourseDetailsPage({
   const handledGenerateUnitsResult = useRef<string | null>(null);
   const handledRawTextExtractResult = useRef<string | null>(null);
   const handledRawTextUpdateResult = useRef<string | null>(null);
+  const handledTagRawTextResult = useRef<string | null>(null);
   const handledSplitRawTextResult = useRef<string | null>(null);
 
   const isGenerating = curriculumFetcher.state !== 'idle';
   const isGeneratingUnits = unitGenerationFetcher.state !== 'idle';
   const isExtractingRawText = rawTextFetcher.state !== 'idle';
   const isUpdatingRawText = rawTextUpdateFetcher.state !== 'idle';
+  const isTaggingRawText = tagRawTextFetcher.state !== 'idle';
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
   const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
@@ -236,6 +240,19 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/update-raw-text`,
+      },
+    );
+  };
+
+  const handleTagRawText = () => {
+    tagRawTextFetcher.submit(
+      {
+        provider: selectedProvider,
+        model: selectedModel,
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/tag-raw-text`,
       },
     );
   };
@@ -394,6 +411,35 @@ export default function CourseDetailsPage({
       }
     }
   }, [rawTextUpdateFetcher, showToast]);
+
+  useEffect(() => {
+    if (tagRawTextFetcher.state === 'idle' && tagRawTextFetcher.data) {
+      const result = tagRawTextFetcher.data as {
+        success?: boolean;
+        error?: string;
+        markersCount?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledTagRawTextResult.current !== resultKey) {
+        handledTagRawTextResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Tagged raw text successfully${result.markersCount !== undefined ? ` (${result.markersCount} markers)` : ''}.`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledTagRawTextResult.current !== resultKey
+      ) {
+        handledTagRawTextResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, tagRawTextFetcher]);
 
   useEffect(() => {
     if (splitRawTextFetcher.state === 'idle' && splitRawTextFetcher.data) {
@@ -644,6 +690,7 @@ export default function CourseDetailsPage({
           isGenerating={isGenerating}
           isGeneratingUnits={isGeneratingUnits}
           isExtractingRawText={isExtractingRawText}
+          isTaggingRawText={isTaggingRawText}
           isSplittingRawText={isSplittingRawText}
           isSplittingModuleRawText={isSplittingModuleRawText}
           hasRawText={Boolean(course.rawText)}
@@ -656,6 +703,7 @@ export default function CourseDetailsPage({
           onModelChange={setSelectedModel}
           onOpenPdf={() => setIsPdfModalOpen(true)}
           onOpenExtractWarning={() => setIsExtractWarningOpen(true)}
+          onTagRawText={() => setIsTagRawTextModalOpen(true)}
           onOpenRawTextEditor={() => {
             setEditableRawText(course.rawText || '');
             setIsRawTextModalOpen(true);
@@ -689,6 +737,7 @@ export default function CourseDetailsPage({
         contentKey={course.contentKey}
         isPdfModalOpen={isPdfModalOpen}
         isGenerateCurriculumModalOpen={isGenerateCurriculumModalOpen}
+        isTagRawTextModalOpen={isTagRawTextModalOpen}
         isGenerateWarningOpen={isGenerateWarningOpen}
         isGenerateUnitsModalOpen={isGenerateUnitsModalOpen}
         isExtractWarningOpen={isExtractWarningOpen}
@@ -697,6 +746,7 @@ export default function CourseDetailsPage({
         isModuleRawTextModalOpen={isModuleRawTextModalOpen}
         isGeneratingUnits={isGeneratingUnits}
         isGenerating={isGenerating}
+        isTaggingRawText={isTaggingRawText}
         isUpdatingRawText={isUpdatingRawText}
         isUpdatingModuleRawText={isUpdatingModuleRawText}
         selectedProvider={selectedProvider}
@@ -711,6 +761,11 @@ export default function CourseDetailsPage({
         onConfirmGenerateCurriculumSelection={() => {
           setIsGenerateCurriculumModalOpen(false);
           setIsGenerateWarningOpen(true);
+        }}
+        onCloseTagRawTextModal={() => setIsTagRawTextModalOpen(false)}
+        onConfirmTagRawText={() => {
+          setIsTagRawTextModalOpen(false);
+          handleTagRawText();
         }}
         onProviderChange={handleProviderChange}
         onModelChange={setSelectedModel}

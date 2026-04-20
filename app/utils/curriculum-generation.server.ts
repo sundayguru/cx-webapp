@@ -175,6 +175,47 @@ export type QuizQuestion = {
   options?: string[];
 };
 
+export type RawTextTagMarker = {
+  position: number;
+  tag: '--endmodule--' | '--endunit--';
+};
+
+export type RawTextTaggingResponse = {
+  markers: RawTextTagMarker[];
+};
+
+export const buildRawTextTaggingPrompt = (rawText: string) => `
+Analyze the following course raw text and identify where section boundaries should be tagged.
+
+Return ONLY a JSON object in this format:
+{
+  "markers": [
+    { "position": 1234, "tag": "--endunit--" },
+    { "position": 4567, "tag": "--endmodule--" }
+  ]
+}
+
+Rules:
+- "position" must be a zero-based character index in the ORIGINAL raw text where the tag should be inserted.
+- Use "--endunit--" where a unit ends.
+- Use "--endmodule--" where a module ends.
+- Every "--endmodule--" should represent the end of the final unit in that module.
+- A module can contain multiple "--endunit--" markers before a "--endmodule--" marker.
+- Do not return any text outside the JSON object.
+- Do not invent positions outside the bounds of the raw text.
+- Keep the markers ordered from lowest position to highest position.
+
+RAW TEXT:
+${rawText}
+`;
+
+export const parseRawTextTaggingResponse = (
+  responseText: string,
+): RawTextTaggingResponse => {
+  const jsonStr = responseText.replace(/```json|```/g, '').trim();
+  return JSON.parse(jsonStr) as RawTextTaggingResponse;
+};
+
 export type QuizResponse = {
   quizzes: QuizQuestion[];
 };

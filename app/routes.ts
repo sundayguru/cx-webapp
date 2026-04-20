@@ -59,6 +59,10 @@ export default [
       'routes/api/courses/update-raw-text.tsx',
     ),
     route(
+      'api/courses/:id/tag-raw-text',
+      'routes/api/courses/tag-raw-text.tsx',
+    ),
+    route(
       'api/courses/:id/split-raw-text-into-modules',
       'routes/api/courses/split-raw-text-into-modules.tsx',
     ),

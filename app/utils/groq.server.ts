@@ -15,6 +15,9 @@ import {
   buildUnitAudioScriptPrompt,
   parseUnitAudioScriptResponse,
   type AudioScriptResponse,
+  buildRawTextTaggingPrompt,
+  parseRawTextTaggingResponse,
+  type RawTextTaggingResponse,
 } from './curriculum-generation.server';
 import { GROQ_MODELS } from './constants';
 
@@ -191,6 +194,23 @@ export const generateUnitAudioScriptWithGroq = async (
   });
 
   return parseUnitAudioScriptResponse(response.text);
+};
+
+export const generateRawTextTagsWithGroq = async (
+  rawText: string,
+  apiKey: string,
+  model: string,
+): Promise<RawTextTaggingResponse> => {
+  const response = await GroqService.generate({
+    apiKey,
+    model,
+    systemPrompt:
+      'You are an instructional designer. Return valid JSON only, with no commentary.',
+    userPrompt: buildRawTextTaggingPrompt(rawText),
+    temperature: 0.1,
+  });
+
+  return parseRawTextTaggingResponse(response.text);
 };
 
 // Transcribe audio using Groq Whisper from a remote URL

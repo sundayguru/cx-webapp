@@ -33,6 +33,7 @@ export type SidebarProps = {
   isGenerating: boolean;
   isGeneratingUnits: boolean;
   isExtractingRawText: boolean;
+  isTaggingRawText: boolean;
   isSplittingRawText: boolean;
   isSplittingModuleRawText: boolean;
   hasRawText: boolean;
@@ -45,6 +46,7 @@ export type SidebarProps = {
   onModelChange: (model: string) => void;
   onOpenPdf: () => void;
   onOpenExtractWarning: () => void;
+  onTagRawText: () => void;
   onOpenRawTextEditor: () => void;
   onOpenSplitWarning: () => void;
   onOpenGenerateWarning: () => void;
