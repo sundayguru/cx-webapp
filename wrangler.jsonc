@@ -22,6 +22,9 @@
       "bucket_name": "coursexquiz",
     },
   ],
+  "vars": {
+    "BASE_URL": "https://prod-coursexquiz.rallyard-com.workers.dev"
+  },
   "env": {
     "production": {
       "name": "prod-coursexquiz",
@@ -39,6 +42,9 @@
           "bucket_name": "coursexquiz",
         },
       ],
+       "vars": {
+    "BASE_URL": "https://prod-coursexquiz.rallyard-com.workers.dev"
+  },
     },
     "dev": {
       "name": "dev-coursexquiz",
@@ -56,6 +62,9 @@
           "bucket_name": "coursexquiz",
         },
       ],
+       "vars": {
+    "BASE_URL": "http://localhost:5173"
+  },
     },
   },
 }
