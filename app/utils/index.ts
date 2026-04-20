@@ -10,10 +10,6 @@ export const formatDateTime = (dateTimeString: string): string => {
   });
 };
 
-export const getAppUrl = (path: string = ''): string => {
-  return `${import.meta.env.VITE_APP_URL}${path}`;
-};
-
 export const formatDate = (date: Date): string => {
   return dayjs(date).format('YYYY-MM-DD');
 };
