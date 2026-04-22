@@ -88,32 +88,40 @@ export const insertMarkersIntoRawText = (
   return nextRawText;
 };
 
-
-const getModuleMarkerPosition = (rawText: string, moduleWordStyle: string, lookupDistance: number, moduleNumber: number): RawTextTagMarker | undefined => {
-  const mregx = new RegExp(`\\b${moduleWordStyle.toLowerCase().replace("x", moduleNumber.toString())}\\b`, 'gi')
-  const moduleMatches = rawText.matchAll(
-    mregx,
+const getModuleMarkerPosition = (
+  rawText: string,
+  moduleWordStyle: string,
+  lookupDistance: number,
+  moduleNumber: number,
+): RawTextTagMarker | undefined => {
+  const mregx = new RegExp(
+    `\\b${moduleWordStyle.toLowerCase().replace('x', moduleNumber.toString())}\\b`,
+    'gi',
   );
+  const moduleMatches = rawText.matchAll(mregx);
 
   for (const match of moduleMatches) {
-    const headingStart = match.index
+    const headingStart = match.index;
 
     if (headingStart <= 0) {
       continue;
     }
 
-    const windowText = rawText.slice(headingStart, headingStart + lookupDistance);
+    const windowText = rawText.slice(
+      headingStart,
+      headingStart + lookupDistance,
+    );
 
     const unitOnePairIndex = findNextOrderedTokenPairIndex(
       windowText,
       'unit 1',
-      '1.0'
+      '1.0',
     );
 
     const unitOnePairSecondIndex = findNextOrderedTokenPairIndex(
       windowText,
       'unit 1',
-      '1.1'
+      '1.1',
     );
 
     if (unitOnePairIndex === -1 && unitOnePairSecondIndex === -1) {
@@ -123,19 +131,21 @@ const getModuleMarkerPosition = (rawText: string, moduleWordStyle: string, looku
     return {
       position: headingStart,
       tag: COURSE_RAW_TEXT_TAG,
-    }
+    };
   }
-}
+};
 
-const getUnitMarkerPosition = (rawText: string, unitNumber: number, moduleIndex: number): RawTextTagMarker | undefined => {
-  const unitStyle = `unit ${unitNumber}`
-  const mregx = new RegExp(`\\b${unitStyle}\\b`, 'gi')
-  const moduleMatches = rawText.matchAll(
-    mregx,
-  );
+const getUnitMarkerPosition = (
+  rawText: string,
+  unitNumber: number,
+  moduleIndex: number,
+): RawTextTagMarker | undefined => {
+  const unitStyle = `unit ${unitNumber}`;
+  const mregx = new RegExp(`\\b${unitStyle}\\b`, 'gi');
+  const moduleMatches = rawText.matchAll(mregx);
 
   for (const match of moduleMatches) {
-    const headingStart = match.index
+    const headingStart = match.index;
 
     if (headingStart <= 0) {
       continue;
@@ -163,7 +173,7 @@ const getUnitMarkerPosition = (rawText: string, unitNumber: number, moduleIndex:
     //   continue;
     // }
 
-    const matchesOtherUnit = windowText.slice(7).match(unitRegex)
+    const matchesOtherUnit = windowText.slice(7).match(unitRegex);
     if (!windowText.match(subunitRegex) || matchesOtherUnit) {
       continue;
     }
@@ -171,11 +181,14 @@ const getUnitMarkerPosition = (rawText: string, unitNumber: number, moduleIndex:
     return {
       position: headingStart + moduleIndex,
       tag: UNIT_RAW_TEXT_TAG,
-    }
+    };
   }
-}
+};
 
-const buildUnitMarkers = (rawText: string, moduleIndex: number): RawTextTagMarker[] => {
+const buildUnitMarkers = (
+  rawText: string,
+  moduleIndex: number,
+): RawTextTagMarker[] => {
   const markers: RawTextTagMarker[] = [];
   for (let unitNumber = 2; unitNumber < 10; unitNumber++) {
     const marker = getUnitMarkerPosition(rawText, unitNumber, moduleIndex);
@@ -194,10 +207,18 @@ const buildModuleMarkers = (
   const moduleMarkers: RawTextTagMarker[] = [];
   const unitMarkers: RawTextTagMarker[] = [];
   for (let moduleNumber = 1; moduleNumber < 10; moduleNumber++) {
-    const moduleMarker = getModuleMarkerPosition(rawText, moduleWordStyle, lookupDistance, moduleNumber);
+    const moduleMarker = getModuleMarkerPosition(
+      rawText,
+      moduleWordStyle,
+      lookupDistance,
+      moduleNumber,
+    );
     if (moduleMarker) {
       moduleMarkers.push(moduleMarker);
-      const moduleUnitMarkers = buildUnitMarkers(rawText.slice(moduleMarker.position, rawText.length + 1), moduleMarker.position);
+      const moduleUnitMarkers = buildUnitMarkers(
+        rawText.slice(moduleMarker.position, rawText.length + 1),
+        moduleMarker.position,
+      );
       if (moduleUnitMarkers) {
         unitMarkers.push(...moduleUnitMarkers);
       }
@@ -206,7 +227,6 @@ const buildModuleMarkers = (
   return [...moduleMarkers, ...unitMarkers];
 };
 
-
 export const buildHeuristicRawTextMarkers = (
   rawText: string,
   moduleWordStyle: string = DEFAULT_MODULE_WORD_STYLE,
@@ -214,7 +234,7 @@ export const buildHeuristicRawTextMarkers = (
 ): RawTextTagMarker[] => {
   const markers = buildModuleMarkers(rawText, moduleWordStyle, lookupDistance);
 
-  return markers
+  return markers;
 };
 
 export const markRawText = (
@@ -222,35 +242,46 @@ export const markRawText = (
   moduleWordStyle: string = DEFAULT_MODULE_WORD_STYLE,
   lookupDistance: number = 1000,
 ) => {
-  const markers = buildHeuristicRawTextMarkers(rawText, moduleWordStyle, lookupDistance);
+  const markers = buildHeuristicRawTextMarkers(
+    rawText,
+    moduleWordStyle,
+    lookupDistance,
+  );
   return insertMarkersIntoRawText(rawText, markers);
 };
 
-
-export function markRawText2(rawText: string, moduleWordStyle: string = "module x unit 1"): string {
-  const moduleRegex = /(?=(\s*)Module\s+\d+\b)/gi
+export function markRawText2(
+  rawText: string,
+  moduleWordStyle: string = 'module x unit 1',
+): string {
+  const moduleRegex = /(?=(\s*)Module\s+\d+\b)/gi;
   // --- UNITS ---
   const unitRegex = /Unit\s+(\d+):?\s*([^U\d]+)/gi;
   const unit1Regex = /\bUnit\s+(1)\b/gi;
   const subunitRegex = /\b(\d+\.\d+)\s+([^0-9]+)/g;
-  const maxModules = 6
-  const maxUnit = 8
+  const maxModules = 6;
+  const maxUnit = 8;
 
-
-  let taggedRawText = rawText
+  let taggedRawText = rawText;
 
   for (let i = 1; i <= maxModules; i++) {
-    const word = moduleWordStyle.replace("x", i.toString())
-    const mregx = new RegExp(`\\b${word}\\b`, 'gi')
-    const matches = [...rawText.matchAll(mregx)]
-    let counter = 0
+    const word = moduleWordStyle.replace('x', i.toString());
+    const mregx = new RegExp(`\\b${word}\\b`, 'gi');
+    const matches = [...rawText.matchAll(mregx)];
+    let counter = 0;
     // console.log("MATCHES", matches.length, i)
     while (counter < matches.length) {
-      const startIndex = matches[counter].index
-      const endIndex = counter + 1 <= matches.length - 1 ? matches[counter + 1].index : rawText.length
-      const newRawText = taggedRawText.substring(startIndex, endIndex)
+      const startIndex = matches[counter].index;
+      const endIndex =
+        counter + 1 <= matches.length - 1
+          ? matches[counter + 1].index
+          : rawText.length;
+      const newRawText = taggedRawText.substring(startIndex, endIndex);
       if (!!newRawText.match(subunitRegex)?.length) {
-        taggedRawText = taggedRawText.replace(newRawText, "--modulestart--" + newRawText)
+        taggedRawText = taggedRawText.replace(
+          newRawText,
+          '--modulestart--' + newRawText,
+        );
 
         // const moduleRawText = rawText.substring(startIndex, rawText.length)
         // const firstPart = moduleRawText.substring(0, startIndex)
@@ -274,12 +305,18 @@ export function markRawText2(rawText: string, moduleWordStyle: string = "module 
         //   }
         // }
         // taggedRawText = firstPart + taggedUnitText
-        console.log(newRawText.substring(0, 200), "newRawText", counter, "TOTAL", newRawText.length)
-        break
+        console.log(
+          newRawText.substring(0, 200),
+          'newRawText',
+          counter,
+          'TOTAL',
+          newRawText.length,
+        );
+        break;
       }
-      counter++
+      counter++;
     }
     // console.log("MATCHES", matches, i)
   }
-  return taggedRawText
+  return taggedRawText;
 }

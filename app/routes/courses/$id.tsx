@@ -70,7 +70,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
       uniqueUsersMap.set(postItem.user.id, {
         id: postItem.user.id,
         firstName: postItem.user.firstName,
-        avatarUrl: postItem.profile?.avatarUrl,
+        avatarUrl: postItem.profile?.avatarUrl ?? null,
       });
     }
   });
@@ -108,6 +108,7 @@ export default function CourseDetailsPage({
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
   const moduleRawTextUpdateFetcher = useFetcher();
+  const unitRawTextUpdateFetcher = useFetcher();
   const publishFetcher = useFetcher();
   const deleteFetcher = useFetcher();
 
@@ -126,12 +127,15 @@ export default function CourseDetailsPage({
   const [isSplitWarningOpen, setIsSplitWarningOpen] = useState(false);
   const [isModuleRawTextModalOpen, setIsModuleRawTextModalOpen] =
     useState(false);
+  const [isUnitRawTextModalOpen, setIsUnitRawTextModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
+  const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editableRawText, setEditableRawText] = useState(
     data?.course.rawText || '',
   );
   const [editableModuleRawText, setEditableModuleRawText] = useState('');
+  const [editableUnitRawText, setEditableUnitRawText] = useState('');
   const [selectedProvider, setSelectedProvider] =
     useState<CurriculumAiProvider>(DEFAULT_CURRICULUM_PROVIDER);
   const [selectedModel, setSelectedModel] = useState(
@@ -167,6 +171,7 @@ export default function CourseDetailsPage({
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
   const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
+  const isUpdatingUnitRawText = unitRawTextUpdateFetcher.state !== 'idle';
   const isDeletingCourse = deleteFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
@@ -311,6 +316,26 @@ export default function CourseDetailsPage({
     setEditingModuleId(moduleId);
     setEditableModuleRawText(rawText || '');
     setIsModuleRawTextModalOpen(true);
+  };
+
+  const handleUpdateUnitRawText = () => {
+    if (!editingUnitId) {
+      return;
+    }
+
+    unitRawTextUpdateFetcher.submit(
+      { rawText: editableUnitRawText },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/units/${editingUnitId}/update-raw-text`,
+      },
+    );
+  };
+
+  const openUnitRawTextModal = (unitId: string, rawText: string) => {
+    setEditingUnitId(unitId);
+    setEditableUnitRawText(rawText || '');
+    setIsUnitRawTextModalOpen(true);
   };
 
   useEffect(() => {
@@ -596,6 +621,43 @@ export default function CourseDetailsPage({
     }
   }, [showToast, moduleRawTextUpdateFetcher]);
 
+  const handledUnitRawTextUpdateResult = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      unitRawTextUpdateFetcher.state === 'idle' &&
+      unitRawTextUpdateFetcher.data
+    ) {
+      const result = unitRawTextUpdateFetcher.data as {
+        success?: boolean;
+        error?: string;
+        characters?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (
+        result.success &&
+        handledUnitRawTextUpdateResult.current !== resultKey
+      ) {
+        handledUnitRawTextUpdateResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Unit raw text updated successfully${result.characters !== undefined ? ` (${result.characters} characters)` : ''}.`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledUnitRawTextUpdateResult.current !== resultKey
+      ) {
+        handledUnitRawTextUpdateResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, unitRawTextUpdateFetcher]);
+
   const handledEnrollResult = useRef<string | null>(null);
   useEffect(() => {
     if (enrollFetcher.state === 'idle' && enrollFetcher.data) {
@@ -784,6 +846,7 @@ export default function CourseDetailsPage({
           isSplittingModuleRawText={isSplittingModuleRawText}
           onSplitModuleRawText={handleSplitModuleRawTextIntoUnits}
           onOpenModuleRawTextModal={openModuleRawTextModal}
+          onOpenUnitRawTextModal={openUnitRawTextModal}
         />
       </div>
 
@@ -801,12 +864,14 @@ export default function CourseDetailsPage({
         isSplitWarningOpen={isSplitWarningOpen}
         isRawTextModalOpen={isRawTextModalOpen}
         isModuleRawTextModalOpen={isModuleRawTextModalOpen}
+        isUnitRawTextModalOpen={isUnitRawTextModalOpen}
         isGeneratingUnits={isGeneratingUnits}
         isGenerating={isGenerating}
         isHeuristicTaggingRawText={isHeuristicTaggingRawText}
         isTaggingRawText={isTaggingRawText}
         isUpdatingRawText={isUpdatingRawText}
         isUpdatingModuleRawText={isUpdatingModuleRawText}
+        isUpdatingUnitRawText={isUpdatingUnitRawText}
         selectedProvider={selectedProvider}
         selectedModel={selectedModel}
         moduleWordStyle={moduleWordStyle}
@@ -814,6 +879,8 @@ export default function CourseDetailsPage({
         selectedModuleId={effectiveSelectedModuleId}
         modulesWithRawText={modulesWithRawText}
         editableRawText={editableRawText}
+        editableModuleRawText={editableModuleRawText}
+        editableUnitRawText={editableUnitRawText}
         onClosePdf={() => setIsPdfModalOpen(false)}
         onLookupDistanceChange={setLookupDistance}
         onCloseGenerateCurriculumModal={() =>
@@ -859,10 +926,12 @@ export default function CourseDetailsPage({
         onCloseRawTextModal={() => setIsRawTextModalOpen(false)}
         onRawTextChange={setEditableRawText}
         onSaveRawText={handleUpdateRawText}
-        editableModuleRawText={editableModuleRawText}
         onCloseModuleRawTextModal={() => setIsModuleRawTextModalOpen(false)}
         onModuleRawTextChange={setEditableModuleRawText}
         onSaveModuleRawText={handleUpdateModuleRawText}
+        onCloseUnitRawTextModal={() => setIsUnitRawTextModalOpen(false)}
+        onUnitRawTextChange={setEditableUnitRawText}
+        onSaveUnitRawText={handleUpdateUnitRawText}
       />
 
       <CoursePlaylist

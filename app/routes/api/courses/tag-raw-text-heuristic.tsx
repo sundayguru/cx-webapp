@@ -40,17 +40,21 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const lookupDistanceValue = formData.get('lookupDistance');
     const moduleWordStyle =
       typeof moduleWordStyleValue === 'string' &&
-        moduleWordStyleValue.trim().length > 0
+      moduleWordStyleValue.trim().length > 0
         ? moduleWordStyleValue.trim()
         : undefined;
     const lookupDistance =
       typeof lookupDistanceValue === 'string' &&
-        lookupDistanceValue.trim().length > 0
+      lookupDistanceValue.trim().length > 0
         ? Number(lookupDistanceValue.trim())
         : undefined;
 
     const cleanRawText = stripExistingRawTextTags(currentRawText);
-    const taggedText = markRawText(cleanRawText, moduleWordStyle, lookupDistance);
+    const taggedText = markRawText(
+      cleanRawText,
+      moduleWordStyle,
+      lookupDistance,
+    );
 
     if (taggedText === cleanRawText) {
       return data(

@@ -1,18 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
 import { Lock, MessageSquare, MoreVertical, Play } from 'lucide-react';
-import type { CourseModuleWithUnits } from './types';
-
-type CourseContentProps = {
-  courseId: string;
-  modules: CourseModuleWithUnits[];
-  isInstructor: boolean;
-  isEnrolled: boolean;
-  communityUsers: any[];
-  isSplittingModuleRawText: boolean;
-  onSplitModuleRawText: (moduleId: string) => void;
-  onOpenModuleRawTextModal: (moduleId: string, rawText: string) => void;
-};
+import type { CourseContentProps } from './types';
 
 export const CourseContent = ({
   courseId,
@@ -23,11 +12,19 @@ export const CourseContent = ({
   isSplittingModuleRawText,
   onSplitModuleRawText,
   onOpenModuleRawTextModal,
+  onOpenUnitRawTextModal,
 }: CourseContentProps) => {
   const [openMenuModuleId, setOpenMenuModuleId] = useState<string | null>(null);
+  const [openMenuUnitId, setOpenMenuUnitId] = useState<string | null>(null);
 
   const toggleMenu = (moduleId: string) => {
+    setOpenMenuUnitId(null);
     setOpenMenuModuleId(openMenuModuleId === moduleId ? null : moduleId);
+  };
+
+  const toggleUnitMenu = (unitId: string) => {
+    setOpenMenuModuleId(null);
+    setOpenMenuUnitId(openMenuUnitId === unitId ? null : unitId);
   };
   return (
     <div className='grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1fr)_320px]'>
@@ -141,6 +138,32 @@ export const CourseContent = ({
                       ) : (
                         <Lock size={16} className='text-black/20' />
                       )}
+                      {isInstructor ? (
+                        <div className='relative'>
+                          <button
+                            onClick={() => toggleUnitMenu(unit.id)}
+                            className='flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-black/60 transition-all hover:bg-black/5'
+                          >
+                            <MoreVertical size={16} />
+                          </button>
+                          {openMenuUnitId === unit.id ? (
+                            <div className='absolute top-10 right-0 z-20 min-w-[160px] rounded-xl border border-black/10 bg-white py-1 shadow-lg'>
+                              <button
+                                onClick={() => {
+                                  onOpenUnitRawTextModal(
+                                    unit.id,
+                                    unit.rawText || '',
+                                  );
+                                  setOpenMenuUnitId(null);
+                                }}
+                                className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                              >
+                                Edit Raw Text
+                              </button>
+                            </div>
+                          ) : null}
+                        </div>
+                      ) : null}
                       {!isEnrolled && !isInstructor && (
                         <div className='absolute inset-0 cursor-not-allowed bg-black/5' />
                       )}

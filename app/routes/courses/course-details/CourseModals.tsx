@@ -729,6 +729,8 @@ type ModuleRawTextModalProps = {
   isOpen: boolean;
   isUpdating: boolean;
   editableRawText: string;
+  title: string;
+  placeholder: string;
   onClose: () => void;
   onRawTextChange: (value: string) => void;
   onSave: () => void;
@@ -738,6 +740,8 @@ const ModuleRawTextModal = ({
   isOpen,
   isUpdating,
   editableRawText,
+  title,
+  placeholder,
   onClose,
   onRawTextChange,
   onSave,
@@ -770,7 +774,7 @@ const ModuleRawTextModal = ({
                 </div>
                 <div>
                   <h3 className='leading-tight font-bold text-[#1a1a1a]'>
-                    Edit Module Text
+                    {title}
                   </h3>
                   <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
                     Raw extracted text
@@ -790,7 +794,7 @@ const ModuleRawTextModal = ({
                 value={editableRawText}
                 onChange={(event) => onRawTextChange(event.target.value)}
                 className='h-full min-h-[24rem] w-full rounded-2xl border border-black/5 bg-white p-6 font-mono text-sm leading-6 text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
-                placeholder='Module raw text will appear here.'
+                placeholder={placeholder}
               />
             </div>
             <div className='flex items-center justify-between border-t border-black/5 bg-white p-6'>
@@ -835,12 +839,14 @@ type CourseModalsProps = {
   isSplitWarningOpen: boolean;
   isRawTextModalOpen: boolean;
   isModuleRawTextModalOpen: boolean;
+  isUnitRawTextModalOpen: boolean;
   isGeneratingUnits: boolean;
   isGenerating: boolean;
   isHeuristicTaggingRawText: boolean;
   isTaggingRawText: boolean;
   isUpdatingRawText: boolean;
   isUpdatingModuleRawText: boolean;
+  isUpdatingUnitRawText: boolean;
   selectedProvider: CurriculumAiProvider;
   selectedModel: string;
   moduleWordStyle: string;
@@ -849,6 +855,7 @@ type CourseModalsProps = {
   modulesWithRawText: CourseModuleWithUnits[];
   editableRawText: string;
   editableModuleRawText: string;
+  editableUnitRawText: string;
   onClosePdf: () => void;
   onCloseGenerateCurriculumModal: () => void;
   onConfirmGenerateCurriculumSelection: () => void;
@@ -875,6 +882,9 @@ type CourseModalsProps = {
   onCloseModuleRawTextModal: () => void;
   onModuleRawTextChange: (value: string) => void;
   onSaveModuleRawText: () => void;
+  onCloseUnitRawTextModal: () => void;
+  onUnitRawTextChange: (value: string) => void;
+  onSaveUnitRawText: () => void;
 };
 
 export const CourseModals = ({
@@ -891,12 +901,14 @@ export const CourseModals = ({
   isSplitWarningOpen,
   isRawTextModalOpen,
   isModuleRawTextModalOpen,
+  isUnitRawTextModalOpen,
   isGeneratingUnits,
   isGenerating,
   isHeuristicTaggingRawText,
   isTaggingRawText,
   isUpdatingRawText,
   isUpdatingModuleRawText,
+  isUpdatingUnitRawText,
   selectedProvider,
   selectedModel,
   moduleWordStyle,
@@ -905,6 +917,7 @@ export const CourseModals = ({
   modulesWithRawText,
   editableRawText,
   editableModuleRawText,
+  editableUnitRawText,
   onClosePdf,
   onCloseGenerateCurriculumModal,
   onConfirmGenerateCurriculumSelection,
@@ -931,6 +944,9 @@ export const CourseModals = ({
   onCloseModuleRawTextModal,
   onModuleRawTextChange,
   onSaveModuleRawText,
+  onCloseUnitRawTextModal,
+  onUnitRawTextChange,
+  onSaveUnitRawText,
 }: CourseModalsProps) => {
   return (
     <>
@@ -1026,9 +1042,22 @@ export const CourseModals = ({
         isOpen={isModuleRawTextModalOpen}
         isUpdating={isUpdatingModuleRawText}
         editableRawText={editableModuleRawText}
+        title='Edit Module Text'
+        placeholder='Module raw text will appear here.'
         onClose={onCloseModuleRawTextModal}
         onRawTextChange={onModuleRawTextChange}
         onSave={onSaveModuleRawText}
+      />
+
+      <ModuleRawTextModal
+        isOpen={isUnitRawTextModalOpen}
+        isUpdating={isUpdatingUnitRawText}
+        editableRawText={editableUnitRawText}
+        title='Edit Unit Text'
+        placeholder='Unit raw text will appear here.'
+        onClose={onCloseUnitRawTextModal}
+        onRawTextChange={onUnitRawTextChange}
+        onSave={onSaveUnitRawText}
       />
     </>
   );

@@ -403,10 +403,10 @@ export const splitCourseRawTextIntoModules = async (
     const db = getDb();
     await clearCourseCurriculum(courseId);
 
-    const moduleValues = []
+    const moduleValues = [];
     for (const [index, part] of parts.entries()) {
       if (index == 0) {
-        continue
+        continue;
       }
       moduleValues.push({
         id: uuidv4(),
@@ -534,6 +534,23 @@ export const updateModuleRawText = async (
     return true;
   } catch (e) {
     logError(e, 'Error updating module raw text');
+    return false;
+  }
+};
+
+export const updateUnitRawText = async (unitId: string, rawText: string) => {
+  try {
+    const db = getDb();
+    await db
+      .update(units)
+      .set({
+        rawText,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(units.id, unitId));
+    return true;
+  } catch (e) {
+    logError(e, 'Error updating unit raw text');
     return false;
   }
 };

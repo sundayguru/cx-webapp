@@ -66,7 +66,13 @@ export type CourseContentProps = {
   modules: CourseModuleWithUnits[];
   isInstructor: boolean;
   isEnrolled: boolean;
+  communityUsers: Array<{
+    id: string;
+    firstName: string;
+    avatarUrl: string | null;
+  }>;
   isSplittingModuleRawText: boolean;
   onSplitModuleRawText: (moduleId: string) => void;
   onOpenModuleRawTextModal: (moduleId: string, rawText: string) => void;
+  onOpenUnitRawTextModal: (unitId: string, rawText: string) => void;
 };
