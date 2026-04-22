@@ -403,16 +403,21 @@ export const splitCourseRawTextIntoModules = async (
     const db = getDb();
     await clearCourseCurriculum(courseId);
 
+    const moduleValues = []
     for (const [index, part] of parts.entries()) {
-      await db.insert(modules).values({
+      if (index == 0) {
+        continue
+      }
+      moduleValues.push({
         id: uuidv4(),
         courseId,
-        title: `Module ${index + 1}`,
+        title: `Module ${index}`,
         rawText: part,
         order: index,
       });
     }
 
+    await db.insert(modules).values(moduleValues);
     return getCourseById(courseId);
   } catch (e) {
     logError(e, 'Error splitting course raw text into modules');

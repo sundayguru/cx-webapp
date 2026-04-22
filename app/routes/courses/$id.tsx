@@ -103,6 +103,7 @@ export default function CourseDetailsPage({
   const enrollFetcher = useFetcher();
   const rawTextFetcher = useFetcher();
   const rawTextUpdateFetcher = useFetcher();
+  const heuristicTagRawTextFetcher = useFetcher();
   const tagRawTextFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
@@ -114,6 +115,8 @@ export default function CourseDetailsPage({
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
   const [isRawTextModalOpen, setIsRawTextModalOpen] = useState(false);
   const [isGenerateCurriculumModalOpen, setIsGenerateCurriculumModalOpen] =
+    useState(false);
+  const [isTagRawTextHeuristicModalOpen, setIsTagRawTextHeuristicModalOpen] =
     useState(false);
   const [isTagRawTextModalOpen, setIsTagRawTextModalOpen] = useState(false);
   const [isGenerateWarningOpen, setIsGenerateWarningOpen] = useState(false);
@@ -134,6 +137,8 @@ export default function CourseDetailsPage({
   const [selectedModel, setSelectedModel] = useState(
     DEFAULT_CURRICULUM_MODELS[DEFAULT_CURRICULUM_PROVIDER],
   );
+  const [moduleWordStyle, setModuleWordStyle] = useState('module x unit 1');
+  const [lookupDistance, setLookupDistance] = useState(1000);
 
   const modulesWithRawText =
     data?.modules.filter((module) => module.rawText?.trim()) || [];
@@ -149,6 +154,7 @@ export default function CourseDetailsPage({
   const handledGenerateUnitsResult = useRef<string | null>(null);
   const handledRawTextExtractResult = useRef<string | null>(null);
   const handledRawTextUpdateResult = useRef<string | null>(null);
+  const handledHeuristicTagRawTextResult = useRef<string | null>(null);
   const handledTagRawTextResult = useRef<string | null>(null);
   const handledSplitRawTextResult = useRef<string | null>(null);
 
@@ -156,6 +162,7 @@ export default function CourseDetailsPage({
   const isGeneratingUnits = unitGenerationFetcher.state !== 'idle';
   const isExtractingRawText = rawTextFetcher.state !== 'idle';
   const isUpdatingRawText = rawTextUpdateFetcher.state !== 'idle';
+  const isHeuristicTaggingRawText = heuristicTagRawTextFetcher.state !== 'idle';
   const isTaggingRawText = tagRawTextFetcher.state !== 'idle';
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
@@ -253,6 +260,16 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/tag-raw-text`,
+      },
+    );
+  };
+
+  const handleTagRawTextHeuristically = () => {
+    heuristicTagRawTextFetcher.submit(
+      { moduleWordStyle, lookupDistance },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/tag-raw-text-heuristic`,
       },
     );
   };
@@ -411,6 +428,41 @@ export default function CourseDetailsPage({
       }
     }
   }, [rawTextUpdateFetcher, showToast]);
+
+  useEffect(() => {
+    if (
+      heuristicTagRawTextFetcher.state === 'idle' &&
+      heuristicTagRawTextFetcher.data
+    ) {
+      const result = heuristicTagRawTextFetcher.data as {
+        success?: boolean;
+        error?: string;
+        markersCount?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (
+        result.success &&
+        handledHeuristicTagRawTextResult.current !== resultKey
+      ) {
+        handledHeuristicTagRawTextResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Tagged raw text successfully${result.markersCount !== undefined ? ` (${result.markersCount} markers)` : ''}.`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledHeuristicTagRawTextResult.current !== resultKey
+      ) {
+        handledHeuristicTagRawTextResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [heuristicTagRawTextFetcher, showToast]);
 
   useEffect(() => {
     if (tagRawTextFetcher.state === 'idle' && tagRawTextFetcher.data) {
@@ -690,6 +742,7 @@ export default function CourseDetailsPage({
           isGenerating={isGenerating}
           isGeneratingUnits={isGeneratingUnits}
           isExtractingRawText={isExtractingRawText}
+          isHeuristicTaggingRawText={isHeuristicTaggingRawText}
           isTaggingRawText={isTaggingRawText}
           isSplittingRawText={isSplittingRawText}
           isSplittingModuleRawText={isSplittingModuleRawText}
@@ -703,6 +756,9 @@ export default function CourseDetailsPage({
           onModelChange={setSelectedModel}
           onOpenPdf={() => setIsPdfModalOpen(true)}
           onOpenExtractWarning={() => setIsExtractWarningOpen(true)}
+          onOpenTagRawTextHeuristicModal={() =>
+            setIsTagRawTextHeuristicModalOpen(true)
+          }
           onTagRawText={() => setIsTagRawTextModalOpen(true)}
           onOpenRawTextEditor={() => {
             setEditableRawText(course.rawText || '');
@@ -737,6 +793,7 @@ export default function CourseDetailsPage({
         contentKey={course.contentKey}
         isPdfModalOpen={isPdfModalOpen}
         isGenerateCurriculumModalOpen={isGenerateCurriculumModalOpen}
+        isTagRawTextHeuristicModalOpen={isTagRawTextHeuristicModalOpen}
         isTagRawTextModalOpen={isTagRawTextModalOpen}
         isGenerateWarningOpen={isGenerateWarningOpen}
         isGenerateUnitsModalOpen={isGenerateUnitsModalOpen}
@@ -746,21 +803,33 @@ export default function CourseDetailsPage({
         isModuleRawTextModalOpen={isModuleRawTextModalOpen}
         isGeneratingUnits={isGeneratingUnits}
         isGenerating={isGenerating}
+        isHeuristicTaggingRawText={isHeuristicTaggingRawText}
         isTaggingRawText={isTaggingRawText}
         isUpdatingRawText={isUpdatingRawText}
         isUpdatingModuleRawText={isUpdatingModuleRawText}
         selectedProvider={selectedProvider}
         selectedModel={selectedModel}
+        moduleWordStyle={moduleWordStyle}
+        lookupDistance={lookupDistance}
         selectedModuleId={effectiveSelectedModuleId}
         modulesWithRawText={modulesWithRawText}
         editableRawText={editableRawText}
         onClosePdf={() => setIsPdfModalOpen(false)}
+        onLookupDistanceChange={setLookupDistance}
         onCloseGenerateCurriculumModal={() =>
           setIsGenerateCurriculumModalOpen(false)
         }
         onConfirmGenerateCurriculumSelection={() => {
           setIsGenerateCurriculumModalOpen(false);
           setIsGenerateWarningOpen(true);
+        }}
+        onCloseTagRawTextHeuristicModal={() =>
+          setIsTagRawTextHeuristicModalOpen(false)
+        }
+        onModuleWordStyleChange={setModuleWordStyle}
+        onConfirmTagRawTextHeuristic={() => {
+          setIsTagRawTextHeuristicModalOpen(false);
+          handleTagRawTextHeuristically();
         }}
         onCloseTagRawTextModal={() => setIsTagRawTextModalOpen(false)}
         onConfirmTagRawText={() => {

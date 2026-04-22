@@ -497,6 +497,138 @@ const TagRawTextModal = ({
   );
 };
 
+type TagRawTextHeuristicModalProps = {
+  isOpen: boolean;
+  isTagging: boolean;
+  moduleWordStyle: string;
+  lookupDistance: number;
+  onClose: () => void;
+  onModuleWordStyleChange: (value: string) => void;
+  onLookupDistanceChange: (value: number) => void;
+  onConfirm: () => void;
+};
+
+const TagRawTextHeuristicModal = ({
+  isOpen,
+  isTagging,
+  moduleWordStyle,
+  lookupDistance,
+  onClose,
+  onModuleWordStyleChange,
+  onLookupDistanceChange,
+  onConfirm,
+}: TagRawTextHeuristicModalProps) => {
+  return (
+    <AnimatePresence>
+      {isOpen ? (
+        <div className='fixed inset-0 z-[106] flex items-center justify-center p-4 md:p-8'>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              if (!isTagging) {
+                onClose();
+              }
+            }}
+            className='absolute inset-0 bg-black/70 backdrop-blur-sm'
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            className='relative w-full max-w-2xl rounded-[32px] bg-white p-8 shadow-2xl'
+          >
+            <div className='mb-6 flex items-center justify-between'>
+              <div>
+                <h3 className='font-serif text-2xl text-[#1a1a1a]'>
+                  Tag Course Text
+                </h3>
+                <p className='mt-2 text-sm text-black/55'>
+                  Provide the module word style pattern used to recognize where
+                  module sections begin. Use `x` as the module number
+                  placeholder, for example `module x unit 1`.
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                disabled={isTagging}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10 disabled:opacity-50'
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className='space-y-5'>
+              <div>
+                <label
+                  htmlFor='tag-heuristic-module-style'
+                  className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                >
+                  Module Word Style
+                </label>
+                <input
+                  id='tag-heuristic-module-style'
+                  value={moduleWordStyle}
+                  onChange={(event) =>
+                    onModuleWordStyleChange(event.target.value)
+                  }
+                  className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  placeholder='module x unit 1'
+                />
+                <p className='mt-2 text-sm text-black/45'>
+                  `x` will be replaced with `2`, `3`, `4` and so on when
+                  matching later modules.
+                </p>
+              </div>
+            </div>
+
+            <div className='space-y-5'>
+              <div>
+                <label
+                  htmlFor='tag-heuristic-module-style'
+                  className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                >
+                  Lookup Distance
+                </label>
+                <input
+                  id='tag-heuristic-lookup-distance'
+                  value={lookupDistance}
+                  onChange={(event) =>
+                    onLookupDistanceChange(Number(event.target.value))
+                  }
+                  className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  placeholder='module x unit 1'
+                />
+                <p className='mt-2 text-sm text-black/45'>
+                  The number of characters to look ahead for the next unit
+                </p>
+              </div>
+            </div>
+
+            <div className='mt-8 flex items-center justify-end gap-3'>
+              <button
+                onClick={onClose}
+                disabled={isTagging}
+                className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                disabled={isTagging || moduleWordStyle.trim().length === 0}
+                className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+              >
+                {isTagging ? 'Tagging...' : 'Start Tagging'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      ) : null}
+    </AnimatePresence>
+  );
+};
+
 type RawTextModalProps = {
   isOpen: boolean;
   isUpdatingRawText: boolean;
@@ -695,6 +827,7 @@ type CourseModalsProps = {
   contentKey: string | null;
   isPdfModalOpen: boolean;
   isGenerateCurriculumModalOpen: boolean;
+  isTagRawTextHeuristicModalOpen: boolean;
   isTagRawTextModalOpen: boolean;
   isGenerateWarningOpen: boolean;
   isGenerateUnitsModalOpen: boolean;
@@ -704,11 +837,14 @@ type CourseModalsProps = {
   isModuleRawTextModalOpen: boolean;
   isGeneratingUnits: boolean;
   isGenerating: boolean;
+  isHeuristicTaggingRawText: boolean;
   isTaggingRawText: boolean;
   isUpdatingRawText: boolean;
   isUpdatingModuleRawText: boolean;
   selectedProvider: CurriculumAiProvider;
   selectedModel: string;
+  moduleWordStyle: string;
+  lookupDistance: number;
   selectedModuleId: string;
   modulesWithRawText: CourseModuleWithUnits[];
   editableRawText: string;
@@ -716,6 +852,10 @@ type CourseModalsProps = {
   onClosePdf: () => void;
   onCloseGenerateCurriculumModal: () => void;
   onConfirmGenerateCurriculumSelection: () => void;
+  onCloseTagRawTextHeuristicModal: () => void;
+  onModuleWordStyleChange: (value: string) => void;
+  onLookupDistanceChange: (value: number) => void;
+  onConfirmTagRawTextHeuristic: () => void;
   onCloseTagRawTextModal: () => void;
   onConfirmTagRawText: () => void;
   onCloseGenerateWarning: () => void;
@@ -743,6 +883,7 @@ export const CourseModals = ({
   contentKey,
   isPdfModalOpen,
   isGenerateCurriculumModalOpen,
+  isTagRawTextHeuristicModalOpen,
   isTagRawTextModalOpen,
   isGenerateWarningOpen,
   isGenerateUnitsModalOpen,
@@ -752,11 +893,14 @@ export const CourseModals = ({
   isModuleRawTextModalOpen,
   isGeneratingUnits,
   isGenerating,
+  isHeuristicTaggingRawText,
   isTaggingRawText,
   isUpdatingRawText,
   isUpdatingModuleRawText,
   selectedProvider,
   selectedModel,
+  moduleWordStyle,
+  lookupDistance,
   selectedModuleId,
   modulesWithRawText,
   editableRawText,
@@ -764,6 +908,10 @@ export const CourseModals = ({
   onClosePdf,
   onCloseGenerateCurriculumModal,
   onConfirmGenerateCurriculumSelection,
+  onCloseTagRawTextHeuristicModal,
+  onModuleWordStyleChange,
+  onLookupDistanceChange,
+  onConfirmTagRawTextHeuristic,
   onCloseTagRawTextModal,
   onConfirmTagRawText,
   onCloseGenerateWarning,
@@ -803,6 +951,17 @@ export const CourseModals = ({
         onProviderChange={onProviderChange}
         onModelChange={onModelChange}
         onConfirm={onConfirmGenerateCurriculumSelection}
+      />
+
+      <TagRawTextHeuristicModal
+        isOpen={isTagRawTextHeuristicModalOpen}
+        isTagging={isHeuristicTaggingRawText}
+        moduleWordStyle={moduleWordStyle}
+        lookupDistance={lookupDistance}
+        onClose={onCloseTagRawTextHeuristicModal}
+        onModuleWordStyleChange={onModuleWordStyleChange}
+        onLookupDistanceChange={onLookupDistanceChange}
+        onConfirm={onConfirmTagRawTextHeuristic}
       />
 
       <TagRawTextModal

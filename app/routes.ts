@@ -63,6 +63,10 @@ export default [
       'routes/api/courses/tag-raw-text.tsx',
     ),
     route(
+      'api/courses/:id/tag-raw-text-heuristic',
+      'routes/api/courses/tag-raw-text-heuristic.tsx',
+    ),
+    route(
       'api/courses/:id/split-raw-text-into-modules',
       'routes/api/courses/split-raw-text-into-modules.tsx',
     ),

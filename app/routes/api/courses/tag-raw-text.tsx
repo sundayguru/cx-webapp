@@ -11,39 +11,10 @@ import {
   isCurriculumAiProvider,
   isSupportedCurriculumModel,
 } from '~/utils/curriculum-options';
-import type { RawTextTagMarker } from '~/utils/curriculum-generation.server';
-
-const COURSE_RAW_TEXT_TAG = '--endmodule--';
-const UNIT_RAW_TEXT_TAG = '--endunit--';
-
-const stripExistingTags = (rawText: string) =>
-  rawText.replaceAll(COURSE_RAW_TEXT_TAG, '').replaceAll(UNIT_RAW_TEXT_TAG, '');
-
-const insertMarkersIntoRawText = (
-  rawText: string,
-  markers: RawTextTagMarker[],
-): string => {
-  const validMarkers = markers
-    .filter(
-      (marker) =>
-        Number.isInteger(marker.position) &&
-        marker.position >= 0 &&
-        marker.position <= rawText.length &&
-        (marker.tag === COURSE_RAW_TEXT_TAG ||
-          marker.tag === UNIT_RAW_TEXT_TAG),
-    )
-    .sort((a, b) => b.position - a.position);
-
-  let nextRawText = rawText;
-
-  validMarkers.forEach((marker) => {
-    const prefix = nextRawText.slice(0, marker.position).replace(/\s+$/, '');
-    const suffix = nextRawText.slice(marker.position).replace(/^\s+/, '');
-    nextRawText = `${prefix}\n${marker.tag}\n${suffix}`;
-  });
-
-  return nextRawText;
-};
+import {
+  insertMarkersIntoRawText,
+  stripExistingRawTextTags,
+} from '~/utils/raw-text-tagging';
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -100,7 +71,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       );
     }
 
-    const cleanRawText = stripExistingTags(currentRawText);
+    const cleanRawText = stripExistingRawTextTags(currentRawText);
     const response =
       provider === 'google'
         ? await generateRawTextTags(cleanRawText, apiKey, model)
