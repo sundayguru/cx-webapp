@@ -368,6 +368,136 @@ const GenerateCurriculumModal = ({
   );
 };
 
+type WorkflowSelectionModalProps = {
+  isOpen: boolean;
+  isRunning: boolean;
+  title: string;
+  description: string;
+  confirmLabel: string;
+  selectedProvider: CurriculumAiProvider;
+  selectedModel: string;
+  onClose: () => void;
+  onProviderChange: (provider: CurriculumAiProvider) => void;
+  onModelChange: (model: string) => void;
+  onConfirm: () => void;
+};
+
+const WorkflowSelectionModal = ({
+  isOpen,
+  isRunning,
+  title,
+  description,
+  confirmLabel,
+  selectedProvider,
+  selectedModel,
+  onClose,
+  onProviderChange,
+  onModelChange,
+  onConfirm,
+}: WorkflowSelectionModalProps) => {
+  return (
+    <AnimatePresence>
+      {isOpen ? (
+        <div className='fixed inset-0 z-[106] flex items-center justify-center p-4 md:p-8'>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              if (!isRunning) {
+                onClose();
+              }
+            }}
+            className='absolute inset-0 bg-black/70 backdrop-blur-sm'
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            className='relative w-full max-w-2xl rounded-[32px] bg-white p-8 shadow-2xl'
+          >
+            <div className='mb-6 flex items-center justify-between'>
+              <div>
+                <h3 className='font-serif text-2xl text-[#1a1a1a]'>{title}</h3>
+                <p className='mt-2 text-sm text-black/55'>{description}</p>
+              </div>
+              <button
+                onClick={onClose}
+                disabled={isRunning}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10 disabled:opacity-50'
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className='space-y-5'>
+              <div>
+                <label
+                  htmlFor='workflow-provider'
+                  className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                >
+                  AI Provider
+                </label>
+                <select
+                  id='workflow-provider'
+                  value={selectedProvider}
+                  onChange={(event) =>
+                    onProviderChange(event.target.value as CurriculumAiProvider)
+                  }
+                  className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                >
+                  <option value='google'>Google</option>
+                  <option value='groq'>Groq</option>
+                </select>
+              </div>
+
+              <div>
+                <label
+                  htmlFor='workflow-model'
+                  className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                >
+                  Model
+                </label>
+                <select
+                  id='workflow-model'
+                  value={selectedModel}
+                  onChange={(event) => onModelChange(event.target.value)}
+                  className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                >
+                  {CURRICULUM_MODEL_OPTIONS[selectedProvider].map(
+                    (modelOption) => (
+                      <option key={modelOption.value} value={modelOption.value}>
+                        {modelOption.label}
+                      </option>
+                    ),
+                  )}
+                </select>
+              </div>
+            </div>
+
+            <div className='mt-8 flex items-center justify-end gap-3'>
+              <button
+                onClick={onClose}
+                disabled={isRunning}
+                className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={onConfirm}
+                disabled={isRunning}
+                className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+              >
+                {isRunning ? 'Starting...' : confirmLabel}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      ) : null}
+    </AnimatePresence>
+  );
+};
+
 type TagRawTextModalProps = {
   isOpen: boolean;
   isTagging: boolean;
@@ -835,6 +965,8 @@ type CourseModalsProps = {
   isTagRawTextModalOpen: boolean;
   isGenerateWarningOpen: boolean;
   isGenerateUnitsModalOpen: boolean;
+  isCourseWorkflowModalOpen: boolean;
+  isUnitAudioWorkflowModalOpen: boolean;
   isExtractWarningOpen: boolean;
   isSplitWarningOpen: boolean;
   isRawTextModalOpen: boolean;
@@ -842,6 +974,8 @@ type CourseModalsProps = {
   isUnitRawTextModalOpen: boolean;
   isGeneratingUnits: boolean;
   isGenerating: boolean;
+  isRunningCourseWorkflow: boolean;
+  isRunningUnitAudioWorkflow: boolean;
   isHeuristicTaggingRawText: boolean;
   isTaggingRawText: boolean;
   isUpdatingRawText: boolean;
@@ -868,6 +1002,10 @@ type CourseModalsProps = {
   onCloseGenerateWarning: () => void;
   onConfirmGenerateCurriculum: () => void;
   onCloseGenerateUnitsModal: () => void;
+  onCloseCourseWorkflowModal: () => void;
+  onConfirmCourseWorkflow: () => void;
+  onCloseUnitAudioWorkflowModal: () => void;
+  onConfirmUnitAudioWorkflow: () => void;
   onProviderChange: (provider: CurriculumAiProvider) => void;
   onModelChange: (model: string) => void;
   onModuleChange: (moduleId: string) => void;
@@ -897,6 +1035,8 @@ export const CourseModals = ({
   isTagRawTextModalOpen,
   isGenerateWarningOpen,
   isGenerateUnitsModalOpen,
+  isCourseWorkflowModalOpen,
+  isUnitAudioWorkflowModalOpen,
   isExtractWarningOpen,
   isSplitWarningOpen,
   isRawTextModalOpen,
@@ -904,6 +1044,8 @@ export const CourseModals = ({
   isUnitRawTextModalOpen,
   isGeneratingUnits,
   isGenerating,
+  isRunningCourseWorkflow,
+  isRunningUnitAudioWorkflow,
   isHeuristicTaggingRawText,
   isTaggingRawText,
   isUpdatingRawText,
@@ -930,6 +1072,10 @@ export const CourseModals = ({
   onCloseGenerateWarning,
   onConfirmGenerateCurriculum,
   onCloseGenerateUnitsModal,
+  onCloseCourseWorkflowModal,
+  onConfirmCourseWorkflow,
+  onCloseUnitAudioWorkflowModal,
+  onConfirmUnitAudioWorkflow,
   onProviderChange,
   onModelChange,
   onModuleChange,
@@ -1011,6 +1157,34 @@ export const CourseModals = ({
         onModelChange={onModelChange}
         onModuleChange={onModuleChange}
         onGenerate={onGenerateUnits}
+      />
+
+      <WorkflowSelectionModal
+        isOpen={isCourseWorkflowModalOpen}
+        isRunning={isRunningCourseWorkflow}
+        title='Run Course Workflow'
+        description='Choose an AI provider and model before starting the full course processing workflow.'
+        confirmLabel='Start Workflow'
+        selectedProvider={selectedProvider}
+        selectedModel={selectedModel}
+        onClose={onCloseCourseWorkflowModal}
+        onProviderChange={onProviderChange}
+        onModelChange={onModelChange}
+        onConfirm={onConfirmCourseWorkflow}
+      />
+
+      <WorkflowSelectionModal
+        isOpen={isUnitAudioWorkflowModalOpen}
+        isRunning={isRunningUnitAudioWorkflow}
+        title='Run Unit Audio Workflow'
+        description='Choose an AI provider and model before generating audio scripts and audio for course units.'
+        confirmLabel='Start Audio Workflow'
+        selectedProvider={selectedProvider}
+        selectedModel={selectedModel}
+        onClose={onCloseUnitAudioWorkflowModal}
+        onProviderChange={onProviderChange}
+        onModelChange={onModelChange}
+        onConfirm={onConfirmUnitAudioWorkflow}
       />
 
       <WarningModal

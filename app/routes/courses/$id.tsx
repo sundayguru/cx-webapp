@@ -125,6 +125,10 @@ export default function CourseDetailsPage({
   const [isGenerateWarningOpen, setIsGenerateWarningOpen] = useState(false);
   const [isGenerateUnitsModalOpen, setIsGenerateUnitsModalOpen] =
     useState(false);
+  const [isCourseWorkflowModalOpen, setIsCourseWorkflowModalOpen] =
+    useState(false);
+  const [isUnitAudioWorkflowModalOpen, setIsUnitAudioWorkflowModalOpen] =
+    useState(false);
   const [isExtractWarningOpen, setIsExtractWarningOpen] = useState(false);
   const [isSplitWarningOpen, setIsSplitWarningOpen] = useState(false);
   const [isModuleRawTextModalOpen, setIsModuleRawTextModalOpen] =
@@ -927,8 +931,8 @@ export default function CourseDetailsPage({
           onOpenSplitWarning={() => setIsSplitWarningOpen(true)}
           onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
-          onRunCourseWorkflow={handleRunCourseWorkflow}
-          onRunUnitAudioWorkflow={handleRunUnitAudioWorkflow}
+          onRunCourseWorkflow={() => setIsCourseWorkflowModalOpen(true)}
+          onRunUnitAudioWorkflow={() => setIsUnitAudioWorkflowModalOpen(true)}
           onOpenDeleteModal={() => setIsDeleteModalOpen(true)}
           onPublish={handlePublish}
           onUnpublish={handleUnpublish}
@@ -960,6 +964,8 @@ export default function CourseDetailsPage({
         isTagRawTextModalOpen={isTagRawTextModalOpen}
         isGenerateWarningOpen={isGenerateWarningOpen}
         isGenerateUnitsModalOpen={isGenerateUnitsModalOpen}
+        isCourseWorkflowModalOpen={isCourseWorkflowModalOpen}
+        isUnitAudioWorkflowModalOpen={isUnitAudioWorkflowModalOpen}
         isExtractWarningOpen={isExtractWarningOpen}
         isSplitWarningOpen={isSplitWarningOpen}
         isRawTextModalOpen={isRawTextModalOpen}
@@ -967,6 +973,8 @@ export default function CourseDetailsPage({
         isUnitRawTextModalOpen={isUnitRawTextModalOpen}
         isGeneratingUnits={isGeneratingUnits}
         isGenerating={isGenerating}
+        isRunningCourseWorkflow={isRunningCourseWorkflow}
+        isRunningUnitAudioWorkflow={isRunningUnitAudioWorkflow}
         isHeuristicTaggingRawText={isHeuristicTaggingRawText}
         isTaggingRawText={isTaggingRawText}
         isUpdatingRawText={isUpdatingRawText}
@@ -1011,6 +1019,18 @@ export default function CourseDetailsPage({
           triggerGenerateCurriculum();
         }}
         onCloseGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(false)}
+        onCloseCourseWorkflowModal={() => setIsCourseWorkflowModalOpen(false)}
+        onConfirmCourseWorkflow={() => {
+          setIsCourseWorkflowModalOpen(false);
+          handleRunCourseWorkflow();
+        }}
+        onCloseUnitAudioWorkflowModal={() =>
+          setIsUnitAudioWorkflowModalOpen(false)
+        }
+        onConfirmUnitAudioWorkflow={() => {
+          setIsUnitAudioWorkflowModalOpen(false);
+          handleRunUnitAudioWorkflow();
+        }}
         onModuleChange={setSelectedModuleId}
         onGenerateUnits={handleGenerateUnits}
         onCloseExtractWarning={() => setIsExtractWarningOpen(false)}
