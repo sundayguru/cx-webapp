@@ -107,6 +107,7 @@ export default function CourseDetailsPage({
   const tagRawTextFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
+  const courseWorkflowFetcher = useFetcher();
   const moduleRawTextUpdateFetcher = useFetcher();
   const unitRawTextUpdateFetcher = useFetcher();
   const publishFetcher = useFetcher();
@@ -170,6 +171,7 @@ export default function CourseDetailsPage({
   const isTaggingRawText = tagRawTextFetcher.state !== 'idle';
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
+  const isRunningCourseWorkflow = courseWorkflowFetcher.state !== 'idle';
   const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
   const isUpdatingUnitRawText = unitRawTextUpdateFetcher.state !== 'idle';
   const isDeletingCourse = deleteFetcher.state !== 'idle';
@@ -295,6 +297,19 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/split-module-raw-text-into-units`,
+      },
+    );
+  };
+
+  const handleRunCourseWorkflow = () => {
+    courseWorkflowFetcher.submit(
+      {
+        provider: selectedProvider,
+        model: selectedModel,
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/run-processing-workflow`,
       },
     );
   };
@@ -584,6 +599,36 @@ export default function CourseDetailsPage({
     }
   }, [showToast, splitModuleRawTextFetcher]);
 
+  const handledCourseWorkflowResult = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (courseWorkflowFetcher.state === 'idle' && courseWorkflowFetcher.data) {
+      const result = courseWorkflowFetcher.data as {
+        success?: boolean;
+        error?: string;
+        instanceId?: string;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledCourseWorkflowResult.current !== resultKey) {
+        handledCourseWorkflowResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Course workflow started successfully${result.instanceId ? ` (${result.instanceId})` : ''}.`,
+        });
+      } else if (
+        result.error &&
+        handledCourseWorkflowResult.current !== resultKey
+      ) {
+        handledCourseWorkflowResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [courseWorkflowFetcher, showToast]);
+
   const handledModuleRawTextUpdateResult = useRef<string | null>(null);
 
   useEffect(() => {
@@ -808,6 +853,7 @@ export default function CourseDetailsPage({
           isTaggingRawText={isTaggingRawText}
           isSplittingRawText={isSplittingRawText}
           isSplittingModuleRawText={isSplittingModuleRawText}
+          isRunningCourseWorkflow={isRunningCourseWorkflow}
           hasRawText={Boolean(course.rawText)}
           rawTextLength={course.rawText?.length || 0}
           modulesWithRawText={modulesWithRawText}
@@ -829,6 +875,7 @@ export default function CourseDetailsPage({
           onOpenSplitWarning={() => setIsSplitWarningOpen(true)}
           onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
+          onRunCourseWorkflow={handleRunCourseWorkflow}
           onOpenDeleteModal={() => setIsDeleteModalOpen(true)}
           onPublish={handlePublish}
           onUnpublish={handleUnpublish}

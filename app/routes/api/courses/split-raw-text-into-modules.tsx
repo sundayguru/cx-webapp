@@ -1,5 +1,9 @@
 import { type ActionFunctionArgs, data } from 'react-router';
-import { getCourseById, splitCourseRawTextIntoModules } from '~/db/courses';
+import { getCourseById } from '~/db/courses';
+import {
+  CourseProcessingError,
+  splitCourseRawTextIntoModulesForCourse,
+} from '~/utils/course-processing.server';
 import { getUserFromRequest } from '~/utils/session.server';
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -25,31 +29,21 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     );
   }
 
-  const rawText = courseData.course.rawText?.trim() || '';
-  if (!rawText) {
-    return data({ error: 'Course raw text is empty' }, { status: 400 });
-  }
+  try {
+    const result = await splitCourseRawTextIntoModulesForCourse(id);
 
-  if (!rawText.includes('--endmodule--') && !rawText.includes('--end--')) {
+    return data({
+      success: true,
+      modulesCount: result.modulesCount,
+    });
+  } catch (err: unknown) {
+    const message =
+      err instanceof Error
+        ? err.message
+        : 'Failed to create modules from raw text';
     return data(
-      {
-        error:
-          'Course raw text must include "--endmodule--" separators before splitting.',
-      },
-      { status: 400 },
+      { error: message },
+      { status: err instanceof CourseProcessingError ? err.status : 500 },
     );
   }
-
-  const updatedCourse = await splitCourseRawTextIntoModules(id, rawText);
-  if (!updatedCourse) {
-    return data(
-      { error: 'Failed to create modules from raw text' },
-      { status: 500 },
-    );
-  }
-
-  return data({
-    success: true,
-    modulesCount: updatedCourse.modules.length,
-  });
 };

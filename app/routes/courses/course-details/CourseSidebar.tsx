@@ -21,6 +21,7 @@ export const CourseSidebar = ({
   isHeuristicTaggingRawText,
   isTaggingRawText,
   isSplittingRawText,
+  isRunningCourseWorkflow,
   hasRawText,
   modulesWithRawText,
   onOpenPdf,
@@ -31,6 +32,7 @@ export const CourseSidebar = ({
   onOpenSplitWarning,
   onOpenGenerateWarning,
   onOpenGenerateUnitsModal,
+  onRunCourseWorkflow,
   onOpenDeleteModal,
   onPublish,
   onUnpublish,
@@ -135,6 +137,18 @@ export const CourseSidebar = ({
                 {isSplittingRawText
                   ? 'Splitting Into Modules...'
                   : 'Split Raw Text Into Modules'}
+              </button>
+            ) : null}
+            {hasRawText ? (
+              <button
+                onClick={onRunCourseWorkflow}
+                disabled={isRunningCourseWorkflow}
+                className='flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-md shadow-[#5A5A40]/25 transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+              >
+                <Sparkles size={20} />
+                {isRunningCourseWorkflow
+                  ? 'Starting Course Workflow...'
+                  : 'Run Full Course Workflow'}
               </button>
             ) : null}
 

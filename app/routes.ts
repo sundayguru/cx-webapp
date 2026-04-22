@@ -75,6 +75,10 @@ export default [
       'routes/api/courses/split-module-raw-text-into-units.tsx',
     ),
     route(
+      'api/courses/:id/run-processing-workflow',
+      'routes/api/courses/$id.run-processing-workflow.tsx',
+    ),
+    route(
       'api/courses/:id/update-module-raw-text',
       'routes/api/courses/update-module-raw-text.tsx',
     ),

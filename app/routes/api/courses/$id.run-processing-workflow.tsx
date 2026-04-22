@@ -1,8 +1,11 @@
+import { env } from 'cloudflare:workers';
 import { type ActionFunctionArgs, data } from 'react-router';
 import { getCourseById } from '~/db/courses';
 import {
-  CourseProcessingError,
-  splitModuleRawTextIntoUnitsForModule,
+  DEFAULT_WORKFLOW_QUIZ_BATCH_SIZE,
+  DEFAULT_WORKFLOW_QUIZ_DELAY_SECONDS,
+  DEFAULT_WORKFLOW_QUIZ_TARGET,
+  resolveCourseAiOptions,
 } from '~/utils/course-processing.server';
 import { getUserFromRequest } from '~/utils/session.server';
 
@@ -24,34 +27,30 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   if (courseData.course.createdBy !== user.id) {
     return data(
-      { error: 'Only the creator can split module raw text into units' },
+      { error: 'Only the creator can start the course workflow' },
       { status: 403 },
     );
   }
 
   const formData = await request.formData();
-  const moduleIdValue = formData.get('moduleId');
+  const options = resolveCourseAiOptions(
+    formData.get('provider'),
+    formData.get('model'),
+  );
+  const instance = await env.COURSE_PROCESSING_WORKFLOW.create({
+    id: `course-${id}-${Date.now()}`,
+    params: {
+      courseId: id,
+      provider: options.provider,
+      model: options.model,
+      quizTargetCount: DEFAULT_WORKFLOW_QUIZ_TARGET,
+      quizBatchSize: DEFAULT_WORKFLOW_QUIZ_BATCH_SIZE,
+      quizDelaySeconds: DEFAULT_WORKFLOW_QUIZ_DELAY_SECONDS,
+    },
+  });
 
-  if (typeof moduleIdValue !== 'string' || !moduleIdValue) {
-    return data({ error: 'Module ID is required' }, { status: 400 });
-  }
-
-  try {
-    const result = await splitModuleRawTextIntoUnitsForModule(moduleIdValue);
-
-    return data({
-      success: true,
-      moduleId: moduleIdValue,
-      unitsCount: result.unitsCount,
-    });
-  } catch (err: unknown) {
-    const message =
-      err instanceof Error
-        ? err.message
-        : 'Failed to create units from raw text';
-    return data(
-      { error: message },
-      { status: err instanceof CourseProcessingError ? err.status : 500 },
-    );
-  }
+  return data({
+    success: true,
+    instanceId: instance.id,
+  });
 };
