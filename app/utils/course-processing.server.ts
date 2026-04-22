@@ -16,15 +16,23 @@ import {
   isCurriculumAiProvider,
   isSupportedCurriculumModel,
 } from '~/utils/curriculum-options';
-import { generateModuleUnit, generateQuiz } from '~/utils/ai.server';
+import {
+  generateModuleUnit,
+  generateQuiz,
+  generateUnitAudioScript,
+} from '~/utils/ai.server';
 import {
   generateModuleUnitWithGroq,
   generateQuizWithGroq,
+  generateUnitAudioScriptWithGroq,
 } from '~/utils/groq.server';
+import { generateContentKey, uploadToR2 } from '~/utils/r2.server';
 
 export const DEFAULT_WORKFLOW_QUIZ_TARGET = 50;
 export const DEFAULT_WORKFLOW_QUIZ_BATCH_SIZE = 10;
 export const DEFAULT_WORKFLOW_QUIZ_DELAY_SECONDS = 20;
+const GOOGLE_TTS_ENDPOINT =
+  'https://texttospeech.googleapis.com/v1/text:synthesize';
 
 export type CourseAiOptions = {
   provider: CurriculumAiProvider;
@@ -51,7 +59,7 @@ export const resolveCourseAiOptions = (
       : DEFAULT_CURRICULUM_PROVIDER;
   const model =
     typeof modelValue === 'string' &&
-    isSupportedCurriculumModel(provider, modelValue)
+      isSupportedCurriculumModel(provider, modelValue)
       ? modelValue
       : DEFAULT_CURRICULUM_MODELS[provider];
 
@@ -60,6 +68,70 @@ export const resolveCourseAiOptions = (
 
 const getCourseProcessingApiKey = (provider: CurriculumAiProvider) => {
   return provider === 'google' ? env.GEMINI_API_KEY : env.GROQ_API_KEY;
+};
+
+const createUnitMediaKey = (
+  unitId: string,
+  mediaType: 'audio' | 'video',
+  filename: string,
+) => {
+  return `units/${unitId}/${mediaType}/${generateContentKey(unitId, filename).split('/').pop()}`;
+};
+
+const decodeBase64ToUint8Array = (base64: string) => {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+
+  return bytes;
+};
+
+const synthesizeAudioWithGoogleTts = async (audioScript: string) => {
+  if (!env.GOOGLE_API_KEY) {
+    throw new CourseProcessingError(
+      'Google API key is missing for unit audio generation',
+      503,
+    );
+  }
+
+  const response = await fetch(GOOGLE_TTS_ENDPOINT, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': env.GOOGLE_API_KEY,
+    },
+    body: JSON.stringify({
+      input: { text: audioScript },
+      voice: {
+        languageCode: 'en-US',
+        ssmlGender: 'NEUTRAL',
+      },
+      audioConfig: {
+        audioEncoding: 'MP3',
+      },
+    }),
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new CourseProcessingError(
+      `Google TTS request failed: ${errorText || response.statusText}`,
+      502,
+    );
+  }
+
+  const payload = (await response.json()) as { audioContent?: string };
+  if (!payload.audioContent) {
+    throw new CourseProcessingError(
+      'Google TTS did not return audio content',
+      502,
+    );
+  }
+
+  return decodeBase64ToUint8Array(payload.audioContent);
 };
 
 export const splitCourseRawTextIntoModulesForCourse = async (
@@ -200,6 +272,121 @@ export const generateUnitContentForUnit = async (
   };
 };
 
+export const generateUnitAudioScriptForUnit = async (
+  unitId: string,
+  options: CourseAiOptions,
+) => {
+  const db = getDb();
+  const [unit] = await db
+    .select()
+    .from(units)
+    .where(eq(units.id, unitId))
+    .limit(1);
+
+  if (!unit) {
+    throw new CourseProcessingError('Unit not found', 404);
+  }
+
+  if (!unit.content?.trim()) {
+    throw new CourseProcessingError(
+      'Unit does not have content to convert into an audio script',
+      400,
+    );
+  }
+
+  const apiKey = getCourseProcessingApiKey(options.provider);
+  if (!apiKey) {
+    throw new CourseProcessingError(
+      `${options.provider} API key is missing for audio script generation`,
+      503,
+    );
+  }
+
+  const generatedScript =
+    options.provider === 'google'
+      ? await generateUnitAudioScript(unit.content, apiKey, options.model)
+      : await generateUnitAudioScriptWithGroq(
+        unit.content,
+        apiKey,
+        options.model,
+      );
+
+  const audioScript = generatedScript.audioScript?.trim();
+  if (!audioScript) {
+    throw new CourseProcessingError(
+      'The AI response did not include an audio script',
+      422,
+    );
+  }
+
+  await db
+    .update(units)
+    .set({
+      audioScript,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(units.id, unitId));
+
+  return {
+    scriptLength: audioScript.length,
+  };
+};
+
+export const generateUnitAudioForUnit = async (unitId: string) => {
+  const db = getDb();
+  const [unit] = await db
+    .select()
+    .from(units)
+    .where(eq(units.id, unitId))
+    .limit(1);
+
+  if (!unit) {
+    throw new CourseProcessingError('Unit not found', 404);
+  }
+
+  if (!unit.audioScript?.trim()) {
+    throw new CourseProcessingError(
+      'Unit does not have an audio script to synthesize',
+      400,
+    );
+  }
+
+  if (unit.audioUrl?.trim()) {
+    throw new CourseProcessingError(
+      'Unit already has audio. Remove or replace it before generating again.',
+      409,
+    );
+  }
+
+  const audioBytes = await synthesizeAudioWithGoogleTts(
+    unit.audioScript.trim(),
+  );
+  const audioKey = createUnitMediaKey(unitId, 'audio', 'generated-audio.mp3');
+  const audioBuffer = audioBytes.buffer.slice(
+    audioBytes.byteOffset,
+    audioBytes.byteOffset + audioBytes.byteLength,
+  );
+  const upload = await uploadToR2(audioKey, audioBuffer, 'audio/mpeg');
+
+  if (!upload) {
+    throw new CourseProcessingError('Failed to upload generated audio', 500);
+  }
+
+  const audioUrl = `/api/course/serve/${upload.key}`;
+
+  await db
+    .update(units)
+    .set({
+      audioUrl,
+      updatedAt: new Date().toISOString(),
+    })
+    .where(eq(units.id, unitId));
+
+  return {
+    audioUrl,
+  };
+};
+
 type GenerateUnitQuizBatchOptions = CourseAiOptions & {
   maxNewQuizzes?: number;
   maxTotalQuizzes?: number;
@@ -255,17 +442,17 @@ export const generateQuizBatchForUnit = async (
   const generatedQuiz =
     options.provider === 'google'
       ? await generateQuiz(
-          unit.rawText,
-          existingQuestions,
-          apiKey,
-          options.model,
-        )
+        unit.rawText,
+        existingQuestions,
+        apiKey,
+        options.model,
+      )
       : await generateQuizWithGroq(
-          unit.rawText,
-          existingQuestions,
-          apiKey,
-          options.model,
-        );
+        unit.rawText,
+        existingQuestions,
+        apiKey,
+        options.model,
+      );
 
   if (!generatedQuiz.quizzes || generatedQuiz.quizzes.length === 0) {
     throw new CourseProcessingError(

@@ -108,6 +108,7 @@ export default function CourseDetailsPage({
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
   const courseWorkflowFetcher = useFetcher();
+  const unitAudioWorkflowFetcher = useFetcher();
   const moduleRawTextUpdateFetcher = useFetcher();
   const unitRawTextUpdateFetcher = useFetcher();
   const publishFetcher = useFetcher();
@@ -172,6 +173,7 @@ export default function CourseDetailsPage({
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
   const isRunningCourseWorkflow = courseWorkflowFetcher.state !== 'idle';
+  const isRunningUnitAudioWorkflow = unitAudioWorkflowFetcher.state !== 'idle';
   const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
   const isUpdatingUnitRawText = unitRawTextUpdateFetcher.state !== 'idle';
   const isDeletingCourse = deleteFetcher.state !== 'idle';
@@ -310,6 +312,19 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/run-processing-workflow`,
+      },
+    );
+  };
+
+  const handleRunUnitAudioWorkflow = () => {
+    unitAudioWorkflowFetcher.submit(
+      {
+        provider: selectedProvider,
+        model: selectedModel,
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/run-unit-audio-workflow`,
       },
     );
   };
@@ -629,6 +644,42 @@ export default function CourseDetailsPage({
     }
   }, [courseWorkflowFetcher, showToast]);
 
+  const handledUnitAudioWorkflowResult = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      unitAudioWorkflowFetcher.state === 'idle' &&
+      unitAudioWorkflowFetcher.data
+    ) {
+      const result = unitAudioWorkflowFetcher.data as {
+        success?: boolean;
+        error?: string;
+        instanceId?: string;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (
+        result.success &&
+        handledUnitAudioWorkflowResult.current !== resultKey
+      ) {
+        handledUnitAudioWorkflowResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Unit audio workflow started successfully${result.instanceId ? ` (${result.instanceId})` : ''}.`,
+        });
+      } else if (
+        result.error &&
+        handledUnitAudioWorkflowResult.current !== resultKey
+      ) {
+        handledUnitAudioWorkflowResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, unitAudioWorkflowFetcher]);
+
   const handledModuleRawTextUpdateResult = useRef<string | null>(null);
 
   useEffect(() => {
@@ -854,6 +905,7 @@ export default function CourseDetailsPage({
           isSplittingRawText={isSplittingRawText}
           isSplittingModuleRawText={isSplittingModuleRawText}
           isRunningCourseWorkflow={isRunningCourseWorkflow}
+          isRunningUnitAudioWorkflow={isRunningUnitAudioWorkflow}
           hasRawText={Boolean(course.rawText)}
           rawTextLength={course.rawText?.length || 0}
           modulesWithRawText={modulesWithRawText}
@@ -876,6 +928,7 @@ export default function CourseDetailsPage({
           onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
           onRunCourseWorkflow={handleRunCourseWorkflow}
+          onRunUnitAudioWorkflow={handleRunUnitAudioWorkflow}
           onOpenDeleteModal={() => setIsDeleteModalOpen(true)}
           onPublish={handlePublish}
           onUnpublish={handleUnpublish}

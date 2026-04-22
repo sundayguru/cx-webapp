@@ -2,8 +2,7 @@ import { data, type ActionFunctionArgs } from 'react-router';
 import { getCourseById } from '~/db/courses';
 import {
   CourseProcessingError,
-  generateUnitAudioScriptForUnit,
-  resolveCourseAiOptions,
+  generateUnitAudioForUnit,
 } from '~/utils/course-processing.server';
 import { getUserFromRequest } from '~/utils/session.server';
 
@@ -31,23 +30,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   if (courseData.course.createdBy !== user.id) {
     return data(
-      { error: 'Only the creator can generate unit audio scripts' },
+      { error: 'Only the creator can generate unit audio' },
       { status: 403 },
     );
   }
 
-  const formData = await request.formData();
-  const options = resolveCourseAiOptions(
-    formData.get('provider'),
-    formData.get('model'),
-  );
-
   try {
-    const result = await generateUnitAudioScriptForUnit(unitId, options);
+    const result = await generateUnitAudioForUnit(unitId);
 
     return data({
       success: true,
-      scriptLength: result.scriptLength,
+      audioUrl: result.audioUrl,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Generation failed';

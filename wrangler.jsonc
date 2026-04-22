@@ -28,6 +28,11 @@
       "name": "course-processing-workflow",
       "class_name": "CourseProcessingWorkflow",
     },
+    {
+      "binding": "COURSE_UNIT_AUDIO_WORKFLOW",
+      "name": "course-unit-audio-workflow",
+      "class_name": "CourseUnitAudioWorkflow",
+    },
   ],
   "vars": {
     "BASE_URL": "https://prod-coursexquiz.rallyard-com.workers.dev",
@@ -55,6 +60,11 @@
           "name": "course-processing-workflow",
           "class_name": "CourseProcessingWorkflow",
         },
+        {
+          "binding": "COURSE_UNIT_AUDIO_WORKFLOW",
+          "name": "course-unit-audio-workflow",
+          "class_name": "CourseUnitAudioWorkflow",
+        },
       ],
       "vars": {
         "BASE_URL": "https://prod-coursexquiz.rallyard-com.workers.dev",
@@ -81,6 +91,11 @@
           "binding": "COURSE_PROCESSING_WORKFLOW",
           "name": "course-processing-workflow",
           "class_name": "CourseProcessingWorkflow",
+        },
+        {
+          "binding": "COURSE_UNIT_AUDIO_WORKFLOW",
+          "name": "course-unit-audio-workflow",
+          "class_name": "CourseUnitAudioWorkflow",
         },
       ],
       "vars": {

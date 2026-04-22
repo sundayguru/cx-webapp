@@ -7,6 +7,7 @@ import {
   Sparkles,
   Send,
   Trash2,
+  Volume2,
   XCircle,
 } from 'lucide-react';
 import type { SidebarProps } from './types';
@@ -22,6 +23,7 @@ export const CourseSidebar = ({
   isTaggingRawText,
   isSplittingRawText,
   isRunningCourseWorkflow,
+  isRunningUnitAudioWorkflow,
   hasRawText,
   modulesWithRawText,
   onOpenPdf,
@@ -33,6 +35,7 @@ export const CourseSidebar = ({
   onOpenGenerateWarning,
   onOpenGenerateUnitsModal,
   onRunCourseWorkflow,
+  onRunUnitAudioWorkflow,
   onOpenDeleteModal,
   onPublish,
   onUnpublish,
@@ -151,6 +154,16 @@ export const CourseSidebar = ({
                   : 'Run Full Course Workflow'}
               </button>
             ) : null}
+            <button
+              onClick={onRunUnitAudioWorkflow}
+              disabled={isRunningUnitAudioWorkflow}
+              className='flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1f4a57] py-4 text-lg font-bold text-white shadow-md shadow-[#1f4a57]/20 transition-all hover:bg-[#173944] disabled:opacity-50'
+            >
+              <Volume2 size={20} />
+              {isRunningUnitAudioWorkflow
+                ? 'Starting Unit Audio Workflow...'
+                : 'Run Unit Audio Workflow'}
+            </button>
 
             <button
               onClick={onOpenGenerateWarning}

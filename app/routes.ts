@@ -79,6 +79,10 @@ export default [
       'routes/api/courses/$id.run-processing-workflow.tsx',
     ),
     route(
+      'api/courses/:id/run-unit-audio-workflow',
+      'routes/api/courses/$id.run-unit-audio-workflow.tsx',
+    ),
+    route(
       'api/courses/:id/update-module-raw-text',
       'routes/api/courses/update-module-raw-text.tsx',
     ),
@@ -89,6 +93,10 @@ export default [
     route(
       'api/courses/:id/units/:unitId/generate-audio-script',
       'routes/api/courses/$id.units.$unitId.generate-audio-script.tsx',
+    ),
+    route(
+      'api/courses/:id/units/:unitId/generate-audio',
+      'routes/api/courses/$id.units.$unitId.generate-audio.tsx',
     ),
     route(
       'api/courses/:id/units/:unitId/upload-media',

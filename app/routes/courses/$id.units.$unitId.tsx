@@ -211,6 +211,7 @@ const UnitPageContent = ({
   const generateContentFetcher = useFetcher();
   const generateQuizFetcher = useFetcher();
   const generateAudioScriptFetcher = useFetcher();
+  const generateAudioFetcher = useFetcher();
   const completeFetcher = useFetcher();
   const clearQuizzesFetcher = useFetcher();
   const uploadMediaFetcher = useFetcher();
@@ -220,12 +221,14 @@ const UnitPageContent = ({
   const isGenerating = generateContentFetcher.state !== 'idle';
   const isGeneratingQuiz = generateQuizFetcher.state !== 'idle';
   const isGeneratingAudioScript = generateAudioScriptFetcher.state !== 'idle';
+  const isGeneratingAudio = generateAudioFetcher.state !== 'idle';
   const isClearingQuizzes = clearQuizzesFetcher.state !== 'idle';
   const isUploadingMedia = uploadMediaFetcher.state !== 'idle';
   const { showToast } = useToast();
   const handledGenerateContentResult = useRef<string | null>(null);
   const handledGenerateQuizResult = useRef<string | null>(null);
   const handledGenerateAudioScriptResult = useRef<string | null>(null);
+  const handledGenerateAudioResult = useRef<string | null>(null);
   const completedSessionSyncRef = useRef<string | null>(null);
   const currentQuizSessionId =
     startQuizSessionFetcher.state === 'idle' &&
@@ -274,6 +277,16 @@ const UnitPageContent = ({
       {
         method: 'post',
         action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-audio-script`,
+      },
+    );
+  };
+
+  const handleGenerateAudio = () => {
+    generateAudioFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-audio`,
       },
     );
   };
@@ -386,6 +399,34 @@ const UnitPageContent = ({
       }
     }
   }, [generateAudioScriptFetcher, showToast]);
+
+  useEffect(() => {
+    if (generateAudioFetcher.state === 'idle' && generateAudioFetcher.data) {
+      const result = generateAudioFetcher.data as {
+        success?: boolean;
+        error?: string;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledGenerateAudioResult.current !== resultKey) {
+        handledGenerateAudioResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: 'Generated unit audio successfully',
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledGenerateAudioResult.current !== resultKey
+      ) {
+        handledGenerateAudioResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [generateAudioFetcher, showToast]);
 
   useEffect(() => {
     if (clearQuizzesFetcher.data) {
@@ -1068,6 +1109,23 @@ const UnitPageContent = ({
                         >
                           <Sparkles size={16} />
                           Generate Unit Audio Script
+                        </button>
+                        <button
+                          onClick={() => {
+                            setShowMoreMenu(false);
+                            handleGenerateAudio();
+                          }}
+                          disabled={
+                            isGeneratingAudio ||
+                            !currentUnit.audioScript?.trim() ||
+                            Boolean(currentUnit.audioUrl)
+                          }
+                          className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                        >
+                          <Volume2 size={16} />
+                          {isGeneratingAudio
+                            ? 'Generating Unit Audio...'
+                            : 'Generate Unit Audio'}
                         </button>
                         <button
                           onClick={() => {
