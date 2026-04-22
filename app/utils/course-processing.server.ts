@@ -137,6 +137,7 @@ const synthesizeAudioWithGoogleTts = async (audioScript: string) => {
 export const splitCourseRawTextIntoModulesForCourse = async (
   courseId: string,
 ) => {
+  const db = getDb();
   const courseData = await getCourseById(courseId);
   if (!courseData) {
     throw new CourseProcessingError('Course not found', 404);
@@ -145,6 +146,20 @@ export const splitCourseRawTextIntoModulesForCourse = async (
   const rawText = courseData.course.rawText?.trim() || '';
   if (!rawText) {
     throw new CourseProcessingError('Course raw text is empty', 400);
+  }
+
+  const existingModules = await db.query.modules.findMany({
+    where: eq(modules.courseId, courseId),
+  });
+
+  if (existingModules.length > 0) {
+    return {
+      modulesCount: existingModules.length,
+      modules: existingModules.map((module) => ({
+        id: module.id,
+        title: module.title,
+      })),
+    };
   }
 
   if (!rawText.includes('--endmodule--') && !rawText.includes('--end--')) {
@@ -187,6 +202,17 @@ export const splitModuleRawTextIntoUnitsForModule = async (
 
   if (!module.rawText?.trim()) {
     throw new CourseProcessingError('Module raw text is empty', 400);
+  }
+
+  const existingUnits = await db.query.units.findMany({
+    where: eq(units.moduleId, moduleId),
+  });
+
+  if (existingUnits.length > 0) {
+    return {
+      moduleId,
+      unitsCount: existingUnits.length,
+    };
   }
 
   if (
@@ -233,6 +259,14 @@ export const generateUnitContentForUnit = async (
       'Unit does not have raw text to generate content from',
       400,
     );
+  }
+
+  if (unit.content?.trim()) {
+    return {
+      title: unit.title,
+      summary: unit.summary,
+      contentLength: unit.content.length,
+    };
   }
 
   const apiKey = getCourseProcessingApiKey(options.provider);
