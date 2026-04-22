@@ -28,8 +28,8 @@ import {
 } from '~/utils/groq.server';
 import { generateContentKey, uploadToR2 } from '~/utils/r2.server';
 
-export const DEFAULT_WORKFLOW_QUIZ_TARGET = 50;
-export const DEFAULT_WORKFLOW_QUIZ_BATCH_SIZE = 10;
+export const DEFAULT_WORKFLOW_QUIZ_TARGET = 40;
+export const DEFAULT_WORKFLOW_QUIZ_BATCH_SIZE = 20;
 export const DEFAULT_WORKFLOW_QUIZ_DELAY_SECONDS = 20;
 const GOOGLE_TTS_ENDPOINT =
   'https://texttospeech.googleapis.com/v1/text:synthesize';

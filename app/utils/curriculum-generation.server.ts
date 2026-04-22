@@ -229,7 +229,7 @@ export const buildGenerateQuizPrompt = (
       ? `\n\nEXISTING QUESTIONS (DO NOT REPEAT THESE):\n${existingQuestions.map((q, i) => `${i + 1}. ${q}`).join('\n')}\n\nMake sure new questions are different from the existing ones above.`
       : '';
 
-  return `Analyze the following educational content and generate 10 quiz questions to test understanding.
+  return `Analyze the following educational content and generate 20 quiz questions to test understanding.
 ${existingContext}
 Each quiz question should be one of these types:
 - "openText": Questions that require a written answer
@@ -254,7 +254,7 @@ Rules:
 - Questions should be clear and unambiguous
 - answer must contain the valid response to the question or the option value to the correct option for the question
 - open text question answer should not be more than 3 words
-- Ensure to include more choice questions
+- Ensure to include 80% of choice questions
 
 TEXT TO ANALYZE:
 ${rawText.slice(0, 40000)}

@@ -80,6 +80,14 @@ export const CourseSidebar = ({
 
         {isInstructor ? (
           <div className='space-y-3'>
+            {!isEnrolled && course.status === 'published' && (
+              <button
+                onClick={onEnroll}
+                className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'
+              >
+                Enroll Now
+              </button>
+            )}
             <Link
               to={`/courses/${course.id}/edit`}
               className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5'

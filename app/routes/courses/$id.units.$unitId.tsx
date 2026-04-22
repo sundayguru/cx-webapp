@@ -50,6 +50,7 @@ import {
 } from '~/utils/quiz-session';
 import { getChatHistoryByUnitId } from '~/db/chat-history';
 import type { SelectChatMessage } from '~/db/schemas';
+import { getYouTubeEmbedUrl } from '~/utils/video';
 
 type CourseModuleWithUnits = SelectModule & {
   units: SelectUnit[];
@@ -243,6 +244,9 @@ const UnitPageContent = ({
 
   const isCompleted = currentUnit.isComplete === 1;
   const audioRef = useRef<HTMLAudioElement>(null);
+  const currentUnitVideoEmbedUrl = currentUnit.videoUrl
+    ? getYouTubeEmbedUrl(currentUnit.videoUrl)
+    : null;
   const [quizPerformanceState, setQuizPerformanceState] =
     useState(quizPerformance);
 
@@ -461,12 +465,14 @@ const UnitPageContent = ({
       error?: string;
       audioUploaded?: boolean;
       videoUploaded?: boolean;
+      videoLinked?: boolean;
     };
 
     if (result.success) {
       const uploadedItems = [
         result.audioUploaded ? 'audio' : null,
         result.videoUploaded ? 'video' : null,
+        result.videoLinked ? 'YouTube video' : null,
       ].filter(Boolean);
 
       showToast({
@@ -1310,11 +1316,22 @@ const UnitPageContent = ({
                           </div>
 
                           <div className='overflow-hidden rounded-[28px] border border-white/10 bg-black shadow-2xl'>
-                            <video
-                              src={currentUnit.videoUrl}
-                              controls
-                              className='aspect-video w-full object-cover'
-                            />
+                            {currentUnitVideoEmbedUrl ? (
+                              <iframe
+                                src={currentUnitVideoEmbedUrl}
+                                title={currentUnit.title}
+                                className='aspect-video w-full'
+                                allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                                referrerPolicy='strict-origin-when-cross-origin'
+                                allowFullScreen
+                              />
+                            ) : (
+                              <video
+                                src={currentUnit.videoUrl}
+                                controls
+                                className='aspect-video w-full object-cover'
+                              />
+                            )}
                           </div>
                         </div>
                       ) : (
@@ -1856,7 +1873,8 @@ const UnitPageContent = ({
                   Upload Unit Media
                 </h2>
                 <p className='mt-2 text-sm text-black/55'>
-                  Add or replace the audio and video files used for this unit.
+                  Add or replace the audio file, video file, or a YouTube link
+                  used for this unit.
                 </p>
               </div>
 
@@ -1897,6 +1915,21 @@ const UnitPageContent = ({
                     {currentUnit.videoUrl
                       ? 'Uploading a new video file will replace the current one.'
                       : 'Upload a video lesson for this unit.'}
+                  </p>
+                </div>
+
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    YouTube Link
+                  </label>
+                  <input
+                    type='url'
+                    name='videoLink'
+                    placeholder='https://www.youtube.com/watch?v=...'
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  />
+                  <p className='mt-2 text-xs text-black/45'>
+                    Paste a YouTube link instead of uploading a video file.
                   </p>
                 </div>
 

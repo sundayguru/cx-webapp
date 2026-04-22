@@ -5,6 +5,7 @@ import { getCourseById } from '~/db/courses';
 import { units } from '~/db/schemas';
 import { generateContentKey, uploadToR2 } from '~/utils/r2.server';
 import { getUserFromRequest } from '~/utils/session.server';
+import { isYouTubeUrl } from '~/utils/video';
 
 const createUnitMediaKey = (
   unitId: string,
@@ -46,13 +47,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   const formData = await request.formData();
   const audioFile = formData.get('audioFile');
   const videoFile = formData.get('videoFile');
+  const videoLink = formData.get('videoLink');
 
   const hasAudioFile = audioFile instanceof File && audioFile.size > 0;
   const hasVideoFile = videoFile instanceof File && videoFile.size > 0;
+  const hasVideoLink =
+    typeof videoLink === 'string' && videoLink.trim().length > 0;
 
-  if (!hasAudioFile && !hasVideoFile) {
+  if (!hasAudioFile && !hasVideoFile && !hasVideoLink) {
     return data(
-      { error: 'Upload at least one audio or video file' },
+      { error: 'Upload audio, video, or paste a YouTube link' },
       { status: 400 },
     );
   }
@@ -67,6 +71,20 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
   if (hasVideoFile && !videoFile.type.startsWith('video/')) {
     return data(
       { error: 'Video file must be a valid video type' },
+      { status: 400 },
+    );
+  }
+
+  if (hasVideoFile && hasVideoLink) {
+    return data(
+      { error: 'Choose either a video file or a YouTube link, not both' },
+      { status: 400 },
+    );
+  }
+
+  if (hasVideoLink && !isYouTubeUrl(videoLink.trim())) {
+    return data(
+      { error: 'Video link must be a valid YouTube URL' },
       { status: 400 },
     );
   }
@@ -115,6 +133,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     nextVideoUrl = `/api/course/serve/${videoUpload.key}`;
   }
 
+  if (hasVideoLink) {
+    nextVideoUrl = videoLink.trim();
+  }
+
   await db
     .update(units)
     .set({
@@ -128,5 +150,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     success: true,
     audioUploaded: hasAudioFile,
     videoUploaded: hasVideoFile,
+    videoLinked: hasVideoLink,
   });
 };

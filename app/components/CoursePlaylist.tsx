@@ -8,10 +8,10 @@ import {
   Video,
   X,
   List,
-  ChevronDown,
   ChevronUp,
 } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { getYouTubeEmbedUrl, isYouTubeUrl } from '~/utils/video';
 
 export type PlaylistItem = {
   id: string;
@@ -42,30 +42,33 @@ export const CoursePlaylist = ({
   const playlistItems = items.filter((item) =>
     mode === 'audio' ? item.audioUrl : item.videoUrl,
   );
+  const safeCurrentIndex =
+    currentIndex >= playlistItems.length && playlistItems.length > 0
+      ? 0
+      : currentIndex;
 
-  const currentItem = playlistItems[currentIndex];
+  const currentItem = playlistItems[safeCurrentIndex];
   const currentMediaUrl =
     mode === 'audio' ? currentItem?.audioUrl : currentItem?.videoUrl;
+  const isYouTubeVideo =
+    mode === 'video' && currentMediaUrl ? isYouTubeUrl(currentMediaUrl) : false;
+  const currentYouTubeEmbedUrl =
+    mode === 'video' && currentMediaUrl
+      ? getYouTubeEmbedUrl(currentMediaUrl)
+      : null;
 
   useEffect(() => {
-    setCurrentIndex(0);
-    setIsPlaying(false);
-    setProgress(0);
-  }, [mode]);
+    if (isYouTubeVideo && mediaRef.current) {
+      mediaRef.current.pause();
+      return;
+    }
 
-  useEffect(() => {
     if (isPlaying && mediaRef.current) {
       mediaRef.current.play().catch(() => setIsPlaying(false));
     } else if (mediaRef.current) {
       mediaRef.current.pause();
     }
-  }, [isPlaying, currentIndex]);
-
-  useEffect(() => {
-    if (currentIndex >= playlistItems.length && playlistItems.length > 0) {
-      setCurrentIndex(0);
-    }
-  }, [currentIndex, playlistItems.length]);
+  }, [isPlaying, isYouTubeVideo, safeCurrentIndex]);
 
   const handleTimeUpdate = () => {
     if (mediaRef.current && mediaRef.current.duration) {
@@ -135,7 +138,12 @@ export const CoursePlaylist = ({
             <div className='flex items-center gap-3'>
               <div className='flex items-center gap-1 rounded-lg bg-white/10 p-1'>
                 <button
-                  onClick={() => setMode('audio')}
+                  onClick={() => {
+                    setMode('audio');
+                    setCurrentIndex(0);
+                    setIsPlaying(false);
+                    setProgress(0);
+                  }}
                   className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                     mode === 'audio' ? 'bg-white text-black' : 'text-white/60'
                   }`}
@@ -144,7 +152,12 @@ export const CoursePlaylist = ({
                   <span className='hidden sm:inline'>Audio</span>
                 </button>
                 <button
-                  onClick={() => setMode('video')}
+                  onClick={() => {
+                    setMode('video');
+                    setCurrentIndex(0);
+                    setIsPlaying(false);
+                    setProgress(0);
+                  }}
                   className={`flex items-center gap-1.5 rounded-md px-3 py-1.5 text-xs font-medium transition-all ${
                     mode === 'video' ? 'bg-white text-black' : 'text-white/60'
                   }`}
@@ -195,7 +208,7 @@ export const CoursePlaylist = ({
                         onEnded={handleEnded}
                         onLoadedMetadata={() => {
                           if (isPlaying && mediaRef.current) {
-                            mediaRef.current.play().catch(() => {});
+                            mediaRef.current.play().catch(() => undefined);
                           }
                         }}
                         className='hidden'
@@ -206,7 +219,7 @@ export const CoursePlaylist = ({
                             {currentItem?.title}
                           </span>
                           <span className='ml-4 text-xs text-white/40'>
-                            {currentIndex + 1} / {playlistItems.length}
+                            {safeCurrentIndex + 1} / {playlistItems.length}
                           </span>
                         </div>
                         <div
@@ -222,19 +235,30 @@ export const CoursePlaylist = ({
                     </div>
                   ) : (
                     <div className='flex w-full items-center justify-center p-4'>
-                      <video
-                        ref={mediaRef as React.RefObject<HTMLVideoElement>}
-                        src={currentMediaUrl}
-                        onTimeUpdate={handleTimeUpdate}
-                        onEnded={handleEnded}
-                        onLoadedMetadata={() => {
-                          if (isPlaying && mediaRef.current) {
-                            mediaRef.current.play().catch(() => {});
-                          }
-                        }}
-                        className='aspect-video w-full max-w-2xl rounded-lg'
-                        controls
-                      />
+                      {currentYouTubeEmbedUrl ? (
+                        <iframe
+                          src={currentYouTubeEmbedUrl}
+                          title={currentItem?.title || 'YouTube video'}
+                          className='aspect-video w-full max-w-2xl rounded-lg'
+                          allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share'
+                          referrerPolicy='strict-origin-when-cross-origin'
+                          allowFullScreen
+                        />
+                      ) : (
+                        <video
+                          ref={mediaRef as React.RefObject<HTMLVideoElement>}
+                          src={currentMediaUrl}
+                          onTimeUpdate={handleTimeUpdate}
+                          onEnded={handleEnded}
+                          onLoadedMetadata={() => {
+                            if (isPlaying && mediaRef.current) {
+                              mediaRef.current.play().catch(() => undefined);
+                            }
+                          }}
+                          className='aspect-video w-full max-w-2xl rounded-lg'
+                          controls
+                        />
+                      )}
                     </div>
                   )}
                 </div>
@@ -251,14 +275,14 @@ export const CoursePlaylist = ({
               <div className='flex items-center justify-center gap-4 border-t border-white/10 bg-[#1a1a1a] px-6 py-4'>
                 <button
                   onClick={skipBack}
-                  disabled={currentIndex === 0}
+                  disabled={safeCurrentIndex === 0}
                   className='flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white/60 transition-all hover:bg-white/10 disabled:opacity-30'
                 >
                   <SkipBack size={20} />
                 </button>
                 <button
                   onClick={togglePlay}
-                  disabled={!currentMediaUrl}
+                  disabled={!currentMediaUrl || isYouTubeVideo}
                   className='flex h-16 w-16 items-center justify-center rounded-full bg-[#5A5A40] text-white transition-all hover:bg-[#4a4a35] disabled:opacity-30'
                 >
                   {isPlaying ? (
@@ -269,7 +293,7 @@ export const CoursePlaylist = ({
                 </button>
                 <button
                   onClick={skipNext}
-                  disabled={currentIndex >= playlistItems.length - 1}
+                  disabled={safeCurrentIndex >= playlistItems.length - 1}
                   className='flex h-12 w-12 items-center justify-center rounded-full border border-white/20 text-white/60 transition-all hover:bg-white/10 disabled:opacity-30'
                 >
                   <SkipForward size={20} />
@@ -287,11 +311,14 @@ export const CoursePlaylist = ({
                 >
                   <PlaylistPanel
                     items={playlistItems}
-                    currentIndex={currentIndex}
+                    currentIndex={safeCurrentIndex}
                     isPlaying={isPlaying}
                     onSelect={(index) => {
                       setCurrentIndex(index);
-                      setIsPlaying(true);
+                      setIsPlaying(
+                        !isYouTubeUrl(playlistItems[index]?.videoUrl || ''),
+                      );
+                      setProgress(0);
                     }}
                   />
                 </motion.div>
