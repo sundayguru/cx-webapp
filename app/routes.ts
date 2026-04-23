@@ -99,6 +99,10 @@ export default [
       'routes/api/courses/$id.units.$unitId.generate-audio.tsx',
     ),
     route(
+      'api/courses/:id/units/:unitId/google-voices',
+      'routes/api/courses/$id.units.$unitId.google-voices.tsx',
+    ),
+    route(
       'api/courses/:id/units/:unitId/upload-media',
       'routes/api/courses/$id.units.$unitId.upload-media.tsx',
     ),

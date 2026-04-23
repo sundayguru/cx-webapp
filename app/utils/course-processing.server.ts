@@ -33,10 +33,41 @@ export const DEFAULT_WORKFLOW_QUIZ_BATCH_SIZE = 20;
 export const DEFAULT_WORKFLOW_QUIZ_DELAY_SECONDS = 20;
 const GOOGLE_TTS_ENDPOINT =
   'https://texttospeech.googleapis.com/v1/text:synthesize';
+const GOOGLE_TTS_VOICES_ENDPOINT =
+  'https://texttospeech.googleapis.com/v1/voices';
 
 export type CourseAiOptions = {
   provider: CurriculumAiProvider;
   model: string;
+};
+
+export type GoogleTtsVoiceGender =
+  | 'SSML_VOICE_GENDER_UNSPECIFIED'
+  | 'MALE'
+  | 'FEMALE'
+  | 'NEUTRAL';
+
+export type GoogleTtsVoiceOptions = {
+  languageCode: string;
+  ssmlGender: GoogleTtsVoiceGender;
+  voiceName?: string;
+  speakingRate: number;
+  pitch: number;
+};
+
+export type GoogleTtsVoice = {
+  name: string;
+  languageCodes: string[];
+  ssmlGender: GoogleTtsVoiceGender;
+  naturalSampleRateHertz: number;
+};
+
+export const DEFAULT_GOOGLE_TTS_VOICE_OPTIONS: GoogleTtsVoiceOptions = {
+  languageCode: 'en-US',
+  ssmlGender: 'FEMALE',
+  voiceName: '',
+  speakingRate: 1,
+  pitch: 0,
 };
 
 export class CourseProcessingError extends Error {
@@ -59,7 +90,7 @@ export const resolveCourseAiOptions = (
       : DEFAULT_CURRICULUM_PROVIDER;
   const model =
     typeof modelValue === 'string' &&
-      isSupportedCurriculumModel(provider, modelValue)
+    isSupportedCurriculumModel(provider, modelValue)
       ? modelValue
       : DEFAULT_CURRICULUM_MODELS[provider];
 
@@ -68,6 +99,10 @@ export const resolveCourseAiOptions = (
 
 const getCourseProcessingApiKey = (provider: CurriculumAiProvider) => {
   return provider === 'google' ? env.GEMINI_API_KEY : env.GROQ_API_KEY;
+};
+
+const getGoogleTtsApiKey = () => {
+  return env.GOOGLE_API_KEY || env.GEMINI_API_KEY;
 };
 
 const createUnitMediaKey = (
@@ -89,8 +124,46 @@ const decodeBase64ToUint8Array = (base64: string) => {
   return bytes;
 };
 
-const synthesizeAudioWithGoogleTts = async (audioScript: string) => {
-  if (!env.GOOGLE_API_KEY) {
+export const resolveGoogleTtsVoiceOptions = (
+  values: Partial<Record<keyof GoogleTtsVoiceOptions, unknown>>,
+): GoogleTtsVoiceOptions => {
+  const speakingRateValue = Number(values.speakingRate);
+  const pitchValue = Number(values.pitch);
+
+  return {
+    languageCode:
+      typeof values.languageCode === 'string' && values.languageCode.trim()
+        ? values.languageCode.trim()
+        : DEFAULT_GOOGLE_TTS_VOICE_OPTIONS.languageCode,
+    ssmlGender:
+      values.ssmlGender === 'MALE' ||
+      values.ssmlGender === 'FEMALE' ||
+      values.ssmlGender === 'NEUTRAL' ||
+      values.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
+        ? values.ssmlGender
+        : DEFAULT_GOOGLE_TTS_VOICE_OPTIONS.ssmlGender,
+    voiceName:
+      typeof values.voiceName === 'string' ? values.voiceName.trim() : '',
+    speakingRate:
+      Number.isFinite(speakingRateValue) &&
+      speakingRateValue >= 0.25 &&
+      speakingRateValue <= 4
+        ? speakingRateValue
+        : DEFAULT_GOOGLE_TTS_VOICE_OPTIONS.speakingRate,
+    pitch:
+      Number.isFinite(pitchValue) && pitchValue >= -20 && pitchValue <= 20
+        ? pitchValue
+        : DEFAULT_GOOGLE_TTS_VOICE_OPTIONS.pitch,
+  };
+};
+
+const synthesizeAudioWithGoogleTts = async (
+  audioScript: string,
+  voiceOptions: GoogleTtsVoiceOptions,
+) => {
+  const apiKey = getGoogleTtsApiKey();
+
+  if (!apiKey) {
     throw new CourseProcessingError(
       'Google API key is missing for unit audio generation',
       503,
@@ -101,16 +174,19 @@ const synthesizeAudioWithGoogleTts = async (audioScript: string) => {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-Goog-Api-Key': env.GOOGLE_API_KEY,
+      'X-Goog-Api-Key': apiKey,
     },
     body: JSON.stringify({
       input: { text: audioScript },
       voice: {
-        languageCode: 'en-US',
-        ssmlGender: 'NEUTRAL',
+        languageCode: voiceOptions.languageCode,
+        ssmlGender: voiceOptions.ssmlGender,
+        ...(voiceOptions.voiceName ? { name: voiceOptions.voiceName } : {}),
       },
       audioConfig: {
         audioEncoding: 'MP3',
+        speakingRate: voiceOptions.speakingRate,
+        pitch: voiceOptions.pitch,
       },
     }),
   });
@@ -132,6 +208,48 @@ const synthesizeAudioWithGoogleTts = async (audioScript: string) => {
   }
 
   return decodeBase64ToUint8Array(payload.audioContent);
+};
+
+export const listGoogleTtsVoices = async (languageCode?: string) => {
+  const apiKey = getGoogleTtsApiKey();
+
+  if (!apiKey) {
+    throw new CourseProcessingError(
+      'Google API key is missing for voice listing',
+      503,
+    );
+  }
+
+  const requestUrl = new URL(GOOGLE_TTS_VOICES_ENDPOINT);
+  if (languageCode?.trim()) {
+    requestUrl.searchParams.set('languageCode', languageCode.trim());
+  }
+
+  const response = await fetch(requestUrl.toString(), {
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Goog-Api-Key': apiKey,
+    },
+  });
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    throw new CourseProcessingError(
+      `Google TTS voices request failed: ${errorText || response.statusText}`,
+      502,
+    );
+  }
+
+  const payload = (await response.json()) as { voices?: GoogleTtsVoice[] };
+  const voices = Array.isArray(payload.voices) ? payload.voices : [];
+
+  return voices
+    .filter((voice) =>
+      languageCode?.trim()
+        ? voice.languageCodes.includes(languageCode.trim())
+        : true,
+    )
+    .sort((left, right) => left.name.localeCompare(right.name));
 };
 
 export const splitCourseRawTextIntoModulesForCourse = async (
@@ -340,10 +458,10 @@ export const generateUnitAudioScriptForUnit = async (
     options.provider === 'google'
       ? await generateUnitAudioScript(unit.content, apiKey, options.model)
       : await generateUnitAudioScriptWithGroq(
-        unit.content,
-        apiKey,
-        options.model,
-      );
+          unit.content,
+          apiKey,
+          options.model,
+        );
 
   const audioScript = generatedScript.audioScript?.trim();
   if (!audioScript) {
@@ -366,7 +484,10 @@ export const generateUnitAudioScriptForUnit = async (
   };
 };
 
-export const generateUnitAudioForUnit = async (unitId: string) => {
+export const generateUnitAudioForUnit = async (
+  unitId: string,
+  voiceOptions: GoogleTtsVoiceOptions = DEFAULT_GOOGLE_TTS_VOICE_OPTIONS,
+) => {
   const db = getDb();
   const [unit] = await db
     .select()
@@ -394,6 +515,7 @@ export const generateUnitAudioForUnit = async (unitId: string) => {
 
   const audioBytes = await synthesizeAudioWithGoogleTts(
     unit.audioScript.trim(),
+    voiceOptions,
   );
   const audioKey = createUnitMediaKey(unitId, 'audio', 'generated-audio.mp3');
   const audioBuffer = audioBytes.buffer.slice(
@@ -476,17 +598,17 @@ export const generateQuizBatchForUnit = async (
   const generatedQuiz =
     options.provider === 'google'
       ? await generateQuiz(
-        unit.rawText,
-        existingQuestions,
-        apiKey,
-        options.model,
-      )
+          unit.rawText,
+          existingQuestions,
+          apiKey,
+          options.model,
+        )
       : await generateQuizWithGroq(
-        unit.rawText,
-        existingQuestions,
-        apiKey,
-        options.model,
-      );
+          unit.rawText,
+          existingQuestions,
+          apiKey,
+          options.model,
+        );
 
   if (!generatedQuiz.quizzes || generatedQuiz.quizzes.length === 0) {
     throw new CourseProcessingError(

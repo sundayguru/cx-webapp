@@ -52,6 +52,24 @@ import { getChatHistoryByUnitId } from '~/db/chat-history';
 import type { SelectChatMessage } from '~/db/schemas';
 import { getYouTubeEmbedUrl } from '~/utils/video';
 
+const GOOGLE_TTS_LANGUAGE_OPTIONS = [
+  { value: 'en-US', label: 'English (US)' },
+  { value: 'en-GB', label: 'English (UK)' },
+  { value: 'de-DE', label: 'German' },
+  { value: 'fr-FR', label: 'French' },
+  { value: 'es-ES', label: 'Spanish' },
+] as const;
+
+const GOOGLE_TTS_GENDER_OPTIONS = [
+  { value: 'FEMALE', label: 'Female' },
+  { value: 'MALE', label: 'Male' },
+  { value: 'NEUTRAL', label: 'Neutral' },
+  {
+    value: 'SSML_VOICE_GENDER_UNSPECIFIED',
+    label: 'Unspecified',
+  },
+] as const;
+
 type CourseModuleWithUnits = SelectModule & {
   units: SelectUnit[];
 };
@@ -74,6 +92,13 @@ type LoaderData = {
   user: User | null;
   chatHistory: SelectChatMessage[];
   isBookmarked: boolean;
+};
+
+type GoogleVoiceListItem = {
+  name: string;
+  languageCodes: string[];
+  ssmlGender: 'SSML_VOICE_GENDER_UNSPECIFIED' | 'MALE' | 'FEMALE' | 'NEUTRAL';
+  naturalSampleRateHertz: number;
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
@@ -191,6 +216,7 @@ const UnitPageContent = ({
   const [showUploadMediaModal, setShowUploadMediaModal] = useState(false);
   const [showGenerateAudioScriptModal, setShowGenerateAudioScriptModal] =
     useState(false);
+  const [showGenerateAudioModal, setShowGenerateAudioModal] = useState(false);
   const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
   const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
@@ -209,10 +235,16 @@ const UnitPageContent = ({
   const [selectedModel, setSelectedModel] = useState(
     DEFAULT_CURRICULUM_MODELS[DEFAULT_CURRICULUM_PROVIDER],
   );
+  const [audioLanguageCode, setAudioLanguageCode] = useState('en-US');
+  const [audioSsmlGender, setAudioSsmlGender] = useState('FEMALE');
+  const [audioVoiceName, setAudioVoiceName] = useState('');
+  const [audioSpeakingRate, setAudioSpeakingRate] = useState('1');
+  const [audioPitch, setAudioPitch] = useState('0');
   const generateContentFetcher = useFetcher();
   const generateQuizFetcher = useFetcher();
   const generateAudioScriptFetcher = useFetcher();
   const generateAudioFetcher = useFetcher();
+  const googleVoicesFetcher = useFetcher();
   const completeFetcher = useFetcher();
   const clearQuizzesFetcher = useFetcher();
   const uploadMediaFetcher = useFetcher();
@@ -230,13 +262,14 @@ const UnitPageContent = ({
   const handledGenerateQuizResult = useRef<string | null>(null);
   const handledGenerateAudioScriptResult = useRef<string | null>(null);
   const handledGenerateAudioResult = useRef<string | null>(null);
+  const handledGoogleVoicesResult = useRef<string | null>(null);
   const completedSessionSyncRef = useRef<string | null>(null);
   const currentQuizSessionId =
     startQuizSessionFetcher.state === 'idle' &&
-    (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
-      ?.sessionId
+      (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
+        ?.sessionId
       ? (startQuizSessionFetcher.data as { sessionId: string } | undefined)
-          ?.sessionId
+        ?.sessionId
       : null;
 
   const isInstructor = user?.isAdmin === true;
@@ -249,6 +282,23 @@ const UnitPageContent = ({
     : null;
   const [quizPerformanceState, setQuizPerformanceState] =
     useState(quizPerformance);
+  const googleVoiceResult = googleVoicesFetcher.data as
+    | {
+      success?: boolean;
+      error?: string;
+      voices?: GoogleVoiceListItem[];
+    }
+    | undefined;
+  const googleVoices = googleVoiceResult?.voices ?? [];
+  const selectableGoogleVoices =
+    audioSsmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
+      ? googleVoices
+      : googleVoices.filter(
+        (voice) =>
+          voice.ssmlGender === audioSsmlGender ||
+          voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
+      );
+  const isLoadingGoogleVoices = googleVoicesFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
     setSelectedProvider(provider);
@@ -287,7 +337,13 @@ const UnitPageContent = ({
 
   const handleGenerateAudio = () => {
     generateAudioFetcher.submit(
-      {},
+      {
+        languageCode: audioLanguageCode,
+        ssmlGender: audioSsmlGender,
+        voiceName: audioVoiceName,
+        speakingRate: audioSpeakingRate,
+        pitch: audioPitch,
+      },
       {
         method: 'post',
         action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/generate-audio`,
@@ -431,6 +487,46 @@ const UnitPageContent = ({
       }
     }
   }, [generateAudioFetcher, showToast]);
+
+  useEffect(() => {
+    if (!showGenerateAudioModal || !course?.course.id) {
+      return;
+    }
+
+    googleVoicesFetcher.load(
+      `/api/courses/${course.course.id}/units/${currentUnit.id}/google-voices?languageCode=${encodeURIComponent(audioLanguageCode)}`,
+    );
+  }, [
+    audioLanguageCode,
+    course?.course.id,
+    currentUnit.id,
+    showGenerateAudioModal,
+  ]);
+
+  useEffect(() => {
+    if (googleVoicesFetcher.state !== 'idle' || !googleVoicesFetcher.data) {
+      return;
+    }
+
+    const result = googleVoicesFetcher.data as {
+      success?: boolean;
+      error?: string;
+      voices?: GoogleVoiceListItem[];
+    };
+    const resultKey = JSON.stringify(result);
+
+    if (result.error && handledGoogleVoicesResult.current !== resultKey) {
+      handledGoogleVoicesResult.current = resultKey;
+      showToast({
+        tone: 'error',
+        message: result.error,
+      });
+    }
+  }, [
+    googleVoicesFetcher.data,
+    googleVoicesFetcher.state,
+    showToast,
+  ]);
 
   useEffect(() => {
     if (clearQuizzesFetcher.data) {
@@ -735,9 +831,9 @@ const UnitPageContent = ({
             attempts === 0
               ? 6
               : 1 +
-                  Math.max(0, 1 - accuracy) * 4 +
-                  incorrectCount * 1.5 +
-                  (answer.isCorrect ? 0 : 1.5),
+              Math.max(0, 1 - accuracy) * 4 +
+              incorrectCount * 1.5 +
+              (answer.isCorrect ? 0 : 1.5),
           ),
         };
       });
@@ -1119,7 +1215,7 @@ const UnitPageContent = ({
                         <button
                           onClick={() => {
                             setShowMoreMenu(false);
-                            handleGenerateAudio();
+                            setShowGenerateAudioModal(true);
                           }}
                           disabled={
                             isGeneratingAudio ||
@@ -1490,7 +1586,7 @@ const UnitPageContent = ({
                                     . {quiz.question}
                                   </p>
                                   {quiz.questionType === 'choice' &&
-                                  quiz.options ? (
+                                    quiz.options ? (
                                     <div className='space-y-2'>
                                       {JSON.parse(quiz.options).map(
                                         (option: string, optIndex: number) => {
@@ -1852,6 +1948,171 @@ const UnitPageContent = ({
                   className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
                 >
                   {isGeneratingAudioScript ? 'Generating...' : 'Generate'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        ) : null}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {showGenerateAudioModal ? (
+          <div className='fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm'>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className='w-full max-w-md rounded-[32px] bg-white p-8 shadow-2xl'
+            >
+              <div className='mb-6'>
+                <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                  Generate Unit Audio
+                </h2>
+                <p className='mt-2 text-sm text-black/55'>
+                  Choose the Google voice settings used to synthesize this
+                  unit&apos;s audio.
+                </p>
+              </div>
+
+              <div className='space-y-5'>
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    Language
+                  </label>
+                  <select
+                    value={audioLanguageCode}
+                    onChange={(event) => {
+                      setAudioLanguageCode(event.target.value);
+                      setAudioVoiceName('');
+                    }}
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    {GOOGLE_TTS_LANGUAGE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    Gender
+                  </label>
+                  <select
+                    value={audioSsmlGender}
+                    onChange={(event) => {
+                      setAudioSsmlGender(event.target.value);
+                      setAudioVoiceName('');
+                    }}
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    {GOOGLE_TTS_GENDER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                    Voice Name
+                  </label>
+                  <select
+                    value={audioVoiceName}
+                    onChange={(event) => {
+                      const nextVoiceName = event.target.value;
+                      const nextVoice = selectableGoogleVoices.find(
+                        (voice) => voice.name === nextVoiceName,
+                      );
+
+                      setAudioVoiceName(nextVoiceName);
+
+                      if (nextVoice) {
+                        setAudioSsmlGender(nextVoice.ssmlGender);
+                      }
+                    }}
+                    disabled={
+                      isLoadingGoogleVoices ||
+                      selectableGoogleVoices.length === 0
+                    }
+                    className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  >
+                    <option value=''>
+                      {isLoadingGoogleVoices
+                        ? 'Loading Google voices...'
+                        : selectableGoogleVoices.length > 0
+                          ? 'Select a Google voice'
+                          : 'No Google voices found'}
+                    </option>
+                    {selectableGoogleVoices.map((voice) => (
+                      <option key={voice.name} value={voice.name}>
+                        {`${voice.name} • ${voice.ssmlGender.toLowerCase()} • ${voice.naturalSampleRateHertz}Hz`}
+                      </option>
+                    ))}
+                  </select>
+                  <p className='mt-2 text-xs text-black/45'>
+                    Voice names are loaded from Google Text-to-Speech for the
+                    selected language.
+                  </p>
+                </div>
+
+                <div className='grid grid-cols-2 gap-4'>
+                  <div>
+                    <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                      Speaking Rate
+                    </label>
+                    <input
+                      type='number'
+                      min='0.25'
+                      max='4'
+                      step='0.05'
+                      value={audioSpeakingRate}
+                      onChange={(event) =>
+                        setAudioSpeakingRate(event.target.value)
+                      }
+                      className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                    />
+                  </div>
+
+                  <div>
+                    <label className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'>
+                      Pitch
+                    </label>
+                    <input
+                      type='number'
+                      min='-20'
+                      max='20'
+                      step='0.5'
+                      value={audioPitch}
+                      onChange={(event) => setAudioPitch(event.target.value)}
+                      className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className='mt-8 flex items-center justify-end gap-3'>
+                <button
+                  onClick={() => {
+                    if (!isGeneratingAudio) {
+                      setShowGenerateAudioModal(false);
+                    }
+                  }}
+                  disabled={isGeneratingAudio}
+                  className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+                >
+                  {isGeneratingAudio ? 'Please wait...' : 'Cancel'}
+                </button>
+                <button
+                  onClick={handleGenerateAudio}
+                  disabled={
+                    isGeneratingAudio || !currentUnit.audioScript?.trim()
+                  }
+                  className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+                >
+                  {isGeneratingAudio ? 'Generating...' : 'Generate Audio'}
                 </button>
               </div>
             </motion.div>
