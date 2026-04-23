@@ -219,7 +219,21 @@ export default function CourseDetailsPage({
   const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
   const isUpdatingUnitRawText = unitRawTextUpdateFetcher.state !== 'idle';
   const isDeletingCurriculumItem = curriculumDeleteFetcher.state !== 'idle';
+  const isPublishingCourse = publishFetcher.state !== 'idle';
   const isDeletingCourse = deleteFetcher.state !== 'idle';
+  const isAdminActionProcessing =
+    isExtractingRawText ||
+    isHeuristicTaggingRawText ||
+    isTaggingModuleUnits ||
+    isTaggingRawText ||
+    isSplittingRawText ||
+    isSplittingAllModuleRawText ||
+    isRunningCourseWorkflow ||
+    isRunningUnitAudioWorkflow ||
+    isGenerating ||
+    isGeneratingUnits ||
+    isPublishingCourse ||
+    isDeletingCourse;
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
     setSelectedProvider(provider);
@@ -1153,6 +1167,7 @@ export default function CourseDetailsPage({
           isEnrolled={isEnrolled}
           isInstructor={isInstructor}
           canDeleteCourse={canDeleteCourse}
+          isAdminActionProcessing={isAdminActionProcessing}
           isGenerating={isGenerating}
           isGeneratingUnits={isGeneratingUnits}
           isExtractingRawText={isExtractingRawText}

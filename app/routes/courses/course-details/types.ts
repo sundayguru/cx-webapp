@@ -30,6 +30,7 @@ export type SidebarProps = {
   course: SelectCourse;
   isInstructor: boolean;
   canDeleteCourse: boolean;
+  isAdminActionProcessing: boolean;
   isGenerating: boolean;
   isGeneratingUnits: boolean;
   isExtractingRawText: boolean;

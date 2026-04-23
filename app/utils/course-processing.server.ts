@@ -82,7 +82,7 @@ export const resolveCourseAiOptions = (
       : DEFAULT_CURRICULUM_PROVIDER;
   const model =
     typeof modelValue === 'string' &&
-    isSupportedCurriculumModel(provider, modelValue)
+      isSupportedCurriculumModel(provider, modelValue)
       ? modelValue
       : DEFAULT_CURRICULUM_MODELS[provider];
 
@@ -129,17 +129,17 @@ export const resolveGoogleTtsVoiceOptions = (
         : DEFAULT_GOOGLE_TTS_VOICE_OPTIONS.languageCode,
     ssmlGender:
       values.ssmlGender === 'MALE' ||
-      values.ssmlGender === 'FEMALE' ||
-      values.ssmlGender === 'NEUTRAL' ||
-      values.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
+        values.ssmlGender === 'FEMALE' ||
+        values.ssmlGender === 'NEUTRAL' ||
+        values.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
         ? values.ssmlGender
         : DEFAULT_GOOGLE_TTS_VOICE_OPTIONS.ssmlGender,
     voiceName:
       typeof values.voiceName === 'string' ? values.voiceName.trim() : '',
     speakingRate:
       Number.isFinite(speakingRateValue) &&
-      speakingRateValue >= 0.25 &&
-      speakingRateValue <= 4
+        speakingRateValue >= 0.25 &&
+        speakingRateValue <= 4
         ? speakingRateValue
         : DEFAULT_GOOGLE_TTS_VOICE_OPTIONS.speakingRate,
     pitch:
@@ -474,10 +474,10 @@ export const generateUnitAudioScriptForUnit = async (
     options.provider === 'google'
       ? await generateUnitAudioScript(unit.content, apiKey, options.model)
       : await generateUnitAudioScriptWithGroq(
-          unit.content,
-          apiKey,
-          options.model,
-        );
+        unit.content,
+        apiKey,
+        options.model,
+      );
 
   const audioScript = generatedScript.audioScript?.trim();
   if (!audioScript) {
@@ -614,17 +614,17 @@ export const generateQuizBatchForUnit = async (
   const generatedQuiz =
     options.provider === 'google'
       ? await generateQuiz(
-          unit.rawText,
-          existingQuestions,
-          apiKey,
-          options.model,
-        )
+        unit.rawText,
+        existingQuestions,
+        apiKey,
+        options.model,
+      )
       : await generateQuizWithGroq(
-          unit.rawText,
-          existingQuestions,
-          apiKey,
-          options.model,
-        );
+        unit.rawText,
+        existingQuestions,
+        apiKey,
+        options.model,
+      );
 
   if (!generatedQuiz.quizzes || generatedQuiz.quizzes.length === 0) {
     throw new CourseProcessingError(
@@ -670,8 +670,16 @@ export const generateQuizBatchForUnit = async (
       422,
     );
   }
-
-  await db.insert(quizzes).values(newQuizzes);
+  try {
+    const batchSize = 10;
+    for (let i = 0; i < newQuizzes.length; i += batchSize) {
+      const batch = newQuizzes.slice(i, i + batchSize);
+      await db.insert(quizzes).values(batch);
+    }
+  } catch (err) {
+    console.error('Failed to insert quizzes:', err);
+    throw new CourseProcessingError('Failed to insert quizzes', 500);
+  }
 
   return {
     count: newQuizzes.length,

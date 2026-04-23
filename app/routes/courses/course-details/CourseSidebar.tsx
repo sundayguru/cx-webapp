@@ -18,6 +18,7 @@ export const CourseSidebar = ({
   course,
   isInstructor,
   canDeleteCourse,
+  isAdminActionProcessing,
   isGenerating,
   isGeneratingUnits,
   isExtractingRawText,
@@ -101,7 +102,7 @@ export const CourseSidebar = ({
                 className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5'
               >
                 <MoreVertical size={20} />
-                Admin Actions
+                {isAdminActionProcessing ? 'Processing...' : 'Admin Actions'}
               </button>
               {isAdminMenuOpen ? (
                 <div className='absolute top-[calc(100%+0.75rem)] right-0 z-30 min-w-[260px] rounded-2xl border border-black/10 bg-white py-2 shadow-2xl'>
