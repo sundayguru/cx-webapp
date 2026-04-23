@@ -173,7 +173,7 @@ const getUnitMarkerPosition = (
       continue;
     }
 
-    const windowText = rawText.slice(headingStart, headingStart + 150);
+    const windowText = rawText.slice(headingStart, headingStart + 1000);
 
     const subunitRegex = /\b(\d+\.\d+)\s+([^0-9]+)/gim;
     // const unitRegex = new RegExp(`unit\s+(?!${unitNumber}\b)(\d+):?\s*([^U\d]+)`, 'gim')
