@@ -76,7 +76,7 @@ export const CourseOverview = ({
         <p className='mb-3 text-[11px] font-bold tracking-[0.24em] text-[#5A5A40] uppercase'>
           {course.code} • {course.category}
         </p>
-        <h1 className='mb-6 max-w-4xl font-serif text-5xl leading-tight text-[#1a1a1a] md:text-6xl'>
+        <h1 className='mb-6 max-w-4xl font-serif text-3xl leading-tight text-[#1a1a1a] md:text-6xl'>
           {course.title}
         </h1>
         <p className='max-w-3xl font-serif text-xl leading-relaxed text-black/55 italic'>
@@ -247,16 +247,14 @@ type StatPillProps = {
 
 const StatPill = ({ icon, label, value, highlight }: StatPillProps) => (
   <div
-    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${
-      highlight
+    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${highlight
         ? 'border border-green-200 bg-green-50'
         : 'border border-black/5 bg-[#f7f6ef]'
-    }`}
+      }`}
   >
     <div
-      className={`flex shrink-0 ${
-        highlight ? 'text-green-600' : 'text-[#5A5A40]'
-      }`}
+      className={`flex shrink-0 ${highlight ? 'text-green-600' : 'text-[#5A5A40]'
+        }`}
     >
       {icon}
     </div>

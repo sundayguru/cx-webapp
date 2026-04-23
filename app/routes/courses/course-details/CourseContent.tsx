@@ -111,9 +111,19 @@ export const CourseContent = ({
               <div className='divide-y divide-black/5'>
                 {module.units.length > 0 ? (
                   module.units.map((unit, unitIndex) => (
-                    <div
+                    <Link
                       key={unit.id}
-                      className={`group relative flex items-center gap-4 px-6 py-4 transition-colors ${isEnrolled || isInstructor ? 'hover:bg-black/[0.02]' : ''}`}
+                      to={
+                        isEnrolled || isInstructor
+                          ? `/courses/${courseId}/units/${unit.id}`
+                          : '#'
+                      }
+                      className={`group relative flex items-center gap-4 px-6 py-4 transition-colors ${isEnrolled || isInstructor ? 'hover:bg-black/[0.02]' : 'cursor-not-allowed'}`}
+                      onClick={(e) => {
+                        if (!isEnrolled && !isInstructor) {
+                          e.preventDefault();
+                        }
+                      }}
                     >
                       <div className='flex h-9 w-9 items-center justify-center rounded-full bg-black/5 text-xs font-bold text-black/40 transition-all group-hover:bg-[#5A5A40] group-hover:text-white'>
                         {unitIndex + 1}
@@ -129,19 +139,21 @@ export const CourseContent = ({
                         ) : null}
                       </div>
                       {isEnrolled || isInstructor ? (
-                        <Link to={`/courses/${courseId}/units/${unit.id}`}>
-                          <Play
-                            size={16}
-                            className='text-black/20 group-hover:text-[#5A5A40]'
-                          />
-                        </Link>
+                        <Play
+                          size={16}
+                          className='text-black/20 group-hover:text-[#5A5A40]'
+                        />
                       ) : (
                         <Lock size={16} className='text-black/20' />
                       )}
                       {isInstructor ? (
                         <div className='relative'>
                           <button
-                            onClick={() => toggleUnitMenu(unit.id)}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              toggleUnitMenu(unit.id);
+                            }}
                             className='flex h-8 w-8 items-center justify-center rounded-full border border-black/10 text-black/60 transition-all hover:bg-black/5'
                           >
                             <MoreVertical size={16} />
@@ -149,7 +161,9 @@ export const CourseContent = ({
                           {openMenuUnitId === unit.id ? (
                             <div className='absolute top-10 right-0 z-20 min-w-[160px] rounded-xl border border-black/10 bg-white py-1 shadow-lg'>
                               <button
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
                                   onOpenUnitRawTextModal(
                                     unit.id,
                                     unit.rawText || '',
@@ -165,9 +179,9 @@ export const CourseContent = ({
                         </div>
                       ) : null}
                       {!isEnrolled && !isInstructor && (
-                        <div className='absolute inset-0 cursor-not-allowed bg-black/5' />
+                        <div className='absolute inset-0 bg-black/5' />
                       )}
-                    </div>
+                    </Link>
                   ))
                 ) : (
                   <div className='px-6 py-6 text-sm text-black/45'>
