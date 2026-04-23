@@ -30,6 +30,26 @@ export const uploadToR2 = async (
 };
 
 /**
+ * Deletes a file from the R2 course content bucket.
+ */
+export const deleteFromR2 = async (key: string): Promise<boolean> => {
+  try {
+    const bucket = env.COURSE_CONTENT;
+
+    if (!bucket) {
+      console.error('R2 bucket COURSE_CONTENT is not configured');
+      return false;
+    }
+
+    await bucket.delete(key);
+    return true;
+  } catch (e) {
+    console.error('Error deleting from R2:', e);
+    return false;
+  }
+};
+
+/**
  * Gets a file from the R2 course content bucket.
  */
 export const getFromR2 = async (key: string) => {
@@ -57,4 +77,17 @@ export const generateContentKey = (
 ): string => {
   const timestamp = Date.now();
   return `courses/${courseId}/${timestamp}-${filename}`;
+};
+
+const COURSE_SERVE_PREFIX = '/api/course/serve/';
+
+/**
+ * Extracts an R2 object key from an app-served media URL.
+ */
+export const getR2KeyFromServeUrl = (url?: string | null): string | null => {
+  if (!url?.startsWith(COURSE_SERVE_PREFIX)) {
+    return null;
+  }
+
+  return decodeURIComponent(url.slice(COURSE_SERVE_PREFIX.length));
 };

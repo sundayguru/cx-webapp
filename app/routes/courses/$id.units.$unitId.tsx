@@ -14,6 +14,7 @@ import { useToast } from '~/utils/useToast';
 import { QuizResultsView } from '~/components/quiz/QuizResultsView';
 import { QuizTakerView } from '~/components/quiz/QuizTakerView';
 import { ChatWindow } from '~/components/ChatWindow';
+import { ConfirmModal } from '~/components/ConfirmModal';
 import {
   Bookmark,
   CheckCircle,
@@ -85,6 +86,10 @@ const cx = (...classes: Array<string | false | null | undefined>) =>
   classes.filter(Boolean).join(' ');
 const QUIZ_SESSION_SIZE = 10;
 const QUIZ_SESSION_OPEN_TEXT_LIMIT = 3;
+const COURSE_SERVE_PREFIX = '/api/course/serve/';
+
+const isUploadedUnitMedia = (url?: string | null) =>
+  Boolean(url?.startsWith(COURSE_SERVE_PREFIX));
 
 const buildQuizSessionAnswers = (
   quizzes: SelectQuiz[],
@@ -199,6 +204,9 @@ const UnitPageContent = ({
   const [showGenerateAudioModal, setShowGenerateAudioModal] = useState(false);
   const [showGenerateQuizModal, setShowGenerateQuizModal] = useState(false);
   const [showClearQuizzesModal, setShowClearQuizzesModal] = useState(false);
+  const [mediaPendingDelete, setMediaPendingDelete] = useState<
+    'audio' | 'video' | null
+  >(null);
   const [showGenerateModal, setShowGenerateModal] = useState(false);
   const [quizPage, setQuizPage] = useState(1);
   const QUIZZES_PER_PAGE = 10;
@@ -254,6 +262,11 @@ const UnitPageContent = ({
 
   const isInstructor = user?.isAdmin === true;
   const hasRawText = Boolean(currentUnit.rawText?.trim());
+  const hasUploadedAudio = isUploadedUnitMedia(currentUnit.audioUrl);
+  const hasUploadedVideo = isUploadedUnitMedia(currentUnit.videoUrl);
+  const hasVideoLink = Boolean(
+    currentUnit.videoUrl && !isUploadedUnitMedia(currentUnit.videoUrl),
+  );
 
   const isCompleted = currentUnit.isComplete === 1;
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -337,6 +350,25 @@ const UnitPageContent = ({
       {
         method: 'post',
         action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/clear-quizzes`,
+      },
+    );
+  };
+
+  const handleDeleteMedia = () => {
+    if (!mediaPendingDelete) {
+      return;
+    }
+
+    setMediaPendingDelete(null);
+    setShowUploadMediaModal(false);
+
+    uploadMediaFetcher.submit(
+      {
+        intent: mediaPendingDelete === 'audio' ? 'deleteAudio' : 'deleteVideo',
+      },
+      {
+        method: 'post',
+        action: `/api/courses/${course?.course.id}/units/${currentUnit.id}/upload-media`,
       },
     );
   };
@@ -539,19 +571,27 @@ const UnitPageContent = ({
       audioUploaded?: boolean;
       videoUploaded?: boolean;
       videoLinked?: boolean;
+      mediaDeleted?: 'audio' | 'video';
     };
 
     if (result.success) {
-      const uploadedItems = [
-        result.audioUploaded ? 'audio' : null,
-        result.videoUploaded ? 'video' : null,
-        result.videoLinked ? 'YouTube video' : null,
-      ].filter(Boolean);
+      if (result.mediaDeleted) {
+        showToast({
+          tone: 'success',
+          message: `Deleted unit ${result.mediaDeleted} successfully`,
+        });
+      } else {
+        const uploadedItems = [
+          result.audioUploaded ? 'audio' : null,
+          result.videoUploaded ? 'video' : null,
+          result.videoLinked ? 'YouTube video' : null,
+        ].filter(Boolean);
 
-      showToast({
-        tone: 'success',
-        message: `Uploaded ${uploadedItems.join(' and ')} for this unit`,
-      });
+        showToast({
+          tone: 'success',
+          message: `Uploaded ${uploadedItems.join(' and ')} for this unit`,
+        });
+      }
       window.setTimeout(() => window.location.reload(), 1200);
     } else if (result.error) {
       showToast({
@@ -2174,11 +2214,47 @@ const UnitPageContent = ({
                 <div className='rounded-2xl border border-black/5 bg-[#faf9f4] p-4 text-sm text-black/55'>
                   <p>Current media status:</p>
                   <p className='mt-2'>
-                    Audio: {currentUnit.audioUrl ? 'Uploaded' : 'Not uploaded'}
+                    Audio:{' '}
+                    {hasUploadedAudio
+                      ? 'Uploaded file'
+                      : currentUnit.audioUrl
+                        ? 'Attached'
+                        : 'Not uploaded'}
                   </p>
                   <p>
-                    Video: {currentUnit.videoUrl ? 'Uploaded' : 'Not uploaded'}
+                    Video:{' '}
+                    {hasUploadedVideo
+                      ? 'Uploaded file'
+                      : hasVideoLink
+                        ? 'YouTube link'
+                        : 'Not uploaded'}
                   </p>
+                  {hasUploadedAudio || hasUploadedVideo ? (
+                    <div className='mt-4 flex flex-wrap gap-2'>
+                      {hasUploadedAudio ? (
+                        <button
+                          type='button'
+                          onClick={() => setMediaPendingDelete('audio')}
+                          disabled={isUploadingMedia}
+                          className='inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50 disabled:opacity-50'
+                        >
+                          <Trash2 size={16} />
+                          Delete Audio
+                        </button>
+                      ) : null}
+                      {hasUploadedVideo ? (
+                        <button
+                          type='button'
+                          onClick={() => setMediaPendingDelete('video')}
+                          disabled={isUploadingMedia}
+                          className='inline-flex items-center gap-2 rounded-xl border border-red-200 px-3 py-2 text-sm font-medium text-red-600 transition-all hover:bg-red-50 disabled:opacity-50'
+                        >
+                          <Trash2 size={16} />
+                          Delete Video
+                        </button>
+                      ) : null}
+                    </div>
+                  ) : null}
                 </div>
 
                 <div className='flex items-center justify-end gap-3'>
@@ -2207,6 +2283,20 @@ const UnitPageContent = ({
           </div>
         ) : null}
       </AnimatePresence>
+
+      <ConfirmModal
+        isOpen={mediaPendingDelete !== null}
+        title={`Delete unit ${mediaPendingDelete ?? 'media'}?`}
+        description={`This will permanently remove the uploaded ${mediaPendingDelete ?? 'media'} file from this unit. This action cannot be undone.`}
+        onClose={() => {
+          if (!isUploadingMedia) {
+            setMediaPendingDelete(null);
+          }
+        }}
+        onConfirm={handleDeleteMedia}
+        isLoading={isUploadingMedia}
+        confirmVariant='danger'
+      />
 
       <AnimatePresence>
         {showSummary ? (

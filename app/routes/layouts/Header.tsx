@@ -68,7 +68,11 @@ export const Header = () => {
               <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]'>
                 <GraduationCap className='h-6 w-6 text-white' />
               </div>
-              <img src='/logo.svg' className='hidden w-30 xs:block' alt='CourseX' />
+              <img
+                src='/logo.svg'
+                className='xs:block hidden w-30'
+                alt='CourseX'
+              />
             </Link>
           </div>
 

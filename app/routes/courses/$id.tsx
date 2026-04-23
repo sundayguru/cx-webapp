@@ -669,20 +669,20 @@ export default function CourseDetailsPage({
   const handledWorkflowAudioVoicesResult = useRef<string | null>(null);
   const workflowAudioVoiceResult = workflowAudioVoicesFetcher.data as
     | {
-      success?: boolean;
-      error?: string;
-      voices?: GoogleTtsVoiceListItem[];
-    }
+        success?: boolean;
+        error?: string;
+        voices?: GoogleTtsVoiceListItem[];
+      }
     | undefined;
   const workflowAudioVoices = workflowAudioVoiceResult?.voices ?? [];
   const selectableWorkflowAudioVoices =
     workflowAudioSsmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
       ? workflowAudioVoices
       : workflowAudioVoices.filter(
-        (voice) =>
-          voice.ssmlGender === workflowAudioSsmlGender ||
-          voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
-      );
+          (voice) =>
+            voice.ssmlGender === workflowAudioSsmlGender ||
+            voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
+        );
 
   useEffect(() => {
     if (!isUnitAudioWorkflowModalOpen || !data?.course.id) {

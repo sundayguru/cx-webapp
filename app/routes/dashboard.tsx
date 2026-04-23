@@ -177,7 +177,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className='mx-auto max-w-[1400px] px-0 py-8 sm:px-4 space-y-4'>
+    <div className='mx-auto max-w-[1400px] space-y-4 px-0 py-8 sm:px-4'>
       <div className='px-4 sm:px-0'>
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -315,10 +315,11 @@ export default function DashboardPage() {
                     </h3>
                     <div className='flex items-center gap-2 text-xs text-black/40'>
                       <span
-                        className={`rounded-full px-2 py-1 ${courseItem.course.status === 'published'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                          }`}
+                        className={`rounded-full px-2 py-1 ${
+                          courseItem.course.status === 'published'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}
                       >
                         {courseItem.course.status}
                       </span>
@@ -449,8 +450,9 @@ const StatCard = ({ icon, label, value, color, highlight }: StatCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 18 }}
     animate={{ opacity: 1, y: 0 }}
-    className={`rounded-2xl border p-5 ${highlight ? 'border-green-200 bg-green-50' : 'border-black/5 bg-white'
-      }`}
+    className={`rounded-2xl border p-5 ${
+      highlight ? 'border-green-200 bg-green-50' : 'border-black/5 bg-white'
+    }`}
   >
     <div
       className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl'

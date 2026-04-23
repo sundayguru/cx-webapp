@@ -3,7 +3,12 @@ import { data, type ActionFunctionArgs } from 'react-router';
 import { getDb } from '~/db/connection';
 import { getCourseById } from '~/db/courses';
 import { units } from '~/db/schemas';
-import { generateContentKey, uploadToR2 } from '~/utils/r2.server';
+import {
+  deleteFromR2,
+  generateContentKey,
+  getR2KeyFromServeUrl,
+  uploadToR2,
+} from '~/utils/r2.server';
 import { getUserFromRequest } from '~/utils/session.server';
 import { isYouTubeUrl } from '~/utils/video';
 
@@ -37,17 +42,75 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     return data({ error: 'Course not found' }, { status: 404 });
   }
 
-  if (courseData.course.createdBy !== user.id) {
+  if (courseData.course.createdBy !== user.id && !user.isAdmin) {
     return data(
-      { error: 'Only the creator can upload unit media' },
+      { error: 'Only the creator or an admin can manage unit media' },
       { status: 403 },
     );
   }
 
+  const db = getDb();
+  const [unit] = await db
+    .select()
+    .from(units)
+    .where(eq(units.id, unitId))
+    .limit(1);
+
+  if (!unit) {
+    return data({ error: 'Unit not found' }, { status: 404 });
+  }
+
   const formData = await request.formData();
+  const intent = formData.get('intent');
   const audioFile = formData.get('audioFile');
   const videoFile = formData.get('videoFile');
   const videoLink = formData.get('videoLink');
+
+  if (intent === 'deleteAudio' || intent === 'deleteVideo') {
+    const mediaField = intent === 'deleteAudio' ? 'audioUrl' : 'videoUrl';
+    const mediaLabel = intent === 'deleteAudio' ? 'audio' : 'video';
+    const mediaUrl = unit[mediaField];
+
+    if (!mediaUrl) {
+      return data(
+        { error: `This unit does not have uploaded ${mediaLabel} to delete` },
+        { status: 400 },
+      );
+    }
+
+    const mediaKey = getR2KeyFromServeUrl(mediaUrl);
+
+    if (!mediaKey) {
+      return data(
+        {
+          error: `Only uploaded ${mediaLabel} files can be deleted here`,
+        },
+        { status: 400 },
+      );
+    }
+
+    const deleted = await deleteFromR2(mediaKey);
+
+    if (!deleted) {
+      return data(
+        { error: `Failed to delete ${mediaLabel} file` },
+        { status: 500 },
+      );
+    }
+
+    await db
+      .update(units)
+      .set({
+        [mediaField]: null,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(units.id, unitId));
+
+    return data({
+      success: true,
+      mediaDeleted: mediaLabel,
+    });
+  }
 
   const hasAudioFile = audioFile instanceof File && audioFile.size > 0;
   const hasVideoFile = videoFile instanceof File && videoFile.size > 0;
@@ -87,17 +150,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       { error: 'Video link must be a valid YouTube URL' },
       { status: 400 },
     );
-  }
-
-  const db = getDb();
-  const [unit] = await db
-    .select()
-    .from(units)
-    .where(eq(units.id, unitId))
-    .limit(1);
-
-  if (!unit) {
-    return data({ error: 'Unit not found' }, { status: 404 });
   }
 
   let nextAudioUrl = unit.audioUrl;

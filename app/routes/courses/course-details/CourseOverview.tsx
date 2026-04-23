@@ -247,14 +247,16 @@ type StatPillProps = {
 
 const StatPill = ({ icon, label, value, highlight }: StatPillProps) => (
   <div
-    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${highlight
+    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${
+      highlight
         ? 'border border-green-200 bg-green-50'
         : 'border border-black/5 bg-[#f7f6ef]'
-      }`}
+    }`}
   >
     <div
-      className={`flex shrink-0 ${highlight ? 'text-green-600' : 'text-[#5A5A40]'
-        }`}
+      className={`flex shrink-0 ${
+        highlight ? 'text-green-600' : 'text-[#5A5A40]'
+      }`}
     >
       {icon}
     </div>

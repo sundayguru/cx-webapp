@@ -52,7 +52,7 @@ const findNextOrderedTokenPairIndex = (
   secondToken: string,
 ) => {
   const matcher = new RegExp(
-    `\\b${firstToken}\\b[\\s\\S]{0,80}?\\b${secondToken}\\b`,
+    `\\b${firstToken}\\b[\\s\\S]{0,180}?\\b${secondToken}\\b`,
     'i',
   );
   const match = text.match(matcher);
@@ -124,7 +124,18 @@ const getModuleMarkerPosition = (
       '1.1',
     );
 
-    if (unitOnePairIndex === -1 && unitOnePairSecondIndex === -1) {
+    const subunitRegex = /\b(\d+\.\d+)\s+([^0-9]+)/gim;
+    const unitRegex = /\bunit 1\b/gi;
+
+    const moduleRegex = /module\s+\d+\b/gi;
+
+    const matchesOtherModule = windowText.slice(7).match(moduleRegex);
+
+    const matchedSubunits = windowText.match(subunitRegex);
+    const matchedUnitOne = windowText.match(unitRegex);
+    const couldByAModule = matchedSubunits && matchedUnitOne;
+
+    if ((unitOnePairIndex === -1 && unitOnePairSecondIndex === -1 && !couldByAModule) || matchesOtherModule) {
       continue;
     }
 
