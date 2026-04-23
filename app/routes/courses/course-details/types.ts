@@ -15,6 +15,7 @@ export type CourseDetailsData = {
   course: SelectCourse;
   school: SelectSchool | null;
   author: SelectAuthor | null;
+  authors: SelectAuthor[];
   contributor: CourseContributor;
   modules: CourseModuleWithUnits[];
 };

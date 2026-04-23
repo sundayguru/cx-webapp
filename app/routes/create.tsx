@@ -1,12 +1,13 @@
 import type { Route } from './+types/create';
 import { data, useFetcher } from 'react-router';
 import { getUserFromRequest } from '~/utils/session.server';
-import { createCourse, getCourseByCode } from '~/db/courses';
+import { createCourse, getCourseByCode, setCourseAuthors } from '~/db/courses';
 import { createSchool } from '~/db/schools';
 import { createAuthor } from '~/db/authors';
 import { uploadToR2, generateContentKey } from '~/utils/r2.server';
 import {
   CourseCreationForm,
+  type CourseFormAuthor,
   type CourseFormData,
 } from '~/components/CourseCreationForm';
 import { motion } from 'motion/react';
@@ -36,7 +37,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       !courseData.code ||
       !courseData.description ||
       !courseData.schoolId ||
-      !courseData.authorId
+      courseData.authors.length === 0
     ) {
       return data({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -64,15 +65,27 @@ export const action = async ({ request }: Route.ActionArgs) => {
       finalSchoolId = newSchool.id;
     }
 
-    // Handle author creation if needed
-    let finalAuthorId = courseData.authorId;
-    if (courseData.isNewAuthor) {
-      const newAuthor = await createAuthor(courseData.authorId, user.id);
-      if (!newAuthor) {
-        return data({ error: 'Failed to create new author' }, { status: 500 });
+    const resolvedAuthors: CourseFormAuthor[] = [];
+    for (const author of courseData.authors) {
+      if (author.isNew) {
+        const newAuthor = await createAuthor(author.name, user.id);
+        if (!newAuthor) {
+          return data(
+            { error: 'Failed to create new author' },
+            { status: 500 },
+          );
+        }
+        resolvedAuthors.push({
+          id: newAuthor.id,
+          name: newAuthor.name,
+        });
+      } else {
+        resolvedAuthors.push(author);
       }
-      finalAuthorId = newAuthor.id;
     }
+
+    const finalAuthorIds = resolvedAuthors.map((author) => author.id);
+    const primaryAuthorId = finalAuthorIds[0];
 
     // Upload content to R2
     const uploadId = uuidv4();
@@ -107,7 +120,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
       code: courseData.code,
       description: courseData.description,
       schoolId: finalSchoolId,
-      authorId: finalAuthorId,
+      authorId: primaryAuthorId,
       thumbnailKey: finalThumbnailKey,
       level: courseData.level || 'Beginner',
       category: courseData.category || 'General',
@@ -121,6 +134,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
     if (!course) {
       return data(
         { error: 'Failed to create course in database' },
+        { status: 500 },
+      );
+    }
+
+    const authorsAssigned = await setCourseAuthors(course.id, finalAuthorIds);
+    if (!authorsAssigned) {
+      return data(
+        { error: 'Failed to assign course authors' },
         { status: 500 },
       );
     }

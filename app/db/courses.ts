@@ -1,7 +1,8 @@
-import { eq, and, like, or, SQL, asc } from 'drizzle-orm';
+import { eq, and, like, or, SQL, asc, inArray } from 'drizzle-orm';
 import { getDb } from './connection';
 import {
   courses,
+  courseAuthors,
   schools,
   authors,
   modules,
@@ -18,7 +19,70 @@ type CourseWithRelations = {
   course: typeof courses.$inferSelect;
   school: typeof schools.$inferSelect | null;
   author: typeof authors.$inferSelect | null;
+  authors: Array<typeof authors.$inferSelect>;
   contributor: CourseContributor;
+};
+
+const getCourseAuthorsMap = async (courseIds: string[]) => {
+  if (courseIds.length === 0) {
+    return new Map<string, Array<typeof authors.$inferSelect>>();
+  }
+
+  const db = getDb();
+  const rows = await db
+    .select({
+      courseId: courseAuthors.courseId,
+      author: authors,
+    })
+    .from(courseAuthors)
+    .innerJoin(authors, eq(courseAuthors.authorId, authors.id))
+    .where(inArray(courseAuthors.courseId, courseIds));
+
+  const authorsMap = new Map<string, Array<typeof authors.$inferSelect>>();
+
+  rows.forEach(({ courseId, author }) => {
+    const existing = authorsMap.get(courseId) ?? [];
+    existing.push(author);
+    authorsMap.set(courseId, existing);
+  });
+
+  return authorsMap;
+};
+
+export const setCourseAuthors = async (
+  courseId: string,
+  authorIds: string[],
+) => {
+  try {
+    const db = getDb();
+    const uniqueAuthorIds = Array.from(new Set(authorIds.filter(Boolean)));
+
+    await db.delete(courseAuthors).where(eq(courseAuthors.courseId, courseId));
+
+    if (uniqueAuthorIds.length > 0) {
+      await db.insert(courseAuthors).values(
+        uniqueAuthorIds.map((authorId) => ({
+          courseId,
+          authorId,
+        })),
+      );
+    }
+
+    const primaryAuthorId = uniqueAuthorIds[0] ?? null;
+
+    await db
+      .update(courses)
+      .set({
+        authorId: primaryAuthorId,
+        updatedAt: new Date().toISOString(),
+      })
+      .where(eq(courses.id, courseId));
+
+    return true;
+  } catch (e) {
+    logError(e, 'Error setting course authors');
+    return false;
+  }
 };
 
 export const createCourse = async (
@@ -108,6 +172,14 @@ export const getCourseById = async (id: string) => {
     }
 
     const courseData = results[0] as CourseWithRelations;
+    const authorsMap = await getCourseAuthorsMap([id]);
+    const linkedAuthors = authorsMap.get(id) ?? [];
+    const courseAuthorsList =
+      linkedAuthors.length > 0
+        ? linkedAuthors
+        : courseData.author
+          ? [courseData.author]
+          : [];
 
     // Get modules for the course
     const courseModules = await db
@@ -135,6 +207,7 @@ export const getCourseById = async (id: string) => {
 
     return {
       ...courseData,
+      authors: courseAuthorsList,
       modules: modulesWithUnits,
     };
   } catch (e) {
@@ -195,7 +268,22 @@ export const getCourses = async (filters?: CourseFilters, isAdmin = false) => {
     }
 
     if (filters?.authorId) {
-      conditions.push(eq(courses.authorId, filters.authorId));
+      const linkedCourses = await db
+        .selectDistinct({ courseId: courseAuthors.courseId })
+        .from(courseAuthors)
+        .where(eq(courseAuthors.authorId, filters.authorId));
+      const linkedCourseIds = linkedCourses.map((row) => row.courseId);
+
+      if (linkedCourseIds.length > 0) {
+        conditions.push(
+          or(
+            eq(courses.authorId, filters.authorId),
+            inArray(courses.id, linkedCourseIds),
+          )!,
+        );
+      } else {
+        conditions.push(eq(courses.authorId, filters.authorId));
+      }
     }
 
     if (filters?.level) {
@@ -228,7 +316,16 @@ export const getCourses = async (filters?: CourseFilters, isAdmin = false) => {
       query.where(and(...conditions));
     }
 
-    return await query.orderBy(courses.createdAt);
+    const courseRows = await query.orderBy(courses.createdAt);
+    const authorsMap = await getCourseAuthorsMap(
+      courseRows.map((row) => row.course.id),
+    );
+
+    return courseRows.map((row) => ({
+      ...row,
+      authors:
+        authorsMap.get(row.course.id) ?? (row.author ? [row.author] : []),
+    }));
   } catch (e) {
     logError(e, 'Error getting courses');
     return [];
@@ -257,8 +354,7 @@ export const getAllCourseMetadata = async () => {
         id: authors.id,
         name: authors.name,
       })
-      .from(courses)
-      .innerJoin(authors, eq(courses.authorId, authors.id));
+      .from(authors);
 
     return { schools: allSchools, authors: allAuthors };
   } catch (e) {

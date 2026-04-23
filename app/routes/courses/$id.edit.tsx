@@ -5,11 +5,17 @@ import { Edit3, X } from 'lucide-react';
 import { useEffect } from 'react';
 import {
   CourseCreationForm,
+  type CourseFormAuthor,
   type CourseFormData,
 } from '~/components/CourseCreationForm';
 import { createAuthor } from '~/db/authors';
 import { createSchool } from '~/db/schools';
-import { getCourseByCode, getCourseById, updateCourse } from '~/db/courses';
+import {
+  getCourseByCode,
+  getCourseById,
+  setCourseAuthors,
+  updateCourse,
+} from '~/db/courses';
 import { getUserFromRequest } from '~/utils/session.server';
 import { generateContentKey, uploadToR2 } from '~/utils/r2.server';
 import { v4 as uuidv4 } from 'uuid';
@@ -82,7 +88,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       !courseData.code ||
       !courseData.description ||
       !courseData.schoolId ||
-      !courseData.authorId
+      courseData.authors.length === 0
     ) {
       return data({ error: 'Missing required fields' }, { status: 400 });
     }
@@ -104,14 +110,27 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       finalSchoolId = newSchool.id;
     }
 
-    let finalAuthorId = courseData.authorId;
-    if (courseData.isNewAuthor) {
-      const newAuthor = await createAuthor(courseData.authorId, user.id);
-      if (!newAuthor) {
-        return data({ error: 'Failed to create new author' }, { status: 500 });
+    const resolvedAuthors: CourseFormAuthor[] = [];
+    for (const author of courseData.authors) {
+      if (author.isNew) {
+        const newAuthor = await createAuthor(author.name, user.id);
+        if (!newAuthor) {
+          return data(
+            { error: 'Failed to create new author' },
+            { status: 500 },
+          );
+        }
+        resolvedAuthors.push({
+          id: newAuthor.id,
+          name: newAuthor.name,
+        });
+      } else {
+        resolvedAuthors.push(author);
       }
-      finalAuthorId = newAuthor.id;
     }
+
+    const finalAuthorIds = resolvedAuthors.map((author) => author.id);
+    const primaryAuthorId = finalAuthorIds[0];
 
     let thumbnailKey = existingCourseData.course.thumbnailKey;
     if (thumbnailFile) {
@@ -133,7 +152,7 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       code: courseData.code,
       description: courseData.description,
       schoolId: finalSchoolId,
-      authorId: finalAuthorId,
+      authorId: primaryAuthorId,
       thumbnailKey,
       level: courseData.level || 'Beginner',
       category: courseData.category || 'General',
@@ -171,6 +190,14 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
     const updatedCourse = await updateCourse(courseId, updatedPayload);
     if (!updatedCourse) {
       return data({ error: 'Failed to update course' }, { status: 500 });
+    }
+
+    const authorsAssigned = await setCourseAuthors(courseId, finalAuthorIds);
+    if (!authorsAssigned) {
+      return data(
+        { error: 'Failed to update course authors' },
+        { status: 500 },
+      );
     }
 
     return data({ courseId });
@@ -221,8 +248,15 @@ export default function EditCoursePage({ loaderData }: Route.ComponentProps) {
     description: courseData.course.description,
     schoolId: courseData.school?.id || '',
     schoolName: courseData.school?.name || '',
-    authorId: courseData.author?.id || '',
-    authorName: courseData.author?.name || '',
+    authors: (courseData.authors.length > 0
+      ? courseData.authors
+      : courseData.author
+        ? [courseData.author]
+        : []
+    ).map((author) => ({
+      id: author.id,
+      name: author.name,
+    })),
     level: courseData.course.level,
     category: courseData.course.category,
   };

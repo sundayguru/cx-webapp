@@ -350,85 +350,92 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
         </div>
       ) : (
         <div className='grid gap-10 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'>
-          {courses.map(({ course, school, author, contributor }) => (
-            <motion.div
-              key={course.id}
-              layout
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              className='group relative flex flex-col overflow-hidden rounded-[40px] border border-black/5 bg-white transition-all hover:-translate-y-2 hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]'
-            >
-              <Link
-                to={`/courses/${course.id}`}
-                className='relative aspect-[4/3] w-full overflow-hidden bg-black/[0.02]'
+          {courses.map(({ course, school, author, authors, contributor }) => {
+            const courseAuthors =
+              authors.length > 0 ? authors : author ? [author] : [];
+
+            return (
+              <motion.div
+                key={course.id}
+                layout
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className='group relative flex flex-col overflow-hidden rounded-[40px] border border-black/5 bg-white transition-all hover:-translate-y-2 hover:shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)]'
               >
-                <img
-                  src={
-                    course.thumbnailKey
-                      ? `/api/course/serve/${course.thumbnailKey}`
-                      : `https://picsum.photos/seed/${course.id}/700/500`
-                  }
-                  alt={course.title}
-                  className='h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110'
-                />
-                {course.status !== 'published' && (
-                  <div className='absolute top-6 left-6'>
-                    <span
-                      className={`rounded-full border border-white/20 px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase shadow-lg backdrop-blur-xl ${getStatusColor(course.status)}`}
-                    >
-                      {course.status}
-                    </span>
-                  </div>
-                )}
-              </Link>
-
-              <div className='flex flex-1 flex-col p-8'>
-                <div className='mb-4 flex items-center justify-between'>
-                  <span className='text-[10px] font-bold tracking-widest text-[#5A5A40] uppercase'>
-                    {course.code}
-                  </span>
-                  <span className='text-[10px] font-bold tracking-widest text-black/20 uppercase'>
-                    {course.level}
-                  </span>
-                </div>
-
-                <Link to={`/courses/${course.id}`} className='mb-4'>
-                  <h3 className='line-clamp-2 font-serif text-2xl leading-tight font-medium text-[#1a1a1a] transition-colors group-hover:text-[#5A5A40]'>
-                    {course.title}
-                  </h3>
-                </Link>
-
-                <div className='mt-auto space-y-4 border-t border-black/5 pt-6 opacity-60'>
-                  <div className='flex items-center justify-between gap-4'>
-                    {author && (
-                      <div className='flex min-w-0 items-center gap-2'>
-                        <UserCircle size={14} className='text-black/30' />
-                        <span className='truncate text-xs font-bold tracking-wider text-black/80 uppercase'>
-                          {author.name}
-                        </span>
-                      </div>
-                    )}
-                    <div className='flex shrink-0 items-center gap-1.5 text-[10px] font-bold text-black/30'>
-                      <Clock size={12} />
-                      <span>
-                        {new Date(course.createdAt).toLocaleDateString()}
+                <Link
+                  to={`/courses/${course.id}`}
+                  className='relative aspect-[4/3] w-full overflow-hidden bg-black/[0.02]'
+                >
+                  <img
+                    src={
+                      course.thumbnailKey
+                        ? `/api/course/serve/${course.thumbnailKey}`
+                        : `https://picsum.photos/seed/${course.id}/700/500`
+                    }
+                    alt={course.title}
+                    className='h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110'
+                  />
+                  {course.status !== 'published' && (
+                    <div className='absolute top-6 left-6'>
+                      <span
+                        className={`rounded-full border border-white/20 px-4 py-1.5 text-[10px] font-bold tracking-widest uppercase shadow-lg backdrop-blur-xl ${getStatusColor(course.status)}`}
+                      >
+                        {course.status}
                       </span>
                     </div>
-                  </div>
-                  <CourseContributorBadge
-                    contributor={contributor}
-                    variant='card'
-                  />
-                  {school && (
-                    <div className='flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-black/20 uppercase'>
-                      <School size={12} />
-                      <span className='truncate'>{school.name}</span>
-                    </div>
                   )}
+                </Link>
+
+                <div className='flex flex-1 flex-col p-8'>
+                  <div className='mb-4 flex items-center justify-between'>
+                    <span className='text-[10px] font-bold tracking-widest text-[#5A5A40] uppercase'>
+                      {course.code}
+                    </span>
+                    <span className='text-[10px] font-bold tracking-widest text-black/20 uppercase'>
+                      {course.level}
+                    </span>
+                  </div>
+
+                  <Link to={`/courses/${course.id}`} className='mb-4'>
+                    <h3 className='line-clamp-2 font-serif text-2xl leading-tight font-medium text-[#1a1a1a] transition-colors group-hover:text-[#5A5A40]'>
+                      {course.title}
+                    </h3>
+                  </Link>
+
+                  <div className='mt-auto space-y-4 border-t border-black/5 pt-6 opacity-60'>
+                    <div className='flex items-center justify-between gap-4'>
+                      {courseAuthors.length > 0 && (
+                        <div className='flex min-w-0 items-center gap-2'>
+                          <UserCircle size={14} className='text-black/30' />
+                          <span className='truncate text-xs font-bold tracking-wider text-black/80 uppercase'>
+                            {courseAuthors
+                              .map((courseAuthor) => courseAuthor.name)
+                              .join(', ')}
+                          </span>
+                        </div>
+                      )}
+                      <div className='flex shrink-0 items-center gap-1.5 text-[10px] font-bold text-black/30'>
+                        <Clock size={12} />
+                        <span>
+                          {new Date(course.createdAt).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <CourseContributorBadge
+                      contributor={contributor}
+                      variant='card'
+                    />
+                    {school && (
+                      <div className='flex items-center gap-2 text-[10px] font-bold tracking-[0.2em] text-black/20 uppercase'>
+                        <School size={12} />
+                        <span className='truncate'>{school.name}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
       )}
     </div>

@@ -5,6 +5,7 @@ export * from './sessions';
 export * from './verificationTokens';
 export * from './passwordResetTokens';
 export * from './courses';
+export * from './courseAuthors';
 export * from './schools';
 export * from './authors';
 export * from './modules';

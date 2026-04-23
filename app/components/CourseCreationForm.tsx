@@ -14,6 +14,12 @@ import {
 import { SchoolSelect } from './SchoolSelect';
 import { AuthorSelect } from './AuthorSelect';
 
+export type CourseFormAuthor = {
+  id: string;
+  name: string;
+  isNew?: boolean;
+};
+
 type CourseFormData = {
   title: string;
   code: string;
@@ -21,9 +27,7 @@ type CourseFormData = {
   schoolId: string;
   schoolName: string;
   isNewSchool?: boolean;
-  authorId: string;
-  authorName: string;
-  isNewAuthor?: boolean;
+  authors: CourseFormAuthor[];
   level: string;
   category: string;
 };
@@ -36,6 +40,74 @@ type StepProps = {
 export type { CourseFormData };
 
 type CourseFormMode = 'create' | 'edit';
+
+const MultiAuthorSelect = ({
+  authors,
+  onChange,
+}: {
+  authors: CourseFormAuthor[];
+  onChange: (authors: CourseFormAuthor[]) => void;
+}) => {
+  const [pendingValue, setPendingValue] = useState('');
+  const [pendingLabel, setPendingLabel] = useState('');
+
+  const addAuthor = (value: string, label: string, isNew: boolean) => {
+    const nextAuthor = {
+      id: value,
+      name: label,
+      isNew,
+    } satisfies CourseFormAuthor;
+
+    const alreadySelected = authors.some(
+      (author) =>
+        author.id === nextAuthor.id ||
+        author.name.toLowerCase() === nextAuthor.name.toLowerCase(),
+    );
+
+    if (alreadySelected) {
+      setPendingValue('');
+      setPendingLabel('');
+      return;
+    }
+
+    onChange([...authors, nextAuthor]);
+    setPendingValue('');
+    setPendingLabel('');
+  };
+
+  const removeAuthor = (authorId: string) => {
+    onChange(authors.filter((author) => author.id !== authorId));
+  };
+
+  return (
+    <div className='space-y-3'>
+      {authors.length > 0 ? (
+        <div className='flex flex-wrap gap-2'>
+          {authors.map((author) => (
+            <button
+              key={author.id}
+              type='button'
+              onClick={() => removeAuthor(author.id)}
+              className='inline-flex items-center gap-2 rounded-full bg-[#5A5A40]/10 px-3 py-1.5 text-sm font-medium text-[#1a1a1a] transition-colors hover:bg-[#5A5A40]/15'
+            >
+              <span>{author.name}</span>
+              <X size={14} />
+            </button>
+          ))}
+        </div>
+      ) : null}
+      <AuthorSelect
+        value={pendingValue}
+        label={pendingLabel}
+        onChange={(value, label, isNew) => addAuthor(value, label, isNew)}
+      />
+      <p className='text-xs text-black/45'>
+        Search and add one or more original authors. Tap an added author to
+        remove them.
+      </p>
+    </div>
+  );
+};
 
 // Step 1: Course Details
 const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
@@ -80,16 +152,13 @@ const CourseDetailsStep = ({ formData, updateFormData }: StepProps) => {
             </div>
             <div>
               <label className='mb-1 block text-[10px] font-bold tracking-widest text-black/40 uppercase'>
-                Original Author
+                Original Authors
               </label>
-              <AuthorSelect
-                value={formData.authorId}
-                label={formData.authorName}
-                onChange={(value, label, isNew) =>
+              <MultiAuthorSelect
+                authors={formData.authors}
+                onChange={(authors) =>
                   updateFormData({
-                    authorId: value,
-                    authorName: label,
-                    isNewAuthor: isNew,
+                    authors,
                   })
                 }
               />
@@ -472,8 +541,7 @@ export const CourseCreationForm = ({
     description: initialData?.description || '',
     schoolId: initialData?.schoolId || '',
     schoolName: initialData?.schoolName || '',
-    authorId: initialData?.authorId || '',
-    authorName: initialData?.authorName || '',
+    authors: initialData?.authors || [],
     level: initialData?.level || 'Beginner',
     category: initialData?.category || 'General',
   });
@@ -496,7 +564,7 @@ export const CourseCreationForm = ({
       formData.code &&
       formData.description &&
       formData.schoolId &&
-      formData.authorId
+      formData.authors.length > 0
     );
   };
 

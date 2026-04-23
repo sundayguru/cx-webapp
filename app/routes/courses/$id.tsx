@@ -1124,7 +1124,7 @@ export default function CourseDetailsPage({
     );
   }
 
-  const { course, school, author, contributor, modules } = data;
+  const { course, school, author, authors, contributor, modules } = data;
   const isInstructor = user?.isAdmin === true;
   const isCourseCreator = user?.id === course.createdBy;
   const isDraft = course.status === 'pending';
@@ -1150,6 +1150,7 @@ export default function CourseDetailsPage({
           course={course}
           school={school}
           author={author}
+          authors={authors}
           contributor={contributor}
           isCourseCreator={isCourseCreator}
           modulesCount={modules.length}
