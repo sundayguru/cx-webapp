@@ -41,6 +41,11 @@ import {
   type CurriculumAiProvider,
 } from '~/utils/curriculum-options';
 import {
+  GOOGLE_TTS_GENDER_OPTIONS,
+  GOOGLE_TTS_LANGUAGE_OPTIONS,
+  type GoogleTtsVoiceListItem,
+} from '~/utils/google-tts';
+import {
   buildQuizPerformanceMap,
   getQuizDisplayAnswer,
   getQuizSessionQuizzes,
@@ -51,24 +56,6 @@ import {
 import { getChatHistoryByUnitId } from '~/db/chat-history';
 import type { SelectChatMessage } from '~/db/schemas';
 import { getYouTubeEmbedUrl } from '~/utils/video';
-
-const GOOGLE_TTS_LANGUAGE_OPTIONS = [
-  { value: 'en-US', label: 'English (US)' },
-  { value: 'en-GB', label: 'English (UK)' },
-  { value: 'de-DE', label: 'German' },
-  { value: 'fr-FR', label: 'French' },
-  { value: 'es-ES', label: 'Spanish' },
-] as const;
-
-const GOOGLE_TTS_GENDER_OPTIONS = [
-  { value: 'FEMALE', label: 'Female' },
-  { value: 'MALE', label: 'Male' },
-  { value: 'NEUTRAL', label: 'Neutral' },
-  {
-    value: 'SSML_VOICE_GENDER_UNSPECIFIED',
-    label: 'Unspecified',
-  },
-] as const;
 
 type CourseModuleWithUnits = SelectModule & {
   units: SelectUnit[];
@@ -92,13 +79,6 @@ type LoaderData = {
   user: User | null;
   chatHistory: SelectChatMessage[];
   isBookmarked: boolean;
-};
-
-type GoogleVoiceListItem = {
-  name: string;
-  languageCodes: string[];
-  ssmlGender: 'SSML_VOICE_GENDER_UNSPECIFIED' | 'MALE' | 'FEMALE' | 'NEUTRAL';
-  naturalSampleRateHertz: number;
 };
 
 const cx = (...classes: Array<string | false | null | undefined>) =>
@@ -266,10 +246,10 @@ const UnitPageContent = ({
   const completedSessionSyncRef = useRef<string | null>(null);
   const currentQuizSessionId =
     startQuizSessionFetcher.state === 'idle' &&
-      (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
-        ?.sessionId
+    (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
+      ?.sessionId
       ? (startQuizSessionFetcher.data as { sessionId: string } | undefined)
-        ?.sessionId
+          ?.sessionId
       : null;
 
   const isInstructor = user?.isAdmin === true;
@@ -284,20 +264,20 @@ const UnitPageContent = ({
     useState(quizPerformance);
   const googleVoiceResult = googleVoicesFetcher.data as
     | {
-      success?: boolean;
-      error?: string;
-      voices?: GoogleVoiceListItem[];
-    }
+        success?: boolean;
+        error?: string;
+        voices?: GoogleTtsVoiceListItem[];
+      }
     | undefined;
   const googleVoices = googleVoiceResult?.voices ?? [];
   const selectableGoogleVoices =
     audioSsmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
       ? googleVoices
       : googleVoices.filter(
-        (voice) =>
-          voice.ssmlGender === audioSsmlGender ||
-          voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
-      );
+          (voice) =>
+            voice.ssmlGender === audioSsmlGender ||
+            voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
+        );
   const isLoadingGoogleVoices = googleVoicesFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
@@ -500,6 +480,7 @@ const UnitPageContent = ({
     audioLanguageCode,
     course?.course.id,
     currentUnit.id,
+    googleVoicesFetcher,
     showGenerateAudioModal,
   ]);
 
@@ -511,7 +492,7 @@ const UnitPageContent = ({
     const result = googleVoicesFetcher.data as {
       success?: boolean;
       error?: string;
-      voices?: GoogleVoiceListItem[];
+      voices?: GoogleTtsVoiceListItem[];
     };
     const resultKey = JSON.stringify(result);
 
@@ -522,11 +503,7 @@ const UnitPageContent = ({
         message: result.error,
       });
     }
-  }, [
-    googleVoicesFetcher.data,
-    googleVoicesFetcher.state,
-    showToast,
-  ]);
+  }, [googleVoicesFetcher.data, googleVoicesFetcher.state, showToast]);
 
   useEffect(() => {
     if (clearQuizzesFetcher.data) {
@@ -831,9 +808,9 @@ const UnitPageContent = ({
             attempts === 0
               ? 6
               : 1 +
-              Math.max(0, 1 - accuracy) * 4 +
-              incorrectCount * 1.5 +
-              (answer.isCorrect ? 0 : 1.5),
+                  Math.max(0, 1 - accuracy) * 4 +
+                  incorrectCount * 1.5 +
+                  (answer.isCorrect ? 0 : 1.5),
           ),
         };
       });
@@ -1586,7 +1563,7 @@ const UnitPageContent = ({
                                     . {quiz.question}
                                   </p>
                                   {quiz.questionType === 'choice' &&
-                                    quiz.options ? (
+                                  quiz.options ? (
                                     <div className='space-y-2'>
                                       {JSON.parse(quiz.options).map(
                                         (option: string, optIndex: number) => {

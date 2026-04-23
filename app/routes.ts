@@ -83,6 +83,10 @@ export default [
       'routes/api/courses/$id.run-unit-audio-workflow.tsx',
     ),
     route(
+      'api/courses/:id/google-voices',
+      'routes/api/courses/$id.google-voices.tsx',
+    ),
+    route(
       'api/courses/:id/update-module-raw-text',
       'routes/api/courses/update-module-raw-text.tsx',
     ),

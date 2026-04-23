@@ -8,12 +8,18 @@ import {
   generateUnitAudioForUnit,
   generateUnitAudioScriptForUnit,
   resolveCourseAiOptions,
+  resolveGoogleTtsVoiceOptions,
 } from '~/utils/course-processing.server';
 
 export type CourseUnitAudioWorkflowParams = {
   courseId: string;
   provider?: string;
   model?: string;
+  languageCode?: string;
+  ssmlGender?: string;
+  voiceName?: string;
+  speakingRate?: number;
+  pitch?: number;
 };
 
 type WorkflowUnit = {
@@ -40,6 +46,13 @@ export class CourseUnitAudioWorkflow extends WorkflowEntrypoint<
       event.payload.provider,
       event.payload.model,
     );
+    const voiceOptions = resolveGoogleTtsVoiceOptions({
+      languageCode: event.payload.languageCode,
+      ssmlGender: event.payload.ssmlGender,
+      voiceName: event.payload.voiceName,
+      speakingRate: event.payload.speakingRate,
+      pitch: event.payload.pitch,
+    });
 
     console.log('Running course unit audio workflow for course', courseId);
 
@@ -60,12 +73,9 @@ export class CourseUnitAudioWorkflow extends WorkflowEntrypoint<
 
     console.log('Units for audio workflow loaded');
     for (const [unitIndex, unit] of units.entries()) {
-      await step.do(
-        `generate audio script for unit ${unitIndex + 1}`,
-        async () => {
-          return generateUnitAudioScriptForUnit(unit.id, options);
-        },
-      );
+      await step.do(`generate audio script for unit ${unitIndex + 1}`, () => {
+        return generateUnitAudioScriptForUnit(unit.id, options);
+      });
 
       console.log('Audio script generated for unit', unit.id);
 
@@ -73,8 +83,8 @@ export class CourseUnitAudioWorkflow extends WorkflowEntrypoint<
         continue;
       }
 
-      await step.do(`generate audio for unit ${unitIndex + 1}`, async () => {
-        return generateUnitAudioForUnit(unit.id);
+      await step.do(`generate audio for unit ${unitIndex + 1}`, () => {
+        return generateUnitAudioForUnit(unit.id, voiceOptions);
       });
 
       console.log('Audio generated for unit', unit.id);
@@ -88,6 +98,7 @@ export class CourseUnitAudioWorkflow extends WorkflowEntrypoint<
       unitsProcessed: units.length,
       provider: options.provider,
       model: options.model,
+      voiceOptions,
     };
   }
 }

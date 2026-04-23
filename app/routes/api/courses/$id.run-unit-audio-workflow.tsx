@@ -1,7 +1,10 @@
 import { env } from 'cloudflare:workers';
 import { type ActionFunctionArgs, data } from 'react-router';
 import { getCourseById } from '~/db/courses';
-import { resolveCourseAiOptions } from '~/utils/course-processing.server';
+import {
+  resolveCourseAiOptions,
+  resolveGoogleTtsVoiceOptions,
+} from '~/utils/course-processing.server';
 import { getUserFromRequest } from '~/utils/session.server';
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -32,6 +35,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     formData.get('provider'),
     formData.get('model'),
   );
+  const voiceOptions = resolveGoogleTtsVoiceOptions({
+    languageCode: formData.get('languageCode'),
+    ssmlGender: formData.get('ssmlGender'),
+    voiceName: formData.get('voiceName'),
+    speakingRate: formData.get('speakingRate'),
+    pitch: formData.get('pitch'),
+  });
 
   const instance = await env.COURSE_UNIT_AUDIO_WORKFLOW.create({
     id: `course-audio-${id}-${Date.now()}`,
@@ -39,6 +49,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
       courseId: id,
       provider: options.provider,
       model: options.model,
+      languageCode: voiceOptions.languageCode,
+      ssmlGender: voiceOptions.ssmlGender,
+      voiceName: voiceOptions.voiceName,
+      speakingRate: voiceOptions.speakingRate,
+      pitch: voiceOptions.pitch,
     },
   });
 

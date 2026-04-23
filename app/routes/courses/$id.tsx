@@ -20,6 +20,7 @@ import { CourseModals } from './course-details/CourseModals';
 import { CourseOverview } from './course-details/CourseOverview';
 import { CourseSidebar } from './course-details/CourseSidebar';
 import { CoursePlaylist, type PlaylistItem } from '~/components/CoursePlaylist';
+import type { GoogleTtsVoiceListItem } from '~/utils/google-tts';
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -109,6 +110,7 @@ export default function CourseDetailsPage({
   const splitModuleRawTextFetcher = useFetcher();
   const courseWorkflowFetcher = useFetcher();
   const unitAudioWorkflowFetcher = useFetcher();
+  const workflowAudioVoicesFetcher = useFetcher();
   const moduleRawTextUpdateFetcher = useFetcher();
   const unitRawTextUpdateFetcher = useFetcher();
   const publishFetcher = useFetcher();
@@ -149,6 +151,14 @@ export default function CourseDetailsPage({
   );
   const [moduleWordStyle, setModuleWordStyle] = useState('module x unit 1');
   const [lookupDistance, setLookupDistance] = useState(1000);
+  const [workflowAudioLanguageCode, setWorkflowAudioLanguageCode] =
+    useState('en-US');
+  const [workflowAudioSsmlGender, setWorkflowAudioSsmlGender] =
+    useState('FEMALE');
+  const [workflowAudioVoiceName, setWorkflowAudioVoiceName] = useState('');
+  const [workflowAudioSpeakingRate, setWorkflowAudioSpeakingRate] =
+    useState('1');
+  const [workflowAudioPitch, setWorkflowAudioPitch] = useState('0');
 
   const modulesWithRawText =
     data?.modules.filter((module) => module.rawText?.trim()) || [];
@@ -178,6 +188,8 @@ export default function CourseDetailsPage({
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
   const isRunningCourseWorkflow = courseWorkflowFetcher.state !== 'idle';
   const isRunningUnitAudioWorkflow = unitAudioWorkflowFetcher.state !== 'idle';
+  const isLoadingWorkflowAudioVoices =
+    workflowAudioVoicesFetcher.state !== 'idle';
   const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
   const isUpdatingUnitRawText = unitRawTextUpdateFetcher.state !== 'idle';
   const isDeletingCourse = deleteFetcher.state !== 'idle';
@@ -325,6 +337,11 @@ export default function CourseDetailsPage({
       {
         provider: selectedProvider,
         model: selectedModel,
+        languageCode: workflowAudioLanguageCode,
+        ssmlGender: workflowAudioSsmlGender,
+        voiceName: workflowAudioVoiceName,
+        speakingRate: workflowAudioSpeakingRate,
+        pitch: workflowAudioPitch,
       },
       {
         method: 'post',
@@ -649,6 +666,68 @@ export default function CourseDetailsPage({
   }, [courseWorkflowFetcher, showToast]);
 
   const handledUnitAudioWorkflowResult = useRef<string | null>(null);
+  const handledWorkflowAudioVoicesResult = useRef<string | null>(null);
+  const workflowAudioVoiceResult = workflowAudioVoicesFetcher.data as
+    | {
+      success?: boolean;
+      error?: string;
+      voices?: GoogleTtsVoiceListItem[];
+    }
+    | undefined;
+  const workflowAudioVoices = workflowAudioVoiceResult?.voices ?? [];
+  const selectableWorkflowAudioVoices =
+    workflowAudioSsmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
+      ? workflowAudioVoices
+      : workflowAudioVoices.filter(
+        (voice) =>
+          voice.ssmlGender === workflowAudioSsmlGender ||
+          voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
+      );
+
+  useEffect(() => {
+    if (!isUnitAudioWorkflowModalOpen || !data?.course.id) {
+      return;
+    }
+
+    workflowAudioVoicesFetcher.load(
+      `/api/courses/${data.course.id}/google-voices?languageCode=${encodeURIComponent(workflowAudioLanguageCode)}`,
+    );
+  }, [
+    data?.course.id,
+    isUnitAudioWorkflowModalOpen,
+    workflowAudioLanguageCode,
+  ]);
+
+  useEffect(() => {
+    if (
+      workflowAudioVoicesFetcher.state !== 'idle' ||
+      !workflowAudioVoicesFetcher.data
+    ) {
+      return;
+    }
+
+    const result = workflowAudioVoicesFetcher.data as {
+      success?: boolean;
+      error?: string;
+      voices?: GoogleTtsVoiceListItem[];
+    };
+    const resultKey = JSON.stringify(result);
+
+    if (
+      result.error &&
+      handledWorkflowAudioVoicesResult.current !== resultKey
+    ) {
+      handledWorkflowAudioVoicesResult.current = resultKey;
+      showToast({
+        tone: 'error',
+        message: result.error,
+      });
+    }
+  }, [
+    showToast,
+    workflowAudioVoicesFetcher.data,
+    workflowAudioVoicesFetcher.state,
+  ]);
 
   useEffect(() => {
     if (
@@ -932,7 +1011,10 @@ export default function CourseDetailsPage({
           onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
           onRunCourseWorkflow={() => setIsCourseWorkflowModalOpen(true)}
-          onRunUnitAudioWorkflow={() => setIsUnitAudioWorkflowModalOpen(true)}
+          onRunUnitAudioWorkflow={() => {
+            setWorkflowAudioVoiceName('');
+            setIsUnitAudioWorkflowModalOpen(true);
+          }}
           onOpenDeleteModal={() => setIsDeleteModalOpen(true)}
           onPublish={handlePublish}
           onUnpublish={handleUnpublish}
@@ -989,6 +1071,13 @@ export default function CourseDetailsPage({
         editableRawText={editableRawText}
         editableModuleRawText={editableModuleRawText}
         editableUnitRawText={editableUnitRawText}
+        workflowAudioLanguageCode={workflowAudioLanguageCode}
+        workflowAudioSsmlGender={workflowAudioSsmlGender}
+        workflowAudioVoiceName={workflowAudioVoiceName}
+        workflowAudioSpeakingRate={workflowAudioSpeakingRate}
+        workflowAudioPitch={workflowAudioPitch}
+        workflowAudioVoices={selectableWorkflowAudioVoices}
+        isLoadingWorkflowAudioVoices={isLoadingWorkflowAudioVoices}
         onClosePdf={() => setIsPdfModalOpen(false)}
         onLookupDistanceChange={setLookupDistance}
         onCloseGenerateCurriculumModal={() =>
@@ -1013,6 +1102,27 @@ export default function CourseDetailsPage({
         }}
         onProviderChange={handleProviderChange}
         onModelChange={setSelectedModel}
+        onWorkflowAudioLanguageCodeChange={(value) => {
+          setWorkflowAudioLanguageCode(value);
+          setWorkflowAudioVoiceName('');
+        }}
+        onWorkflowAudioSsmlGenderChange={(value) => {
+          setWorkflowAudioSsmlGender(value);
+          setWorkflowAudioVoiceName('');
+        }}
+        onWorkflowAudioVoiceNameChange={(value) => {
+          setWorkflowAudioVoiceName(value);
+
+          const nextVoice = selectableWorkflowAudioVoices.find(
+            (voice) => voice.name === value,
+          );
+
+          if (nextVoice) {
+            setWorkflowAudioSsmlGender(nextVoice.ssmlGender);
+          }
+        }}
+        onWorkflowAudioSpeakingRateChange={setWorkflowAudioSpeakingRate}
+        onWorkflowAudioPitchChange={setWorkflowAudioPitch}
         onCloseGenerateWarning={() => setIsGenerateWarningOpen(false)}
         onConfirmGenerateCurriculum={() => {
           setIsGenerateWarningOpen(false);

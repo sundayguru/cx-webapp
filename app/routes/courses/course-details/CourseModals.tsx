@@ -4,6 +4,11 @@ import {
   CURRICULUM_MODEL_OPTIONS,
   type CurriculumAiProvider,
 } from '~/utils/curriculum-options';
+import {
+  GOOGLE_TTS_GENDER_OPTIONS,
+  GOOGLE_TTS_LANGUAGE_OPTIONS,
+  type GoogleTtsVoiceListItem,
+} from '~/utils/google-tts';
 import { WarningModal } from '~/components/WarningModal';
 import type { CourseModuleWithUnits } from './types';
 
@@ -380,6 +385,19 @@ type WorkflowSelectionModalProps = {
   onProviderChange: (provider: CurriculumAiProvider) => void;
   onModelChange: (model: string) => void;
   onConfirm: () => void;
+  showVoiceSettings?: boolean;
+  audioLanguageCode?: string;
+  audioSsmlGender?: string;
+  audioVoiceName?: string;
+  audioSpeakingRate?: string;
+  audioPitch?: string;
+  availableVoices?: GoogleTtsVoiceListItem[];
+  isLoadingVoices?: boolean;
+  onAudioLanguageCodeChange?: (value: string) => void;
+  onAudioSsmlGenderChange?: (value: string) => void;
+  onAudioVoiceNameChange?: (value: string) => void;
+  onAudioSpeakingRateChange?: (value: string) => void;
+  onAudioPitchChange?: (value: string) => void;
 };
 
 const WorkflowSelectionModal = ({
@@ -394,6 +412,19 @@ const WorkflowSelectionModal = ({
   onProviderChange,
   onModelChange,
   onConfirm,
+  showVoiceSettings = false,
+  audioLanguageCode = 'en-US',
+  audioSsmlGender = 'FEMALE',
+  audioVoiceName = '',
+  audioSpeakingRate = '1',
+  audioPitch = '0',
+  availableVoices = [],
+  isLoadingVoices = false,
+  onAudioLanguageCodeChange,
+  onAudioSsmlGenderChange,
+  onAudioVoiceNameChange,
+  onAudioSpeakingRateChange,
+  onAudioPitchChange,
 }: WorkflowSelectionModalProps) => {
   return (
     <AnimatePresence>
@@ -473,6 +504,135 @@ const WorkflowSelectionModal = ({
                   )}
                 </select>
               </div>
+
+              {showVoiceSettings ? (
+                <>
+                  <div>
+                    <label
+                      htmlFor='workflow-audio-language'
+                      className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                    >
+                      Audio Language
+                    </label>
+                    <select
+                      id='workflow-audio-language'
+                      value={audioLanguageCode}
+                      onChange={(event) =>
+                        onAudioLanguageCodeChange?.(event.target.value)
+                      }
+                      className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                    >
+                      {GOOGLE_TTS_LANGUAGE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor='workflow-audio-gender'
+                      className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                    >
+                      Voice Gender
+                    </label>
+                    <select
+                      id='workflow-audio-gender'
+                      value={audioSsmlGender}
+                      onChange={(event) =>
+                        onAudioSsmlGenderChange?.(event.target.value)
+                      }
+                      className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                    >
+                      {GOOGLE_TTS_GENDER_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor='workflow-audio-voice'
+                      className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                    >
+                      Voice Name
+                    </label>
+                    <select
+                      id='workflow-audio-voice'
+                      value={audioVoiceName}
+                      onChange={(event) =>
+                        onAudioVoiceNameChange?.(event.target.value)
+                      }
+                      disabled={isLoadingVoices || availableVoices.length === 0}
+                      className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                    >
+                      <option value=''>
+                        {isLoadingVoices
+                          ? 'Loading Google voices...'
+                          : availableVoices.length > 0
+                            ? 'Select a Google voice'
+                            : 'No Google voices found'}
+                      </option>
+                      {availableVoices.map((voice) => (
+                        <option key={voice.name} value={voice.name}>
+                          {`${voice.name} • ${voice.ssmlGender.toLowerCase()} • ${voice.naturalSampleRateHertz}Hz`}
+                        </option>
+                      ))}
+                    </select>
+                    <p className='mt-2 text-xs text-black/45'>
+                      Voice names are loaded from Google Text-to-Speech for the
+                      selected language.
+                    </p>
+                  </div>
+
+                  <div className='grid grid-cols-2 gap-4'>
+                    <div>
+                      <label
+                        htmlFor='workflow-audio-speaking-rate'
+                        className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                      >
+                        Speaking Rate
+                      </label>
+                      <input
+                        id='workflow-audio-speaking-rate'
+                        type='number'
+                        min='0.25'
+                        max='4'
+                        step='0.05'
+                        value={audioSpeakingRate}
+                        onChange={(event) =>
+                          onAudioSpeakingRateChange?.(event.target.value)
+                        }
+                        className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                      />
+                    </div>
+
+                    <div>
+                      <label
+                        htmlFor='workflow-audio-pitch'
+                        className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                      >
+                        Pitch
+                      </label>
+                      <input
+                        id='workflow-audio-pitch'
+                        type='number'
+                        min='-20'
+                        max='20'
+                        step='0.5'
+                        value={audioPitch}
+                        onChange={(event) =>
+                          onAudioPitchChange?.(event.target.value)
+                        }
+                        className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                      />
+                    </div>
+                  </div>
+                </>
+              ) : null}
             </div>
 
             <div className='mt-8 flex items-center justify-end gap-3'>
@@ -990,6 +1150,13 @@ type CourseModalsProps = {
   editableRawText: string;
   editableModuleRawText: string;
   editableUnitRawText: string;
+  workflowAudioLanguageCode: string;
+  workflowAudioSsmlGender: string;
+  workflowAudioVoiceName: string;
+  workflowAudioSpeakingRate: string;
+  workflowAudioPitch: string;
+  workflowAudioVoices: GoogleTtsVoiceListItem[];
+  isLoadingWorkflowAudioVoices: boolean;
   onClosePdf: () => void;
   onCloseGenerateCurriculumModal: () => void;
   onConfirmGenerateCurriculumSelection: () => void;
@@ -1008,6 +1175,11 @@ type CourseModalsProps = {
   onConfirmUnitAudioWorkflow: () => void;
   onProviderChange: (provider: CurriculumAiProvider) => void;
   onModelChange: (model: string) => void;
+  onWorkflowAudioLanguageCodeChange: (value: string) => void;
+  onWorkflowAudioSsmlGenderChange: (value: string) => void;
+  onWorkflowAudioVoiceNameChange: (value: string) => void;
+  onWorkflowAudioSpeakingRateChange: (value: string) => void;
+  onWorkflowAudioPitchChange: (value: string) => void;
   onModuleChange: (moduleId: string) => void;
   onGenerateUnits: () => void;
   onCloseExtractWarning: () => void;
@@ -1060,6 +1232,13 @@ export const CourseModals = ({
   editableRawText,
   editableModuleRawText,
   editableUnitRawText,
+  workflowAudioLanguageCode,
+  workflowAudioSsmlGender,
+  workflowAudioVoiceName,
+  workflowAudioSpeakingRate,
+  workflowAudioPitch,
+  workflowAudioVoices,
+  isLoadingWorkflowAudioVoices,
   onClosePdf,
   onCloseGenerateCurriculumModal,
   onConfirmGenerateCurriculumSelection,
@@ -1078,6 +1257,11 @@ export const CourseModals = ({
   onConfirmUnitAudioWorkflow,
   onProviderChange,
   onModelChange,
+  onWorkflowAudioLanguageCodeChange,
+  onWorkflowAudioSsmlGenderChange,
+  onWorkflowAudioVoiceNameChange,
+  onWorkflowAudioSpeakingRateChange,
+  onWorkflowAudioPitchChange,
   onModuleChange,
   onGenerateUnits,
   onCloseExtractWarning,
@@ -1185,6 +1369,19 @@ export const CourseModals = ({
         onProviderChange={onProviderChange}
         onModelChange={onModelChange}
         onConfirm={onConfirmUnitAudioWorkflow}
+        showVoiceSettings
+        audioLanguageCode={workflowAudioLanguageCode}
+        audioSsmlGender={workflowAudioSsmlGender}
+        audioVoiceName={workflowAudioVoiceName}
+        audioSpeakingRate={workflowAudioSpeakingRate}
+        audioPitch={workflowAudioPitch}
+        availableVoices={workflowAudioVoices}
+        isLoadingVoices={isLoadingWorkflowAudioVoices}
+        onAudioLanguageCodeChange={onWorkflowAudioLanguageCodeChange}
+        onAudioSsmlGenderChange={onWorkflowAudioSsmlGenderChange}
+        onAudioVoiceNameChange={onWorkflowAudioVoiceNameChange}
+        onAudioSpeakingRateChange={onWorkflowAudioSpeakingRateChange}
+        onAudioPitchChange={onWorkflowAudioPitchChange}
       />
 
       <WarningModal
