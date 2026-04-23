@@ -108,50 +108,52 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
     filters.mine;
 
   return (
-    <div className='mx-auto max-w-7xl'>
-      <div className='mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end'>
-        <div>
-          <h1 className='mb-2 font-serif text-5xl font-light text-[#1a1a1a]'>
-            Explore Courses
-          </h1>
-          <p className='font-serif text-lg text-black/40 italic'>
-            Curate and manage your collection of academic resources.
-          </p>
-        </div>
+    <div className='mx-auto max-w-7xl px-0 sm:px-4'>
+      <div className='px-4 sm:px-0'>
+        <div className='mb-12 flex flex-col justify-between gap-6 md:flex-row md:items-end'>
+          <div>
+            <h1 className='mb-2 font-serif text-5xl font-light text-[#1a1a1a]'>
+              Explore Courses
+            </h1>
+            <p className='font-serif text-lg text-black/40 italic'>
+              Curate and manage your collection of academic resources.
+            </p>
+          </div>
 
-        <div className='flex items-center gap-3'>
-          <form className='relative' onSubmit={handleSearch}>
-            <SearchIcon
-              className='absolute top-1/2 left-4 -translate-y-1/2 text-black/30'
-              size={18}
-            />
-            <input
-              type='text'
-              name='q'
-              defaultValue={filters.search}
-              placeholder='Search collection...'
-              className='w-full rounded-[20px] border border-black/5 bg-white py-3.5 pr-4 pl-11 shadow-sm transition-all outline-none placeholder:text-black/20 focus:ring-2 focus:ring-[#5A5A40] md:w-80'
-            />
-          </form>
+          <div className='flex items-center gap-3'>
+            <form className='relative' onSubmit={handleSearch}>
+              <SearchIcon
+                className='absolute top-1/2 left-4 -translate-y-1/2 text-black/30'
+                size={18}
+              />
+              <input
+                type='text'
+                name='q'
+                defaultValue={filters.search}
+                placeholder='Search collection...'
+                className='w-full rounded-[20px] border border-black/5 bg-white py-3.5 pr-4 pl-11 shadow-sm transition-all outline-none placeholder:text-black/20 focus:ring-2 focus:ring-[#5A5A40] md:w-80'
+              />
+            </form>
 
-          <button
-            onClick={() => setShowFilters(!showFilters)}
-            className={`flex h-12 w-12 items-center justify-center rounded-[20px] border transition-all ${
-              showFilters
-                ? 'border-[#5A5A40] bg-[#5A5A40] text-white'
-                : 'border-black/5 bg-white text-black/60 shadow-sm hover:border-black/10'
-            }`}
-          >
-            <Filter size={18} />
-          </button>
+            <button
+              onClick={() => setShowFilters(!showFilters)}
+              className={`flex h-12 w-12 items-center justify-center rounded-[20px] border transition-all ${
+                showFilters
+                  ? 'border-[#5A5A40] bg-[#5A5A40] text-white'
+                  : 'border-black/5 bg-white text-black/60 shadow-sm hover:border-black/10'
+              }`}
+            >
+              <Filter size={18} />
+            </button>
 
-          <Link
-            to='/create'
-            className='flex items-center gap-2 rounded-[20px] bg-[#5A5A40] px-6 py-4 font-bold text-white shadow-xl shadow-[#5A5A40]/20 transition-all hover:-translate-y-1 hover:bg-[#4a4a35] active:scale-95'
-          >
-            <PlusCircle size={20} />
-            <span className='hidden sm:inline'>New Course</span>
-          </Link>
+            <Link
+              to='/create'
+              className='flex items-center gap-2 rounded-[20px] bg-[#5A5A40] px-6 py-4 font-bold text-white shadow-xl shadow-[#5A5A40]/20 transition-all hover:-translate-y-1 hover:bg-[#4a4a35] active:scale-95'
+            >
+              <PlusCircle size={20} />
+              <span className='hidden sm:inline'>New Course</span>
+            </Link>
+          </div>
         </div>
       </div>
 

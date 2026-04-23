@@ -957,7 +957,7 @@ export default function CourseDetailsPage({
   const hasPlaylist = playlistItems.length > 0;
 
   return (
-    <div className='mx-auto max-w-[1400px] px-4 py-8'>
+    <div className='mx-auto max-w-[1400px] px-0 py-8 sm:px-4'>
       <div className='grid grid-cols-1 gap-8 xl:grid-cols-[minmax(0,1.65fr)_380px]'>
         <CourseOverview
           course={course}

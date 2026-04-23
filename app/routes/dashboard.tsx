@@ -177,18 +177,20 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className='space-y-8 p-6'>
-      <motion.div
-        initial={{ opacity: 0, y: 18 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <h1 className='mb-2 font-serif text-4xl text-[#1a1a1a]'>
-          Welcome back, {user.name?.split(' ')[0] || 'Learner'}!
-        </h1>
-      </motion.div>
-      <p className='-mt-4 text-lg text-black/55'>
-        Continue your learning journey
-      </p>
+    <div className='mx-auto max-w-[1400px] px-0 py-8 sm:px-4'>
+      <div className='px-4 sm:px-0'>
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          <h1 className='mb-2 font-serif text-4xl text-[#1a1a1a]'>
+            Welcome back, {user.name?.split(' ')[0] || 'Learner'}!
+          </h1>
+        </motion.div>
+        <p className='mb-8 text-lg text-black/55'>
+          Continue your learning journey
+        </p>
+      </div>
 
       <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7'>
         <StatCard
@@ -237,143 +239,145 @@ export default function DashboardPage() {
         />
       </div>
 
-      <section>
-        <div className='rounded-2xl border border-black/5 bg-white p-6 shadow-sm'>
-          <div className='mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
-            <div className='flex items-center gap-2'>
-              <BarChart3 size={22} className='text-[#5A5A40]' />
-              <h2 className='font-serif text-2xl text-[#1a1a1a]'>
-                Accuracy By Unit
+      <div className='space-y-12 px-4 sm:px-0'>
+        <section>
+          <div className='rounded-2xl border border-black/5 bg-white p-6 shadow-sm'>
+            <div className='mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
+              <div className='flex items-center gap-2'>
+                <BarChart3 size={22} className='text-[#5A5A40]' />
+                <h2 className='font-serif text-2xl text-[#1a1a1a]'>
+                  Accuracy By Unit
+                </h2>
+              </div>
+              <div className='w-full max-w-sm'>
+                <label className='mb-2 block text-[10px] font-bold tracking-[0.2em] text-black/35 uppercase'>
+                  Course Filter
+                </label>
+                <select
+                  value={selectedCourseId}
+                  onChange={handleCourseFilterChange}
+                  className='w-full rounded-2xl border border-black/5 bg-[#f7f6ef] px-4 py-3 text-sm font-medium text-[#1a1a1a] transition-all outline-none focus:ring-2 focus:ring-[#5A5A40]'
+                >
+                  <option value=''>All Courses</option>
+                  {courseOptions.map((courseOption) => (
+                    <option key={courseOption.id} value={courseOption.id}>
+                      {courseOption.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+            <AccuracyChart
+              accuracyHistory={accuracyHistory}
+              selectedCourseId={selectedCourseId}
+            />
+          </div>
+        </section>
+
+        {createdCourses.length > 0 && (
+          <section>
+            <div className='mb-4 flex items-center justify-between'>
+              <h2 className='flex items-center gap-2 font-serif text-2xl text-[#1a1a1a]'>
+                <FolderOpen size={24} className='text-[#5A5A40]' />
+                My Contributions
               </h2>
-            </div>
-            <div className='w-full max-w-sm'>
-              <label className='mb-2 block text-[10px] font-bold tracking-[0.2em] text-black/35 uppercase'>
-                Course Filter
-              </label>
-              <select
-                value={selectedCourseId}
-                onChange={handleCourseFilterChange}
-                className='w-full rounded-2xl border border-black/5 bg-[#f7f6ef] px-4 py-3 text-sm font-medium text-[#1a1a1a] transition-all outline-none focus:ring-2 focus:ring-[#5A5A40]'
-              >
-                <option value=''>All Courses</option>
-                {courseOptions.map((courseOption) => (
-                  <option key={courseOption.id} value={courseOption.id}>
-                    {courseOption.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-          <AccuracyChart
-            accuracyHistory={accuracyHistory}
-            selectedCourseId={selectedCourseId}
-          />
-        </div>
-      </section>
-
-      {createdCourses.length > 0 && (
-        <section>
-          <div className='mb-4 flex items-center justify-between'>
-            <h2 className='flex items-center gap-2 font-serif text-2xl text-[#1a1a1a]'>
-              <FolderOpen size={24} className='text-[#5A5A40]' />
-              My Contributions
-            </h2>
-            <Link
-              to='/create'
-              className='flex items-center gap-1 text-sm font-medium text-[#5A5A40] transition-colors hover:text-[#4a4a35]'
-            >
-              Create New <ArrowRight size={16} />
-            </Link>
-          </div>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-            {createdCourses.slice(0, 6).map((courseItem) => (
               <Link
-                key={courseItem.course.id}
-                to={`/courses/${courseItem.course.id}`}
-                className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
+                to='/create'
+                className='flex items-center gap-1 text-sm font-medium text-[#5A5A40] transition-colors hover:text-[#4a4a35]'
               >
-                {courseItem.course.thumbnailKey && (
-                  <div className='absolute inset-0 opacity-5'>
-                    <img
-                      src={`/api/course/serve/${courseItem.course.thumbnailKey}`}
-                      alt=''
-                      className='h-full w-full object-cover'
-                    />
-                  </div>
-                )}
-                <div className='relative'>
-                  <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
-                    {courseItem.course.code} • {courseItem.course.category}
-                  </p>
-                  <h3 className='mb-2 line-clamp-2 font-medium text-[#1a1a1a]'>
-                    {courseItem.course.title}
-                  </h3>
-                  <div className='flex items-center gap-2 text-xs text-black/40'>
-                    <span
-                      className={`rounded-full px-2 py-1 ${
-                        courseItem.course.status === 'published'
-                          ? 'bg-green-100 text-green-700'
-                          : 'bg-yellow-100 text-yellow-700'
-                      }`}
-                    >
-                      {courseItem.course.status}
-                    </span>
-                    <span className='rounded-full bg-black/5 px-2 py-1'>
-                      {courseItem.course.level}
-                    </span>
-                  </div>
-                </div>
+                Create New <ArrowRight size={16} />
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              {createdCourses.slice(0, 6).map((courseItem) => (
+                <Link
+                  key={courseItem.course.id}
+                  to={`/courses/${courseItem.course.id}`}
+                  className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
+                >
+                  {courseItem.course.thumbnailKey && (
+                    <div className='absolute inset-0 opacity-5'>
+                      <img
+                        src={`/api/course/serve/${courseItem.course.thumbnailKey}`}
+                        alt=''
+                        className='h-full w-full object-cover'
+                      />
+                    </div>
+                  )}
+                  <div className='relative'>
+                    <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
+                      {courseItem.course.code} • {courseItem.course.category}
+                    </p>
+                    <h3 className='mb-2 line-clamp-2 font-medium text-[#1a1a1a]'>
+                      {courseItem.course.title}
+                    </h3>
+                    <div className='flex items-center gap-2 text-xs text-black/40'>
+                      <span
+                        className={`rounded-full px-2 py-1 ${
+                          courseItem.course.status === 'published'
+                            ? 'bg-green-100 text-green-700'
+                            : 'bg-yellow-100 text-yellow-700'
+                        }`}
+                      >
+                        {courseItem.course.status}
+                      </span>
+                      <span className='rounded-full bg-black/5 px-2 py-1'>
+                        {courseItem.course.level}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
 
-      {enrolledCourses.length > 0 && (
-        <section>
-          <div className='mb-4 flex items-center justify-between'>
-            <h2 className='font-serif text-2xl text-[#1a1a1a]'>My Courses</h2>
-            <Link
-              to='/courses'
-              className='flex items-center gap-1 text-sm font-medium text-[#5A5A40] transition-colors hover:text-[#4a4a35]'
-            >
-              Browse More <ArrowRight size={16} />
-            </Link>
-          </div>
-          <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
-            {enrolledCourses.slice(0, 6).map((enrollment) => (
+        {enrolledCourses.length > 0 && (
+          <section>
+            <div className='mb-4 flex items-center justify-between'>
+              <h2 className='font-serif text-2xl text-[#1a1a1a]'>My Courses</h2>
               <Link
-                key={enrollment.id}
-                to={`/courses/${enrollment.course.id}`}
-                className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
+                to='/courses'
+                className='flex items-center gap-1 text-sm font-medium text-[#5A5A40] transition-colors hover:text-[#4a4a35]'
               >
-                {enrollment.course.thumbnailKey && (
-                  <div className='absolute inset-0 opacity-5'>
-                    <img
-                      src={`/api/course/serve/${enrollment.course.thumbnailKey}`}
-                      alt=''
-                      className='h-full w-full object-cover'
-                    />
-                  </div>
-                )}
-                <div className='relative'>
-                  <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
-                    {enrollment.course.code} • {enrollment.course.category}
-                  </p>
-                  <h3 className='mb-2 line-clamp-2 font-medium text-[#1a1a1a]'>
-                    {enrollment.course.title}
-                  </h3>
-                  <div className='flex items-center gap-2 text-xs text-black/40'>
-                    <span className='rounded-full bg-black/5 px-2 py-1'>
-                      {enrollment.course.level}
-                    </span>
-                  </div>
-                </div>
+                Browse More <ArrowRight size={16} />
               </Link>
-            ))}
-          </div>
-        </section>
-      )}
+            </div>
+            <div className='grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3'>
+              {enrolledCourses.slice(0, 6).map((enrollment) => (
+                <Link
+                  key={enrollment.id}
+                  to={`/courses/${enrollment.course.id}`}
+                  className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
+                >
+                  {enrollment.course.thumbnailKey && (
+                    <div className='absolute inset-0 opacity-5'>
+                      <img
+                        src={`/api/course/serve/${enrollment.course.thumbnailKey}`}
+                        alt=''
+                        className='h-full w-full object-cover'
+                      />
+                    </div>
+                  )}
+                  <div className='relative'>
+                    <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
+                      {enrollment.course.code} • {enrollment.course.category}
+                    </p>
+                    <h3 className='mb-2 line-clamp-2 font-medium text-[#1a1a1a]'>
+                      {enrollment.course.title}
+                    </h3>
+                    <div className='flex items-center gap-2 text-xs text-black/40'>
+                      <span className='rounded-full bg-black/5 px-2 py-1'>
+                        {enrollment.course.level}
+                      </span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
 
       {bookmarkedUnits.length > 0 && (
         <section>

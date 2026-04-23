@@ -10,6 +10,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Menu, X } from 'lucide-react';
 
 type NavItem = {
   to: string;
@@ -31,6 +32,7 @@ export const Header = () => {
   const { user } = useUser();
   const location = useLocation();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [showMobileMenu, setShowMobileMenu] = useState(false);
 
   const isActive = (path: string) => {
     if (path === '/') {
@@ -52,15 +54,25 @@ export const Header = () => {
     <header className='sticky top-0 z-50 border-b border-black/5 bg-white shadow-sm'>
       <div className='mx-auto max-w-7xl px-4 sm:px-6 lg:px-8'>
         <div className='flex h-16 items-center justify-between'>
-          {/* Logo */}
-          <Link to='/' className='flex items-center gap-3'>
-            <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]'>
-              <GraduationCap className='h-6 w-6 text-white' />
-            </div>
-            <img src='/logo.svg' className='w-30' />
-          </Link>
+          {/* Left Section: Logo & Mobile Toggle */}
+          <div className='flex items-center gap-4'>
+            <button
+              onClick={() => setShowMobileMenu(!showMobileMenu)}
+              className='flex h-10 w-10 items-center justify-center rounded-lg text-black/60 transition-colors hover:bg-black/5 hover:text-black/80 md:hidden'
+              aria-label='Toggle menu'
+            >
+              {showMobileMenu ? <X size={24} /> : <Menu size={24} />}
+            </button>
 
-          {/* Main Navigation */}
+            <Link to='/' className='flex items-center gap-3'>
+              <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]'>
+                <GraduationCap className='h-6 w-6 text-white' />
+              </div>
+              <img src='/logo.svg' className='hidden w-30 xs:block' alt='CourseX' />
+            </Link>
+          </div>
+
+          {/* Main Navigation - Desktop */}
           <nav className='hidden items-center gap-1 md:flex'>
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -153,6 +165,59 @@ export const Header = () => {
           </div>
         </div>
       </div>
+
+      {/* Mobile Navigation Menu */}
+      {showMobileMenu && (
+        <div className='border-t border-black/5 bg-white md:hidden'>
+          <nav className='flex flex-col p-4'>
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active = isActive(item.to);
+              return (
+                <Link
+                  key={item.to}
+                  to={item.to}
+                  onClick={() => setShowMobileMenu(false)}
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-colors ${
+                    active
+                      ? 'bg-[#5A5A40]/10 text-[#5A5A40]'
+                      : 'text-black/60 hover:bg-black/5 hover:text-black/80'
+                  }`}
+                >
+                  <Icon size={20} />
+                  {item.label}
+                </Link>
+              );
+            })}
+            {user?.isAdmin && (
+              <div className='mt-4 border-t border-black/5 pt-4'>
+                <p className='mb-2 px-4 text-[10px] font-bold tracking-widest text-black/40 uppercase'>
+                  Admin
+                </p>
+                {adminNavItems.map((item) => {
+                  const Icon = item.icon;
+                  const active = isActive(item.to);
+                  return (
+                    <Link
+                      key={item.to}
+                      to={item.to}
+                      onClick={() => setShowMobileMenu(false)}
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-colors ${
+                        active
+                          ? 'bg-purple-100 text-purple-700'
+                          : 'text-purple-600 hover:bg-purple-50 hover:text-purple-700'
+                      }`}
+                    >
+                      <Icon size={20} />
+                      {item.label}
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 };
