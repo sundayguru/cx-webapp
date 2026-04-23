@@ -81,4 +81,14 @@ export type CourseContentProps = {
   onSplitModuleRawText: (moduleId: string) => void;
   onOpenModuleRawTextModal: (moduleId: string, rawText: string) => void;
   onOpenUnitRawTextModal: (unitId: string, rawText: string) => void;
+  onRequestDeleteModule: (
+    moduleId: string,
+    moduleTitle: string,
+    unitsCount: number,
+  ) => void;
+  onRequestDeleteUnit: (
+    unitId: string,
+    unitTitle: string,
+    moduleTitle: string,
+  ) => void;
 };

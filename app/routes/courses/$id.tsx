@@ -22,6 +22,20 @@ import { CourseSidebar } from './course-details/CourseSidebar';
 import { CoursePlaylist, type PlaylistItem } from '~/components/CoursePlaylist';
 import type { GoogleTtsVoiceListItem } from '~/utils/google-tts';
 
+type PendingCurriculumDelete =
+  | {
+      type: 'module';
+      id: string;
+      title: string;
+      unitsCount: number;
+    }
+  | {
+      type: 'unit';
+      id: string;
+      title: string;
+      moduleTitle: string;
+    };
+
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
   const courseId = (params as Record<string, string>).id;
@@ -114,6 +128,7 @@ export default function CourseDetailsPage({
   const workflowAudioVoicesFetcher = useFetcher();
   const moduleRawTextUpdateFetcher = useFetcher();
   const unitRawTextUpdateFetcher = useFetcher();
+  const curriculumDeleteFetcher = useFetcher();
   const publishFetcher = useFetcher();
   const deleteFetcher = useFetcher();
 
@@ -138,6 +153,8 @@ export default function CourseDetailsPage({
     useState(false);
   const [isUnitRawTextModalOpen, setIsUnitRawTextModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [pendingCurriculumDelete, setPendingCurriculumDelete] =
+    useState<PendingCurriculumDelete | null>(null);
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
   const [editingUnitId, setEditingUnitId] = useState<string | null>(null);
   const [editableRawText, setEditableRawText] = useState(
@@ -179,6 +196,9 @@ export default function CourseDetailsPage({
   const handledTagModuleUnitsResult = useRef<string | null>(null);
   const handledTagRawTextResult = useRef<string | null>(null);
   const handledSplitRawTextResult = useRef<string | null>(null);
+  const pendingCurriculumDeleteRef = useRef<PendingCurriculumDelete | null>(
+    null,
+  );
 
   const isGenerating = curriculumFetcher.state !== 'idle';
   const isGeneratingUnits = unitGenerationFetcher.state !== 'idle';
@@ -195,6 +215,7 @@ export default function CourseDetailsPage({
     workflowAudioVoicesFetcher.state !== 'idle';
   const isUpdatingModuleRawText = moduleRawTextUpdateFetcher.state !== 'idle';
   const isUpdatingUnitRawText = unitRawTextUpdateFetcher.state !== 'idle';
+  const isDeletingCurriculumItem = curriculumDeleteFetcher.state !== 'idle';
   const isDeletingCourse = deleteFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
@@ -255,6 +276,34 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/delete`,
+      },
+    );
+  };
+
+  const handleDeleteCurriculumItem = () => {
+    if (!pendingCurriculumDelete) {
+      return;
+    }
+
+    pendingCurriculumDeleteRef.current = pendingCurriculumDelete;
+    setPendingCurriculumDelete(null);
+
+    if (pendingCurriculumDelete.type === 'module') {
+      curriculumDeleteFetcher.submit(
+        { moduleId: pendingCurriculumDelete.id },
+        {
+          method: 'post',
+          action: `/api/courses/${data?.course.id}/delete-module`,
+        },
+      );
+      return;
+    }
+
+    curriculumDeleteFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/units/${pendingCurriculumDelete.id}/delete`,
       },
     );
   };
@@ -517,6 +566,36 @@ export default function CourseDetailsPage({
       }
     }
   }, [rawTextUpdateFetcher, showToast]);
+
+  useEffect(() => {
+    if (
+      curriculumDeleteFetcher.state !== 'idle' ||
+      !curriculumDeleteFetcher.data
+    ) {
+      return;
+    }
+
+    const result = curriculumDeleteFetcher.data as {
+      success?: boolean;
+      error?: string;
+    };
+
+    if (result.success) {
+      showToast({
+        tone: 'success',
+        message:
+          pendingCurriculumDeleteRef.current?.type === 'module'
+            ? 'Module deleted successfully'
+            : 'Unit deleted successfully',
+      });
+      window.setTimeout(() => window.location.reload(), 1200);
+    } else if (result.error) {
+      showToast({
+        tone: 'error',
+        message: result.error,
+      });
+    }
+  }, [curriculumDeleteFetcher.data, curriculumDeleteFetcher.state, showToast]);
 
   useEffect(() => {
     if (
@@ -1078,6 +1157,22 @@ export default function CourseDetailsPage({
           onSplitModuleRawText={handleSplitModuleRawTextIntoUnits}
           onOpenModuleRawTextModal={openModuleRawTextModal}
           onOpenUnitRawTextModal={openUnitRawTextModal}
+          onRequestDeleteModule={(moduleId, moduleTitle, unitsCount) =>
+            setPendingCurriculumDelete({
+              type: 'module',
+              id: moduleId,
+              title: moduleTitle,
+              unitsCount,
+            })
+          }
+          onRequestDeleteUnit={(unitId, unitTitle, moduleTitle) =>
+            setPendingCurriculumDelete({
+              type: 'unit',
+              id: unitId,
+              title: unitTitle,
+              moduleTitle,
+            })
+          }
         />
       </div>
 
@@ -1221,6 +1316,27 @@ export default function CourseDetailsPage({
         onClose={() => setIsDeleteModalOpen(false)}
         onConfirm={handleDeleteCourse}
         isLoading={isDeletingCourse}
+        confirmVariant='danger'
+      />
+      <ConfirmModal
+        isOpen={pendingCurriculumDelete !== null}
+        title={
+          pendingCurriculumDelete?.type === 'module'
+            ? `Delete module "${pendingCurriculumDelete.title}"?`
+            : `Delete unit "${pendingCurriculumDelete?.title ?? ''}"?`
+        }
+        description={
+          pendingCurriculumDelete?.type === 'module'
+            ? `This will permanently delete the module and its ${pendingCurriculumDelete.unitsCount} unit${pendingCurriculumDelete.unitsCount === 1 ? '' : 's'}. This action cannot be undone.`
+            : `This will permanently delete the unit from ${pendingCurriculumDelete?.moduleTitle ?? 'this module'}. This action cannot be undone.`
+        }
+        onClose={() => {
+          if (!isDeletingCurriculumItem) {
+            setPendingCurriculumDelete(null);
+          }
+        }}
+        onConfirm={handleDeleteCurriculumItem}
+        isLoading={isDeletingCurriculumItem}
         confirmVariant='danger'
       />
     </div>

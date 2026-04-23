@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Lock, MessageSquare, MoreVertical, Play } from 'lucide-react';
+import { Lock, MessageSquare, MoreVertical, Play, Trash2 } from 'lucide-react';
 import type { CourseContentProps } from './types';
 
 export const CourseContent = ({
@@ -13,6 +13,8 @@ export const CourseContent = ({
   onSplitModuleRawText,
   onOpenModuleRawTextModal,
   onOpenUnitRawTextModal,
+  onRequestDeleteModule,
+  onRequestDeleteUnit,
 }: CourseContentProps) => {
   const [openMenuModuleId, setOpenMenuModuleId] = useState<string | null>(null);
   const [openMenuUnitId, setOpenMenuUnitId] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export const CourseContent = ({
           {modules.map((module, moduleIndex) => (
             <article
               key={module.id}
-              className='overflow-hidden rounded-[24px] border border-black/5 bg-[#fbfbf8] shadow-sm'
+              className='relative overflow-visible rounded-[24px] border border-black/5 bg-[#fbfbf8] shadow-sm'
             >
               <div className='flex items-center justify-between gap-4 border-b border-black/5 bg-white px-6 py-5'>
                 <div>
@@ -64,7 +66,7 @@ export const CourseContent = ({
                   ) : null}
                 </div>
                 <div className='flex items-center gap-3'>
-                  {isInstructor && module.rawText?.trim() ? (
+                  {isInstructor ? (
                     <div className='relative'>
                       <button
                         onClick={() => toggleMenu(module.id)}
@@ -74,29 +76,47 @@ export const CourseContent = ({
                       </button>
                       {openMenuModuleId === module.id && (
                         <div className='absolute top-10 right-0 z-20 min-w-[160px] rounded-xl border border-black/10 bg-white py-1 shadow-lg'>
+                          {module.rawText?.trim() ? (
+                            <>
+                              <button
+                                onClick={() => {
+                                  onOpenModuleRawTextModal(
+                                    module.id,
+                                    module.rawText || '',
+                                  );
+                                  setOpenMenuModuleId(null);
+                                }}
+                                className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                              >
+                                Edit Raw Text
+                              </button>
+                              <button
+                                onClick={() => {
+                                  onSplitModuleRawText(module.id);
+                                  setOpenMenuModuleId(null);
+                                }}
+                                disabled={isSplittingModuleRawText}
+                                className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                              >
+                                {isSplittingModuleRawText
+                                  ? 'Splitting...'
+                                  : 'Split into Units'}
+                              </button>
+                            </>
+                          ) : null}
                           <button
                             onClick={() => {
-                              onOpenModuleRawTextModal(
+                              onRequestDeleteModule(
                                 module.id,
-                                module.rawText || '',
+                                module.title,
+                                module.units.length,
                               );
                               setOpenMenuModuleId(null);
                             }}
-                            className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
+                            className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50'
                           >
-                            Edit Raw Text
-                          </button>
-                          <button
-                            onClick={() => {
-                              onSplitModuleRawText(module.id);
-                              setOpenMenuModuleId(null);
-                            }}
-                            disabled={isSplittingModuleRawText}
-                            className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
-                          >
-                            {isSplittingModuleRawText
-                              ? 'Splitting...'
-                              : 'Split into Units'}
+                            <Trash2 size={14} />
+                            Delete Module
                           </button>
                         </div>
                       )}
@@ -173,6 +193,22 @@ export const CourseContent = ({
                                 className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
                               >
                                 Edit Raw Text
+                              </button>
+                              <button
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  e.stopPropagation();
+                                  onRequestDeleteUnit(
+                                    unit.id,
+                                    unit.title,
+                                    module.title,
+                                  );
+                                  setOpenMenuUnitId(null);
+                                }}
+                                className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50'
+                              >
+                                <Trash2 size={14} />
+                                Delete Unit
                               </button>
                             </div>
                           ) : null}

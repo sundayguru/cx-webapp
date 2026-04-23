@@ -59,6 +59,10 @@ export default [
       'routes/api/courses/update-raw-text.tsx',
     ),
     route(
+      'api/courses/:id/delete-module',
+      'routes/api/courses/$id.delete-module.tsx',
+    ),
+    route(
       'api/courses/:id/tag-raw-text',
       'routes/api/courses/tag-raw-text.tsx',
     ),
@@ -113,6 +117,10 @@ export default [
     route(
       'api/courses/:id/units/:unitId/upload-media',
       'routes/api/courses/$id.units.$unitId.upload-media.tsx',
+    ),
+    route(
+      'api/courses/:id/units/:unitId/delete',
+      'routes/api/courses/$id.units.$unitId.delete.tsx',
     ),
     route(
       'api/courses/:id/units/:unitId/set-complete',

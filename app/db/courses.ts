@@ -555,6 +555,82 @@ export const updateUnitRawText = async (unitId: string, rawText: string) => {
   }
 };
 
+export const deleteModuleById = async (moduleId: string) => {
+  try {
+    const db = getDb();
+    const [module] = await db
+      .select()
+      .from(modules)
+      .where(eq(modules.id, moduleId))
+      .limit(1);
+
+    if (!module) {
+      return false;
+    }
+
+    await db.delete(modules).where(eq(modules.id, moduleId));
+
+    const remainingModules = await db
+      .select({ id: modules.id })
+      .from(modules)
+      .where(eq(modules.courseId, module.courseId))
+      .orderBy(asc(modules.order));
+
+    for (const [index, remainingModule] of remainingModules.entries()) {
+      await db
+        .update(modules)
+        .set({
+          order: index,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(modules.id, remainingModule.id));
+    }
+
+    return true;
+  } catch (e) {
+    logError(e, 'Error deleting module');
+    return false;
+  }
+};
+
+export const deleteUnitById = async (unitId: string) => {
+  try {
+    const db = getDb();
+    const [unit] = await db
+      .select()
+      .from(units)
+      .where(eq(units.id, unitId))
+      .limit(1);
+
+    if (!unit) {
+      return false;
+    }
+
+    await db.delete(units).where(eq(units.id, unitId));
+
+    const remainingUnits = await db
+      .select({ id: units.id })
+      .from(units)
+      .where(eq(units.moduleId, unit.moduleId))
+      .orderBy(asc(units.order));
+
+    for (const [index, remainingUnit] of remainingUnits.entries()) {
+      await db
+        .update(units)
+        .set({
+          order: index,
+          updatedAt: new Date().toISOString(),
+        })
+        .where(eq(units.id, remainingUnit.id));
+    }
+
+    return true;
+  } catch (e) {
+    logError(e, 'Error deleting unit');
+    return false;
+  }
+};
+
 export const setUnitComplete = async (unitId: string, isComplete: boolean) => {
   try {
     const db = getDb();
