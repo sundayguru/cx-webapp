@@ -24,17 +24,17 @@ import type { GoogleTtsVoiceListItem } from '~/utils/google-tts';
 
 type PendingCurriculumDelete =
   | {
-      type: 'module';
-      id: string;
-      title: string;
-      unitsCount: number;
-    }
+    type: 'module';
+    id: string;
+    title: string;
+    unitsCount: number;
+  }
   | {
-      type: 'unit';
-      id: string;
-      title: string;
-      moduleTitle: string;
-    };
+    type: 'unit';
+    id: string;
+    title: string;
+    moduleTitle: string;
+  };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -856,20 +856,20 @@ export default function CourseDetailsPage({
   const handledWorkflowAudioVoicesResult = useRef<string | null>(null);
   const workflowAudioVoiceResult = workflowAudioVoicesFetcher.data as
     | {
-        success?: boolean;
-        error?: string;
-        voices?: GoogleTtsVoiceListItem[];
-      }
+      success?: boolean;
+      error?: string;
+      voices?: GoogleTtsVoiceListItem[];
+    }
     | undefined;
   const workflowAudioVoices = workflowAudioVoiceResult?.voices ?? [];
   const selectableWorkflowAudioVoices =
     workflowAudioSsmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
       ? workflowAudioVoices
       : workflowAudioVoices.filter(
-          (voice) =>
-            voice.ssmlGender === workflowAudioSsmlGender ||
-            voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
-        );
+        (voice) =>
+          voice.ssmlGender === workflowAudioSsmlGender ||
+          voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
+      );
 
   useEffect(() => {
     if (!isUnitAudioWorkflowModalOpen || !data?.course.id) {
@@ -1156,7 +1156,7 @@ export default function CourseDetailsPage({
           modulesCount={modules.length}
           isDraft={isDraft}
           onOpenPlaylist={() => setIsPlaylistOpen(true)}
-          hasPlaylist={hasPlaylist && isEnrolled}
+          hasPlaylist={hasPlaylist}
           progressStats={progressStats}
           isEnrolled={isEnrolled}
           learnerCount={enrollmentCount}
