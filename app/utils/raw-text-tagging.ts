@@ -62,6 +62,12 @@ const findNextOrderedTokenPairIndex = (
 export const stripExistingRawTextTags = (rawText: string) =>
   rawText.replaceAll(COURSE_RAW_TEXT_TAG, '').replaceAll(UNIT_RAW_TEXT_TAG, '');
 
+export const stripCourseModuleTags = (rawText: string) =>
+  rawText.replaceAll(COURSE_RAW_TEXT_TAG, '');
+
+export const stripUnitTags = (rawText: string) =>
+  rawText.replaceAll(UNIT_RAW_TEXT_TAG, '');
+
 export const insertMarkersIntoRawText = (
   rawText: string,
   markers: RawTextTagMarker[],
@@ -135,7 +141,12 @@ const getModuleMarkerPosition = (
     const matchedUnitOne = windowText.match(unitRegex);
     const couldByAModule = matchedSubunits && matchedUnitOne;
 
-    if ((unitOnePairIndex === -1 && unitOnePairSecondIndex === -1 && !couldByAModule) || matchesOtherModule) {
+    if (
+      (unitOnePairIndex === -1 &&
+        unitOnePairSecondIndex === -1 &&
+        !couldByAModule) ||
+      matchesOtherModule
+    ) {
       continue;
     }
 
@@ -196,9 +207,9 @@ const getUnitMarkerPosition = (
   }
 };
 
-const buildUnitMarkers = (
+export const buildModuleUnitMarkers = (
   rawText: string,
-  moduleIndex: number,
+  moduleIndex: number = 0,
 ): RawTextTagMarker[] => {
   const markers: RawTextTagMarker[] = [];
   for (let unitNumber = 2; unitNumber < 10; unitNumber++) {
@@ -210,13 +221,12 @@ const buildUnitMarkers = (
   return markers;
 };
 
-const buildModuleMarkers = (
+export const buildCourseModuleMarkers = (
   rawText: string,
   moduleWordStyle: string,
   lookupDistance: number = 1000,
 ): RawTextTagMarker[] => {
   const moduleMarkers: RawTextTagMarker[] = [];
-  const unitMarkers: RawTextTagMarker[] = [];
   for (let moduleNumber = 1; moduleNumber < 10; moduleNumber++) {
     const moduleMarker = getModuleMarkerPosition(
       rawText,
@@ -226,16 +236,9 @@ const buildModuleMarkers = (
     );
     if (moduleMarker) {
       moduleMarkers.push(moduleMarker);
-      const moduleUnitMarkers = buildUnitMarkers(
-        rawText.slice(moduleMarker.position, rawText.length + 1),
-        moduleMarker.position,
-      );
-      if (moduleUnitMarkers) {
-        unitMarkers.push(...moduleUnitMarkers);
-      }
     }
   }
-  return [...moduleMarkers, ...unitMarkers];
+  return moduleMarkers;
 };
 
 export const buildHeuristicRawTextMarkers = (
@@ -243,9 +246,21 @@ export const buildHeuristicRawTextMarkers = (
   moduleWordStyle: string = DEFAULT_MODULE_WORD_STYLE,
   lookupDistance: number = 1000,
 ): RawTextTagMarker[] => {
-  const markers = buildModuleMarkers(rawText, moduleWordStyle, lookupDistance);
+  return buildCourseModuleMarkers(rawText, moduleWordStyle, lookupDistance);
+};
 
-  return markers;
+export const markCourseModulesRawText = (
+  rawText: string,
+  moduleWordStyle: string = DEFAULT_MODULE_WORD_STYLE,
+  lookupDistance: number = 1000,
+) => {
+  const markers = buildCourseModuleMarkers(
+    rawText,
+    moduleWordStyle,
+    lookupDistance,
+  );
+
+  return insertMarkersIntoRawText(rawText, markers);
 };
 
 export const markRawText = (
@@ -253,12 +268,25 @@ export const markRawText = (
   moduleWordStyle: string = DEFAULT_MODULE_WORD_STYLE,
   lookupDistance: number = 1000,
 ) => {
-  const markers = buildHeuristicRawTextMarkers(
+  const moduleTaggedText = markCourseModulesRawText(
     rawText,
     moduleWordStyle,
     lookupDistance,
   );
-  return insertMarkersIntoRawText(rawText, markers);
+  const moduleMarkers = buildCourseModuleMarkers(
+    rawText,
+    moduleWordStyle,
+    lookupDistance,
+  );
+
+  const unitMarkers = moduleMarkers.flatMap((moduleMarker) =>
+    buildModuleUnitMarkers(
+      rawText.slice(moduleMarker.position, rawText.length + 1),
+      moduleMarker.position,
+    ),
+  );
+
+  return insertMarkersIntoRawText(moduleTaggedText, unitMarkers);
 };
 
 export function markRawText2(

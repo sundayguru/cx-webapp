@@ -2,8 +2,10 @@ import { type ActionFunctionArgs, data } from 'react-router';
 import { getCourseById, updateCourseRawText } from '~/db/courses';
 import { getUserFromRequest } from '~/utils/session.server';
 import {
-  markRawText,
-  stripExistingRawTextTags,
+  DEFAULT_MODULE_WORD_STYLE,
+  buildCourseModuleMarkers,
+  insertMarkersIntoRawText,
+  stripCourseModuleTags,
 } from '~/utils/raw-text-tagging';
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
@@ -40,25 +42,29 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
     const lookupDistanceValue = formData.get('lookupDistance');
     const moduleWordStyle =
       typeof moduleWordStyleValue === 'string' &&
-      moduleWordStyleValue.trim().length > 0
+        moduleWordStyleValue.trim().length > 0
         ? moduleWordStyleValue.trim()
         : undefined;
     const lookupDistance =
       typeof lookupDistanceValue === 'string' &&
-      lookupDistanceValue.trim().length > 0
+        lookupDistanceValue.trim().length > 0
         ? Number(lookupDistanceValue.trim())
         : undefined;
+    const effectiveModuleWordStyle =
+      moduleWordStyle ?? DEFAULT_MODULE_WORD_STYLE;
+    const effectiveLookupDistance = lookupDistance ?? 1000;
 
-    const cleanRawText = stripExistingRawTextTags(currentRawText);
-    const taggedText = markRawText(
+    const cleanRawText = stripCourseModuleTags(currentRawText);
+    const markers = buildCourseModuleMarkers(
       cleanRawText,
-      moduleWordStyle,
-      lookupDistance,
+      effectiveModuleWordStyle,
+      effectiveLookupDistance,
     );
+    const taggedText = insertMarkersIntoRawText(cleanRawText, markers);
 
     if (taggedText === cleanRawText) {
       return data(
-        { error: 'No module or unit boundaries matched the tagging rules' },
+        { error: 'No module boundaries matched the tagging rules' },
         { status: 400 },
       );
     }
@@ -71,9 +77,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
     return data({
       success: true,
-      markersCount:
-        (taggedText.match(/--endmodule--/g)?.length ?? 0) +
-        (taggedText.match(/--endunit--/g)?.length ?? 0),
+      markersCount: markers.length,
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Tagging failed';

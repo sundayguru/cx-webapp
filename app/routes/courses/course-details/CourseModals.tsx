@@ -832,12 +832,12 @@ const TagRawTextHeuristicModal = ({
             <div className='mb-6 flex items-center justify-between'>
               <div>
                 <h3 className='font-serif text-2xl text-[#1a1a1a]'>
-                  Tag Course Text
+                  Tag Course Modules
                 </h3>
                 <p className='mt-2 text-sm text-black/55'>
                   Provide the module word style pattern used to recognize where
-                  module sections begin. Use `x` as the module number
-                  placeholder, for example `module x unit 1`.
+                  module sections begin in the course raw text. Use `x` as the
+                  module number placeholder, for example `module x unit 1`.
                 </p>
               </div>
               <button
@@ -909,7 +909,7 @@ const TagRawTextHeuristicModal = ({
                 disabled={isTagging || moduleWordStyle.trim().length === 0}
                 className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
               >
-                {isTagging ? 'Tagging...' : 'Start Tagging'}
+                {isTagging ? 'Tagging...' : 'Tag Modules'}
               </button>
             </div>
           </motion.div>

@@ -105,6 +105,7 @@ export default function CourseDetailsPage({
   const rawTextFetcher = useFetcher();
   const rawTextUpdateFetcher = useFetcher();
   const heuristicTagRawTextFetcher = useFetcher();
+  const tagModuleUnitsFetcher = useFetcher();
   const tagRawTextFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
@@ -175,6 +176,7 @@ export default function CourseDetailsPage({
   const handledRawTextExtractResult = useRef<string | null>(null);
   const handledRawTextUpdateResult = useRef<string | null>(null);
   const handledHeuristicTagRawTextResult = useRef<string | null>(null);
+  const handledTagModuleUnitsResult = useRef<string | null>(null);
   const handledTagRawTextResult = useRef<string | null>(null);
   const handledSplitRawTextResult = useRef<string | null>(null);
 
@@ -183,6 +185,7 @@ export default function CourseDetailsPage({
   const isExtractingRawText = rawTextFetcher.state !== 'idle';
   const isUpdatingRawText = rawTextUpdateFetcher.state !== 'idle';
   const isHeuristicTaggingRawText = heuristicTagRawTextFetcher.state !== 'idle';
+  const isTaggingModuleUnits = tagModuleUnitsFetcher.state !== 'idle';
   const isTaggingRawText = tagRawTextFetcher.state !== 'idle';
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
@@ -295,6 +298,16 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/tag-raw-text-heuristic`,
+      },
+    );
+  };
+
+  const handleTagModuleUnitsHeuristically = () => {
+    tagModuleUnitsFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/tag-module-units-heuristic`,
       },
     );
   };
@@ -524,7 +537,7 @@ export default function CourseDetailsPage({
         handledHeuristicTagRawTextResult.current = resultKey;
         showToast({
           tone: 'success',
-          message: `Tagged raw text successfully${result.markersCount !== undefined ? ` (${result.markersCount} markers)` : ''}.`,
+          message: `Tagged course modules successfully${result.markersCount !== undefined ? ` (${result.markersCount} markers)` : ''}.`,
         });
         window.setTimeout(() => window.location.reload(), 1200);
       } else if (
@@ -539,6 +552,36 @@ export default function CourseDetailsPage({
       }
     }
   }, [heuristicTagRawTextFetcher, showToast]);
+
+  useEffect(() => {
+    if (tagModuleUnitsFetcher.state === 'idle' && tagModuleUnitsFetcher.data) {
+      const result = tagModuleUnitsFetcher.data as {
+        success?: boolean;
+        error?: string;
+        markersCount?: number;
+        taggedModulesCount?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledTagModuleUnitsResult.current !== resultKey) {
+        handledTagModuleUnitsResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Tagged module units successfully${result.markersCount !== undefined ? ` (${result.markersCount} markers across ${result.taggedModulesCount ?? 0} modules)` : ''}.`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledTagModuleUnitsResult.current !== resultKey
+      ) {
+        handledTagModuleUnitsResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, tagModuleUnitsFetcher]);
 
   useEffect(() => {
     if (tagRawTextFetcher.state === 'idle' && tagRawTextFetcher.data) {
@@ -984,6 +1027,7 @@ export default function CourseDetailsPage({
           isGeneratingUnits={isGeneratingUnits}
           isExtractingRawText={isExtractingRawText}
           isHeuristicTaggingRawText={isHeuristicTaggingRawText}
+          isTaggingModuleUnits={isTaggingModuleUnits}
           isTaggingRawText={isTaggingRawText}
           isSplittingRawText={isSplittingRawText}
           isSplittingModuleRawText={isSplittingModuleRawText}
@@ -1002,6 +1046,7 @@ export default function CourseDetailsPage({
           onOpenTagRawTextHeuristicModal={() =>
             setIsTagRawTextHeuristicModalOpen(true)
           }
+          onTagModuleUnits={handleTagModuleUnitsHeuristically}
           onTagRawText={() => setIsTagRawTextModalOpen(true)}
           onOpenRawTextEditor={() => {
             setEditableRawText(course.rawText || '');
