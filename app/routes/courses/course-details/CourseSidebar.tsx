@@ -64,8 +64,8 @@ export const CourseSidebar = ({
     ) : null;
 
   return (
-    <aside className='space-y-6'>
-      <div className='sticky top-8 overflow-visible rounded-[32px] border border-black/5 bg-white p-6 shadow-[0_30px_80px_-35px_rgba(0,0,0,0.2)]'>
+    <aside className='relative z-20 space-y-6 xl:z-auto'>
+      <div className='sticky top-8 z-20 overflow-visible rounded-[32px] border border-black/5 bg-white p-6 shadow-[0_30px_80px_-35px_rgba(0,0,0,0.2)] xl:z-auto'>
         <div className='group relative mb-6 overflow-hidden rounded-[28px] border border-black/5 bg-[#f5f5f0]'>
           <img
             src={
@@ -105,7 +105,7 @@ export const CourseSidebar = ({
                 {isAdminActionProcessing ? 'Processing...' : 'Admin Actions'}
               </button>
               {isAdminMenuOpen ? (
-                <div className='absolute top-[calc(100%+0.75rem)] right-0 z-30 min-w-[260px] rounded-2xl border border-black/10 bg-white py-2 shadow-2xl'>
+                <div className='absolute top-[calc(100%+0.75rem)] right-0 z-40 min-w-[260px] rounded-2xl border border-black/10 bg-white py-2 shadow-2xl'>
                   <Link
                     to={`/courses/${course.id}/edit`}
                     onClick={() => setIsAdminMenuOpen(false)}
