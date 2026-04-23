@@ -24,34 +24,42 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
   if (courseData.course.createdBy !== user.id && !user.isAdmin) {
     return data(
-      {
-        error:
-          'Only the creator or an admin can split module raw text into units',
-      },
+      { error: 'Only the creator or an admin can split modules into units' },
       { status: 403 },
     );
   }
 
-  const formData = await request.formData();
-  const moduleIdValue = formData.get('moduleId');
+  const modulesWithRawText = courseData.modules.filter((module) =>
+    Boolean(module.rawText?.trim()),
+  );
 
-  if (typeof moduleIdValue !== 'string' || !moduleIdValue) {
-    return data({ error: 'Module ID is required' }, { status: 400 });
+  if (modulesWithRawText.length === 0) {
+    return data(
+      { error: 'No module raw text is available to split into units' },
+      { status: 400 },
+    );
   }
 
   try {
-    const result = await splitModuleRawTextIntoUnitsForModule(moduleIdValue);
+    let modulesCount = 0;
+    let unitsCount = 0;
+
+    for (const module of modulesWithRawText) {
+      const result = await splitModuleRawTextIntoUnitsForModule(module.id);
+      modulesCount += 1;
+      unitsCount += result.unitsCount;
+    }
 
     return data({
       success: true,
-      moduleId: moduleIdValue,
-      unitsCount: result.unitsCount,
+      modulesCount,
+      unitsCount,
     });
   } catch (err: unknown) {
     const message =
       err instanceof Error
         ? err.message
-        : 'Failed to create units from raw text';
+        : 'Failed to create units from module raw text';
     return data(
       { error: message },
       { status: err instanceof CourseProcessingError ? err.status : 500 },

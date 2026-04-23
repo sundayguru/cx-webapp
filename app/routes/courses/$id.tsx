@@ -123,6 +123,7 @@ export default function CourseDetailsPage({
   const tagRawTextFetcher = useFetcher();
   const splitRawTextFetcher = useFetcher();
   const splitModuleRawTextFetcher = useFetcher();
+  const splitAllModuleRawTextFetcher = useFetcher();
   const courseWorkflowFetcher = useFetcher();
   const unitAudioWorkflowFetcher = useFetcher();
   const workflowAudioVoicesFetcher = useFetcher();
@@ -209,6 +210,8 @@ export default function CourseDetailsPage({
   const isTaggingRawText = tagRawTextFetcher.state !== 'idle';
   const isSplittingRawText = splitRawTextFetcher.state !== 'idle';
   const isSplittingModuleRawText = splitModuleRawTextFetcher.state !== 'idle';
+  const isSplittingAllModuleRawText =
+    splitAllModuleRawTextFetcher.state !== 'idle';
   const isRunningCourseWorkflow = courseWorkflowFetcher.state !== 'idle';
   const isRunningUnitAudioWorkflow = unitAudioWorkflowFetcher.state !== 'idle';
   const isLoadingWorkflowAudioVoices =
@@ -377,6 +380,16 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/split-module-raw-text-into-units`,
+      },
+    );
+  };
+
+  const handleSplitAllModuleRawTextIntoUnits = () => {
+    splitAllModuleRawTextFetcher.submit(
+      {},
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/split-all-module-raw-text-into-units`,
       },
     );
   };
@@ -757,6 +770,44 @@ export default function CourseDetailsPage({
     }
   }, [showToast, splitModuleRawTextFetcher]);
 
+  const handledSplitAllModuleRawTextResult = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (
+      splitAllModuleRawTextFetcher.state === 'idle' &&
+      splitAllModuleRawTextFetcher.data
+    ) {
+      const result = splitAllModuleRawTextFetcher.data as {
+        success?: boolean;
+        error?: string;
+        modulesCount?: number;
+        unitsCount?: number;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (
+        result.success &&
+        handledSplitAllModuleRawTextResult.current !== resultKey
+      ) {
+        handledSplitAllModuleRawTextResult.current = resultKey;
+        showToast({
+          tone: 'success',
+          message: `Split ${result.modulesCount ?? 0} modules into ${result.unitsCount ?? 0} units.`,
+        });
+        window.setTimeout(() => window.location.reload(), 1200);
+      } else if (
+        result.error &&
+        handledSplitAllModuleRawTextResult.current !== resultKey
+      ) {
+        handledSplitAllModuleRawTextResult.current = resultKey;
+        showToast({
+          tone: 'error',
+          message: result.error,
+        });
+      }
+    }
+  }, [showToast, splitAllModuleRawTextFetcher]);
+
   const handledCourseWorkflowResult = useRef<string | null>(null);
 
   useEffect(() => {
@@ -1110,6 +1161,7 @@ export default function CourseDetailsPage({
           isTaggingRawText={isTaggingRawText}
           isSplittingRawText={isSplittingRawText}
           isSplittingModuleRawText={isSplittingModuleRawText}
+          isSplittingAllModuleRawText={isSplittingAllModuleRawText}
           isRunningCourseWorkflow={isRunningCourseWorkflow}
           isRunningUnitAudioWorkflow={isRunningUnitAudioWorkflow}
           hasRawText={Boolean(course.rawText)}
@@ -1132,6 +1184,7 @@ export default function CourseDetailsPage({
             setIsRawTextModalOpen(true);
           }}
           onOpenSplitWarning={() => setIsSplitWarningOpen(true)}
+          onSplitAllModuleRawText={handleSplitAllModuleRawTextIntoUnits}
           onOpenGenerateWarning={() => setIsGenerateCurriculumModalOpen(true)}
           onOpenGenerateUnitsModal={() => setIsGenerateUnitsModalOpen(true)}
           onRunCourseWorkflow={() => setIsCourseWorkflowModalOpen(true)}

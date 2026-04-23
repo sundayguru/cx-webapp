@@ -83,6 +83,10 @@ export default [
       'routes/api/courses/split-module-raw-text-into-units.tsx',
     ),
     route(
+      'api/courses/:id/split-all-module-raw-text-into-units',
+      'routes/api/courses/split-all-module-raw-text-into-units.tsx',
+    ),
+    route(
       'api/courses/:id/run-processing-workflow',
       'routes/api/courses/$id.run-processing-workflow.tsx',
     ),

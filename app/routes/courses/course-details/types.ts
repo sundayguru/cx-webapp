@@ -38,6 +38,7 @@ export type SidebarProps = {
   isTaggingRawText: boolean;
   isSplittingRawText: boolean;
   isSplittingModuleRawText: boolean;
+  isSplittingAllModuleRawText: boolean;
   isRunningCourseWorkflow: boolean;
   isRunningUnitAudioWorkflow: boolean;
   hasRawText: boolean;
@@ -55,6 +56,7 @@ export type SidebarProps = {
   onTagRawText: () => void;
   onOpenRawTextEditor: () => void;
   onOpenSplitWarning: () => void;
+  onSplitAllModuleRawText: () => void;
   onOpenGenerateWarning: () => void;
   onOpenGenerateUnitsModal: () => void;
   onRunCourseWorkflow: () => void;

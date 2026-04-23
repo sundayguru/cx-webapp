@@ -1,9 +1,11 @@
+import { useState } from 'react';
 import { Link } from 'react-router';
 import {
   BookOpen,
   Clock,
   Edit3,
   FileText,
+  MoreVertical,
   Sparkles,
   Send,
   Trash2,
@@ -23,6 +25,7 @@ export const CourseSidebar = ({
   isTaggingModuleUnits,
   isTaggingRawText,
   isSplittingRawText,
+  isSplittingAllModuleRawText,
   isRunningCourseWorkflow,
   isRunningUnitAudioWorkflow,
   hasRawText,
@@ -34,6 +37,7 @@ export const CourseSidebar = ({
   onTagRawText,
   onOpenRawTextEditor,
   onOpenSplitWarning,
+  onSplitAllModuleRawText,
   onOpenGenerateWarning,
   onOpenGenerateUnitsModal,
   onRunCourseWorkflow,
@@ -45,6 +49,7 @@ export const CourseSidebar = ({
   isEnrolled,
   onEnroll,
 }: SidebarProps) => {
+  const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
   const deleteButton =
     canDeleteCourse && onOpenDeleteModal ? (
       <button
@@ -59,7 +64,7 @@ export const CourseSidebar = ({
 
   return (
     <aside className='space-y-6'>
-      <div className='sticky top-8 overflow-hidden rounded-[32px] border border-black/5 bg-white p-6 shadow-[0_30px_80px_-35px_rgba(0,0,0,0.2)]'>
+      <div className='sticky top-8 overflow-visible rounded-[32px] border border-black/5 bg-white p-6 shadow-[0_30px_80px_-35px_rgba(0,0,0,0.2)]'>
         <div className='group relative mb-6 overflow-hidden rounded-[28px] border border-black/5 bg-[#f5f5f0]'>
           <img
             src={
@@ -90,137 +95,215 @@ export const CourseSidebar = ({
                 Enroll Now
               </button>
             )}
-            <Link
-              to={`/courses/${course.id}/edit`}
-              className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5'
-            >
-              <Edit3 size={20} />
-              Edit Course
-            </Link>
-            <button
-              onClick={onOpenExtractWarning}
-              disabled={isExtractingRawText}
-              className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
-            >
-              <FileText size={20} />
-              {isExtractingRawText
-                ? 'Extracting PDF Text...'
-                : 'Extract PDF Text'}
-            </button>
-            {hasRawText ? (
+            <div className='relative'>
               <button
-                onClick={onOpenTagRawTextHeuristicModal}
-                disabled={isHeuristicTaggingRawText}
-                className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
-              >
-                <BookOpen size={20} />
-                {isHeuristicTaggingRawText
-                  ? 'Tagging Course Modules...'
-                  : 'Tag Course Modules'}
-              </button>
-            ) : null}
-            {modulesWithRawText.length > 0 ? (
-              <button
-                onClick={onTagModuleUnits}
-                disabled={isTaggingModuleUnits}
-                className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
-              >
-                <BookOpen size={20} />
-                {isTaggingModuleUnits
-                  ? 'Tagging Module Units...'
-                  : 'Tag Module Units'}
-              </button>
-            ) : null}
-            {hasRawText ? (
-              <button
-                onClick={onTagRawText}
-                disabled={isTaggingRawText}
-                className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
-              >
-                <Sparkles size={20} />
-                {isTaggingRawText
-                  ? 'Tagging Course Text...'
-                  : 'AI Tag Course Text'}
-              </button>
-            ) : null}
-            {hasRawText ? (
-              <button
-                onClick={onOpenRawTextEditor}
+                onClick={() => setIsAdminMenuOpen((open) => !open)}
                 className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5'
               >
-                <Edit3 size={20} />
-                Edit Course Text
+                <MoreVertical size={20} />
+                Admin Actions
               </button>
-            ) : null}
-            {hasRawText ? (
-              <button
-                onClick={onOpenSplitWarning}
-                disabled={isSplittingRawText}
-                className='flex w-full items-center justify-center gap-2 rounded-2xl border border-black/10 py-4 text-lg font-bold text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
-              >
-                <BookOpen size={20} />
-                {isSplittingRawText
-                  ? 'Splitting Into Modules...'
-                  : 'Split Raw Text Into Modules'}
-              </button>
-            ) : null}
-            {hasRawText ? (
-              <button
-                onClick={onRunCourseWorkflow}
-                disabled={isRunningCourseWorkflow}
-                className='flex w-full items-center justify-center gap-2 rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-md shadow-[#5A5A40]/25 transition-all hover:bg-[#4a4a35] disabled:opacity-50'
-              >
-                <Sparkles size={20} />
-                {isRunningCourseWorkflow
-                  ? 'Starting Course Workflow...'
-                  : 'Run Full Course Workflow'}
-              </button>
-            ) : null}
-            <button
-              onClick={onRunUnitAudioWorkflow}
-              disabled={isRunningUnitAudioWorkflow}
-              className='flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1f4a57] py-4 text-lg font-bold text-white shadow-md shadow-[#1f4a57]/20 transition-all hover:bg-[#173944] disabled:opacity-50'
-            >
-              <Volume2 size={20} />
-              {isRunningUnitAudioWorkflow
-                ? 'Starting Unit Audio Workflow...'
-                : 'Run Unit Audio Workflow'}
-            </button>
-
-            <button
-              onClick={onOpenGenerateWarning}
-              disabled={isGenerating}
-              className='flex w-full items-center justify-center gap-2 rounded-2xl bg-gradient-to-r from-[#d96b43] to-[#d1a14d] py-4 text-lg font-bold text-white shadow-md shadow-[#d96b43]/25 transition-all hover:shadow-lg disabled:opacity-50'
-            >
-              <Sparkles size={20} />
-              {isGenerating ? 'Generating...' : 'AI Generate Curriculum'}
-            </button>
-            <button
-              onClick={onOpenGenerateUnitsModal}
-              disabled={isGeneratingUnits || modulesWithRawText.length === 0}
-              className='flex w-full items-center justify-center gap-2 rounded-2xl bg-[#1f4a57] py-4 text-lg font-bold text-white shadow-md shadow-[#1f4a57]/20 transition-all hover:bg-[#173944] disabled:opacity-50'
-            >
-              <Sparkles size={20} />
-              {isGeneratingUnits ? 'Generating Units...' : 'Generate Units'}
-            </button>
-            {course.status !== 'published' && onPublish ? (
-              <button
-                onClick={onPublish}
-                className='flex w-full items-center justify-center gap-2 rounded-2xl bg-green-600 py-4 text-lg font-bold text-white shadow-md shadow-green-600/25 transition-all hover:bg-green-700'
-              >
-                <Send size={20} />
-                Publish Course
-              </button>
-            ) : course.status === 'published' && onUnpublish ? (
-              <button
-                onClick={onUnpublish}
-                className='flex w-full items-center justify-center gap-2 rounded-2xl bg-orange-500 py-4 text-lg font-bold text-white shadow-md shadow-orange-500/25 transition-all hover:bg-orange-600'
-              >
-                <XCircle size={20} />
-                Unpublish Course
-              </button>
-            ) : null}
-            {deleteButton}
+              {isAdminMenuOpen ? (
+                <div className='absolute top-[calc(100%+0.75rem)] right-0 z-30 min-w-[260px] rounded-2xl border border-black/10 bg-white py-2 shadow-2xl'>
+                  <Link
+                    to={`/courses/${course.id}/edit`}
+                    onClick={() => setIsAdminMenuOpen(false)}
+                    className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5'
+                  >
+                    <Edit3 size={16} />
+                    Edit Course
+                  </Link>
+                  <button
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      onOpenExtractWarning();
+                    }}
+                    disabled={isExtractingRawText}
+                    className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                  >
+                    <FileText size={16} />
+                    {isExtractingRawText
+                      ? 'Extracting PDF Text...'
+                      : 'Extract PDF Text'}
+                  </button>
+                  {hasRawText ? (
+                    <button
+                      onClick={() => {
+                        setIsAdminMenuOpen(false);
+                        onOpenTagRawTextHeuristicModal();
+                      }}
+                      disabled={isHeuristicTaggingRawText}
+                      className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                    >
+                      <BookOpen size={16} />
+                      {isHeuristicTaggingRawText
+                        ? 'Tagging Course Modules...'
+                        : 'Tag Course Modules'}
+                    </button>
+                  ) : null}
+                  {modulesWithRawText.length > 0 ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onTagModuleUnits();
+                        }}
+                        disabled={isTaggingModuleUnits}
+                        className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                      >
+                        <BookOpen size={16} />
+                        {isTaggingModuleUnits
+                          ? 'Tagging Module Units...'
+                          : 'Tag Module Units'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onSplitAllModuleRawText();
+                        }}
+                        disabled={isSplittingAllModuleRawText}
+                        className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                      >
+                        <BookOpen size={16} />
+                        {isSplittingAllModuleRawText
+                          ? 'Splitting All Modules...'
+                          : 'Split All Modules Into Units'}
+                      </button>
+                    </>
+                  ) : null}
+                  {hasRawText ? (
+                    <>
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onTagRawText();
+                        }}
+                        disabled={isTaggingRawText}
+                        className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                      >
+                        <Sparkles size={16} />
+                        {isTaggingRawText
+                          ? 'Tagging Course Text...'
+                          : 'AI Tag Course Text'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onOpenRawTextEditor();
+                        }}
+                        className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5'
+                      >
+                        <Edit3 size={16} />
+                        Edit Course Text
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onOpenSplitWarning();
+                        }}
+                        disabled={isSplittingRawText}
+                        className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                      >
+                        <BookOpen size={16} />
+                        {isSplittingRawText
+                          ? 'Splitting Into Modules...'
+                          : 'Split Raw Text Into Modules'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setIsAdminMenuOpen(false);
+                          onRunCourseWorkflow();
+                        }}
+                        disabled={isRunningCourseWorkflow}
+                        className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                      >
+                        <Sparkles size={16} />
+                        {isRunningCourseWorkflow
+                          ? 'Starting Course Workflow...'
+                          : 'Run Full Course Workflow'}
+                      </button>
+                    </>
+                  ) : null}
+                  <button
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      onRunUnitAudioWorkflow();
+                    }}
+                    disabled={isRunningUnitAudioWorkflow}
+                    className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                  >
+                    <Volume2 size={16} />
+                    {isRunningUnitAudioWorkflow
+                      ? 'Starting Unit Audio Workflow...'
+                      : 'Run Unit Audio Workflow'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      onOpenGenerateWarning();
+                    }}
+                    disabled={isGenerating}
+                    className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                  >
+                    <Sparkles size={16} />
+                    {isGenerating ? 'Generating...' : 'AI Generate Curriculum'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      onOpenGenerateUnitsModal();
+                    }}
+                    disabled={
+                      isGeneratingUnits || modulesWithRawText.length === 0
+                    }
+                    className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                  >
+                    <Sparkles size={16} />
+                    {isGeneratingUnits
+                      ? 'Generating Units...'
+                      : 'Generate Units'}
+                  </button>
+                  {course.status !== 'published' && onPublish ? (
+                    <button
+                      onClick={() => {
+                        setIsAdminMenuOpen(false);
+                        onPublish();
+                      }}
+                      className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-green-700 hover:bg-green-50'
+                    >
+                      <Send size={16} />
+                      Publish Course
+                    </button>
+                  ) : course.status === 'published' && onUnpublish ? (
+                    <button
+                      onClick={() => {
+                        setIsAdminMenuOpen(false);
+                        onUnpublish();
+                      }}
+                      className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-orange-700 hover:bg-orange-50'
+                    >
+                      <XCircle size={16} />
+                      Unpublish Course
+                    </button>
+                  ) : null}
+                  {deleteButton ? (
+                    <button
+                      onClick={() => {
+                        setIsAdminMenuOpen(false);
+                        onOpenDeleteModal?.();
+                      }}
+                      disabled={isDeletingCourse}
+                      className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-red-600 hover:bg-red-50 disabled:opacity-50'
+                    >
+                      <Trash2 size={16} />
+                      {isDeletingCourse
+                        ? 'Deleting Course...'
+                        : 'Delete Course'}
+                    </button>
+                  ) : null}
+                </div>
+              ) : null}
+            </div>
           </div>
         ) : (
           <div className='space-y-3'>
