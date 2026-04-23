@@ -148,15 +148,17 @@ export default function ProfilePage({ loaderData }: Route.ComponentProps) {
                 to={`/courses/${courseItem.course.id}`}
                 className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
               >
-                {courseItem.course.thumbnailKey && (
-                  <div className='absolute inset-0 opacity-5'>
-                    <img
-                      src={`/api/course/serve/${courseItem.course.thumbnailKey}`}
-                      alt=''
-                      className='h-full w-full object-cover'
-                    />
-                  </div>
-                )}
+                <div className='absolute inset-0 opacity-5'>
+                  <img
+                    src={
+                      courseItem.course.thumbnailKey
+                        ? `/api/course/serve/${courseItem.course.thumbnailKey}`
+                        : `https://picsum.photos/seed/${courseItem.course.id}/700/500`
+                    }
+                    alt=''
+                    className='h-full w-full object-cover'
+                  />
+                </div>
                 <div className='relative'>
                   <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
                     {courseItem.course.code} • {courseItem.course.category}
@@ -197,15 +199,17 @@ export default function ProfilePage({ loaderData }: Route.ComponentProps) {
                 to={`/courses/${enrollment.course.id}`}
                 className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
               >
-                {enrollment.course.thumbnailKey && (
-                  <div className='absolute inset-0 opacity-5'>
-                    <img
-                      src={`/api/course/serve/${enrollment.course.thumbnailKey}`}
-                      alt=''
-                      className='h-full w-full object-cover'
-                    />
-                  </div>
-                )}
+                <div className='absolute inset-0 opacity-5'>
+                  <img
+                    src={
+                      enrollment.course.thumbnailKey
+                        ? `/api/course/serve/${enrollment.course.thumbnailKey}`
+                        : `https://picsum.photos/seed/${enrollment.course.id}/700/500`
+                    }
+                    alt=''
+                    className='h-full w-full object-cover'
+                  />
+                </div>
                 <div className='relative'>
                   <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
                     {enrollment.course.code} • {enrollment.course.category}

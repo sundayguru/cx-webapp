@@ -362,17 +362,15 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
                 to={`/courses/${course.id}`}
                 className='relative aspect-[4/3] w-full overflow-hidden bg-black/[0.02]'
               >
-                {course.thumbnailKey ? (
-                  <img
-                    src={`/api/course/serve/${course.thumbnailKey}`}
-                    alt={course.title}
-                    className='h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110'
-                  />
-                ) : (
-                  <div className='flex h-full w-full items-center justify-center bg-gradient-to-br from-[#5A5A40]/10 to-[#5A5A40]/30 opacity-60'>
-                    <FileText className='h-16 w-16 text-[#5A5A40]/20' />
-                  </div>
-                )}
+                <img
+                  src={
+                    course.thumbnailKey
+                      ? `/api/course/serve/${course.thumbnailKey}`
+                      : `https://picsum.photos/seed/${course.id}/700/500`
+                  }
+                  alt={course.title}
+                  className='h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110'
+                />
                 {course.status !== 'published' && (
                   <div className='absolute top-6 left-6'>
                     <span

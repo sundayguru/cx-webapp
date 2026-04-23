@@ -15,15 +15,17 @@ export const BookmarkedUnitCard = ({
     to={`/courses/${bookmarkedUnit.course.id}/units/${bookmarkedUnit.unit.id}`}
     className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
   >
-    {bookmarkedUnit.course.thumbnailKey ? (
-      <div className='absolute inset-0 opacity-5'>
-        <img
-          src={`/api/course/serve/${bookmarkedUnit.course.thumbnailKey}`}
-          alt=''
-          className='h-full w-full object-cover'
-        />
-      </div>
-    ) : null}
+    <div className='absolute inset-0 opacity-5'>
+      <img
+        src={
+          bookmarkedUnit.course.thumbnailKey
+            ? `/api/course/serve/${bookmarkedUnit.course.thumbnailKey}`
+            : `https://picsum.photos/seed/${bookmarkedUnit.course.id}/700/500`
+        }
+        alt=''
+        className='h-full w-full object-cover'
+      />
+    </div>
     <div className='relative'>
       <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
         {bookmarkedUnit.course.code} • {bookmarkedUnit.module.title}

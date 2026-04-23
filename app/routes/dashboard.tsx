@@ -177,7 +177,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className='mx-auto max-w-[1400px] px-0 py-8 sm:px-4'>
+    <div className='mx-auto max-w-[1400px] px-0 py-8 sm:px-4 space-y-4'>
       <div className='px-4 sm:px-0'>
         <motion.div
           initial={{ opacity: 0, y: 18 }}
@@ -239,7 +239,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className='space-y-12 px-4 sm:px-0'>
+      <div className='mt-4 space-y-12 px-4 sm:px-0'>
         <section>
           <div className='rounded-2xl border border-black/5 bg-white p-6 shadow-sm'>
             <div className='mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
@@ -295,15 +295,17 @@ export default function DashboardPage() {
                   to={`/courses/${courseItem.course.id}`}
                   className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
                 >
-                  {courseItem.course.thumbnailKey && (
-                    <div className='absolute inset-0 opacity-5'>
-                      <img
-                        src={`/api/course/serve/${courseItem.course.thumbnailKey}`}
-                        alt=''
-                        className='h-full w-full object-cover'
-                      />
-                    </div>
-                  )}
+                  <div className='absolute inset-0 opacity-5'>
+                    <img
+                      src={
+                        courseItem.course.thumbnailKey
+                          ? `/api/course/serve/${courseItem.course.thumbnailKey}`
+                          : `https://picsum.photos/seed/${courseItem.course.id}/700/500`
+                      }
+                      alt=''
+                      className='h-full w-full object-cover'
+                    />
+                  </div>
                   <div className='relative'>
                     <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
                       {courseItem.course.code} • {courseItem.course.category}
@@ -313,11 +315,10 @@ export default function DashboardPage() {
                     </h3>
                     <div className='flex items-center gap-2 text-xs text-black/40'>
                       <span
-                        className={`rounded-full px-2 py-1 ${
-                          courseItem.course.status === 'published'
-                            ? 'bg-green-100 text-green-700'
-                            : 'bg-yellow-100 text-yellow-700'
-                        }`}
+                        className={`rounded-full px-2 py-1 ${courseItem.course.status === 'published'
+                          ? 'bg-green-100 text-green-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                          }`}
                       >
                         {courseItem.course.status}
                       </span>
@@ -350,15 +351,17 @@ export default function DashboardPage() {
                   to={`/courses/${enrollment.course.id}`}
                   className='group relative overflow-hidden rounded-2xl border border-black/5 bg-white p-5 shadow-sm transition-all hover:shadow-md'
                 >
-                  {enrollment.course.thumbnailKey && (
-                    <div className='absolute inset-0 opacity-5'>
-                      <img
-                        src={`/api/course/serve/${enrollment.course.thumbnailKey}`}
-                        alt=''
-                        className='h-full w-full object-cover'
-                      />
-                    </div>
-                  )}
+                  <div className='absolute inset-0 opacity-5'>
+                    <img
+                      src={
+                        enrollment.course.thumbnailKey
+                          ? `/api/course/serve/${enrollment.course.thumbnailKey}`
+                          : `https://picsum.photos/seed/${enrollment.course.id}/700/500`
+                      }
+                      alt=''
+                      className='h-full w-full object-cover'
+                    />
+                  </div>
                   <div className='relative'>
                     <p className='mb-1 text-[10px] font-bold tracking-[0.18em] text-[#5A5A40] uppercase'>
                       {enrollment.course.code} • {enrollment.course.category}
@@ -446,9 +449,8 @@ const StatCard = ({ icon, label, value, color, highlight }: StatCardProps) => (
   <motion.div
     initial={{ opacity: 0, y: 18 }}
     animate={{ opacity: 1, y: 0 }}
-    className={`rounded-2xl border p-5 ${
-      highlight ? 'border-green-200 bg-green-50' : 'border-black/5 bg-white'
-    }`}
+    className={`rounded-2xl border p-5 ${highlight ? 'border-green-200 bg-green-50' : 'border-black/5 bg-white'
+      }`}
   >
     <div
       className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl'
