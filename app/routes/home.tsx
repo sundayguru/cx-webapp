@@ -41,7 +41,7 @@ export default function LandingPage() {
             variants={containerVariants}
             initial='hidden'
             animate='visible'
-            className='text-center'
+            className='relative z-10 text-center'
           >
             <motion.div
               variants={itemVariants}
@@ -91,8 +91,8 @@ export default function LandingPage() {
         </div>
 
         {/* Abstract Background Elements */}
-        <div className='absolute top-1/2 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5A5A40]/5 blur-3xl' />
-        <div className='absolute right-0 bottom-0 h-[500px] w-[500px] translate-x-1/4 rounded-full bg-[#5A5A40]/5 blur-3xl' />
+        <div className='pointer-events-none absolute top-1/2 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5A5A40]/5 blur-3xl' />
+        <div className='pointer-events-none absolute right-0 bottom-0 h-[500px] w-[500px] translate-x-1/4 rounded-full bg-[#5A5A40]/5 blur-3xl' />
       </section>
 
       {/* Feature Grid */}
@@ -253,8 +253,8 @@ export default function LandingPage() {
             </Link>
           </div>
           {/* Decorative background */}
-          <div className='absolute top-0 right-0 h-96 w-96 rounded-full bg-[#5A5A40]/20 blur-3xl' />
-          <div className='absolute bottom-0 left-0 h-96 w-96 rounded-full bg-[#5A5A40]/10 blur-3xl' />
+          <div className='pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-[#5A5A40]/20 blur-3xl' />
+          <div className='pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-[#5A5A40]/10 blur-3xl' />
         </div>
       </section>
 

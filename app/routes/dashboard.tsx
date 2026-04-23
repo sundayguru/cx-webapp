@@ -239,7 +239,7 @@ export default function DashboardPage() {
         />
       </div>
 
-      <div className='mt-4 space-y-12 px-4 sm:px-0'>
+      <div className='mt-4 space-y-12 sm:px-0'>
         <section>
           <div className='rounded-2xl border border-black/5 bg-white p-6 shadow-sm'>
             <div className='mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
