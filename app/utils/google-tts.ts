@@ -1,3 +1,9 @@
+export type GoogleTtsVoiceGender =
+  | 'SSML_VOICE_GENDER_UNSPECIFIED'
+  | 'MALE'
+  | 'FEMALE'
+  | 'NEUTRAL';
+
 export const GOOGLE_TTS_LANGUAGE_OPTIONS = [
   { value: 'en-US', label: 'English (US)' },
   { value: 'en-GB', label: 'English (UK)' },
@@ -19,6 +25,8 @@ export const GOOGLE_TTS_GENDER_OPTIONS = [
 export type GoogleTtsVoiceListItem = {
   name: string;
   languageCodes: string[];
-  ssmlGender: 'SSML_VOICE_GENDER_UNSPECIFIED' | 'MALE' | 'FEMALE' | 'NEUTRAL';
+  ssmlGender: GoogleTtsVoiceGender;
   naturalSampleRateHertz: number;
 };
+
+export type GoogleTtsVoice = GoogleTtsVoiceListItem;

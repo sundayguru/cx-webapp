@@ -3,6 +3,10 @@ import { eq } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 import { getDb } from '~/db/connection';
 import {
+  getStoredGoogleTtsVoices,
+  storeGoogleTtsVoices,
+} from '~/db/googleTtsVoices';
+import {
   getCourseById,
   splitCourseRawTextIntoModules,
   splitModuleRawTextIntoUnits,
@@ -16,6 +20,7 @@ import {
   isCurriculumAiProvider,
   isSupportedCurriculumModel,
 } from '~/utils/curriculum-options';
+import type { GoogleTtsVoice, GoogleTtsVoiceGender } from '~/utils/google-tts';
 import {
   generateModuleUnit,
   generateQuiz,
@@ -41,25 +46,12 @@ export type CourseAiOptions = {
   model: string;
 };
 
-export type GoogleTtsVoiceGender =
-  | 'SSML_VOICE_GENDER_UNSPECIFIED'
-  | 'MALE'
-  | 'FEMALE'
-  | 'NEUTRAL';
-
 export type GoogleTtsVoiceOptions = {
   languageCode: string;
   ssmlGender: GoogleTtsVoiceGender;
   voiceName?: string;
   speakingRate: number;
   pitch: number;
-};
-
-export type GoogleTtsVoice = {
-  name: string;
-  languageCodes: string[];
-  ssmlGender: GoogleTtsVoiceGender;
-  naturalSampleRateHertz: number;
 };
 
 export const DEFAULT_GOOGLE_TTS_VOICE_OPTIONS: GoogleTtsVoiceOptions = {
@@ -210,7 +202,7 @@ const synthesizeAudioWithGoogleTts = async (
   return decodeBase64ToUint8Array(payload.audioContent);
 };
 
-export const listGoogleTtsVoices = async (languageCode?: string) => {
+const listGoogleTtsVoicesFromGoogle = async (languageCode?: string) => {
   const apiKey = getGoogleTtsApiKey();
 
   if (!apiKey) {
@@ -250,6 +242,30 @@ export const listGoogleTtsVoices = async (languageCode?: string) => {
         : true,
     )
     .sort((left, right) => left.name.localeCompare(right.name));
+};
+
+export const listGoogleTtsVoices = async (languageCode?: string) => {
+  const storedVoices = await getStoredGoogleTtsVoices();
+  const normalizedLanguageCode = languageCode?.trim();
+
+  if (storedVoices.length > 0) {
+    return storedVoices
+      .filter((voice) =>
+        normalizedLanguageCode
+          ? voice.languageCodes.includes(normalizedLanguageCode)
+          : true,
+      )
+      .sort((left, right) => left.name.localeCompare(right.name));
+  }
+
+  const voices = await listGoogleTtsVoicesFromGoogle();
+  await storeGoogleTtsVoices(voices);
+
+  return voices.filter((voice) =>
+    normalizedLanguageCode
+      ? voice.languageCodes.includes(normalizedLanguageCode)
+      : true,
+  );
 };
 
 export const splitCourseRawTextIntoModulesForCourse = async (

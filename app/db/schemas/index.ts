@@ -15,3 +15,4 @@ export * from './enrollments';
 export * from './notifications';
 export * from './community';
 export * from './bookmarks';
+export * from './googleTtsVoices';

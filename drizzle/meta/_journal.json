@@ -8,6 +8,13 @@
       "when": 1776684365106,
       "tag": "0000_workable_frog_thor",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1776926433755,
+      "tag": "0001_graceful_norrin_radd",
+      "breakpoints": true
     }
   ]
 }
