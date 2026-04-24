@@ -5,6 +5,10 @@ import {
   getQuizDisplayAnswer,
   isQuizAnswerCorrect,
 } from '~/utils/quiz-session';
+import Markdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 type QuizResultsViewProps = {
   quizzes: SelectQuiz[];
@@ -84,9 +88,14 @@ export const QuizResultsView = ({
                     <p className='text-xs font-bold tracking-wide text-black/35 uppercase'>
                       Question {index + 1}
                     </p>
-                    <h3 className='mt-2 text-lg font-semibold text-[#1a1a1a]'>
-                      {quiz.question}
-                    </h3>
+                    <div className='mt-2 text-lg font-semibold text-[#1a1a1a]'>
+                      <Markdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                      >
+                        {quiz.question}
+                      </Markdown>
+                    </div>
                   </div>
                   <span
                     className={[
@@ -124,7 +133,12 @@ export const QuizResultsView = ({
                                 : 'border-black/10 bg-[#faf9f4] text-black/65',
                           ].join(' ')}
                         >
-                          {option}
+                          <Markdown
+                            remarkPlugins={[remarkMath]}
+                            rehypePlugins={[rehypeKatex]}
+                          >
+                            {option}
+                          </Markdown>
                         </div>
                       );
                     })}
@@ -136,17 +150,27 @@ export const QuizResultsView = ({
                     <p className='text-xs font-bold tracking-wide text-black/35 uppercase'>
                       Your Answer
                     </p>
-                    <p className='mt-2 text-sm leading-6 text-[#1a1a1a]'>
-                      {userAnswer?.trim() ? userAnswer : 'No answer submitted'}
-                    </p>
+                    <div className='mt-2 text-sm leading-6 text-[#1a1a1a]'>
+                      <Markdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                      >
+                        {userAnswer?.trim() ? userAnswer : 'No answer submitted'}
+                      </Markdown>
+                    </div>
                   </div>
                   <div className='rounded-2xl border border-green-200 bg-green-50 p-4'>
                     <p className='text-xs font-bold tracking-wide text-green-700 uppercase'>
                       Correct Answer
                     </p>
-                    <p className='mt-2 text-sm leading-6 text-green-950'>
-                      {getQuizDisplayAnswer(quiz)}
-                    </p>
+                    <div className='mt-2 text-sm leading-6 text-green-950'>
+                      <Markdown
+                        remarkPlugins={[remarkMath]}
+                        rehypePlugins={[rehypeKatex]}
+                      >
+                        {getQuizDisplayAnswer(quiz)}
+                      </Markdown>
+                    </div>
                   </div>
                 </div>
               </article>

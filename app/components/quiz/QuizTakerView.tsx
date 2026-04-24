@@ -3,6 +3,10 @@ import { motion } from 'motion/react';
 import { CheckCircle, ChevronRight, Clock, X } from 'lucide-react';
 import type { SelectQuiz } from '~/db/schemas/quizzes';
 import { getQuizDisplayAnswer } from '~/utils/quiz-session';
+import Markdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 
 type QuizTakerViewProps = {
   quizzes: SelectQuiz[];
@@ -172,9 +176,14 @@ export const QuizTakerView = ({
                 : 'Open Response'}
             </div>
 
-            <h3 className='text-xl leading-tight font-semibold text-[#1a1a1a] md:text-2xl'>
-              {currentQuiz.question}
-            </h3>
+            <div className='text-xl leading-tight font-semibold text-[#1a1a1a] md:text-2xl'>
+              <Markdown
+                remarkPlugins={[remarkMath]}
+                rehypePlugins={[rehypeKatex]}
+              >
+                {currentQuiz.question}
+              </Markdown>
+            </div>
 
             <div className='mt-8'>
               {currentQuiz.questionType === 'choice' ? (
@@ -220,9 +229,14 @@ export const QuizTakerView = ({
                         >
                           {optionLetter}
                         </span>
-                        <span className='pt-1 text-base text-[#1a1a1a]'>
-                          {option}
-                        </span>
+                        <div className='pt-1 text-base text-[#1a1a1a]'>
+                          <Markdown
+                            remarkPlugins={[remarkMath]}
+                            rehypePlugins={[rehypeKatex]}
+                          >
+                            {option}
+                          </Markdown>
+                        </div>
                       </button>
                     );
                   })}
@@ -254,9 +268,14 @@ export const QuizTakerView = ({
                     Suggested Answer
                   </p>
                 </div>
-                <p className='text-sm leading-7 text-green-900'>
-                  {getQuizDisplayAnswer(currentQuiz)}
-                </p>
+                <div className='text-sm leading-7 text-green-900'>
+                  <Markdown
+                    remarkPlugins={[remarkMath]}
+                    rehypePlugins={[rehypeKatex]}
+                  >
+                    {getQuizDisplayAnswer(currentQuiz)}
+                  </Markdown>
+                </div>
               </div>
             ) : null}
           </div>

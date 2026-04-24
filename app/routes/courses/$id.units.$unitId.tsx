@@ -1601,12 +1601,24 @@ const UnitPageContent = ({
                                       </span>
                                     ) : null}
                                   </div>
-                                  <p className='mb-4 font-medium text-[#1a1a1a]'>
-                                    {(quizPage - 1) * QUIZZES_PER_PAGE +
-                                      index +
-                                      1}
-                                    . {quiz.question}
-                                  </p>
+                                  <div className='mb-4 font-medium text-[#1a1a1a]'>
+                                    <div className='flex gap-2 text-sm'>
+                                      <span className='font-bold'>
+                                        {(quizPage - 1) * QUIZZES_PER_PAGE +
+                                          index +
+                                          1}
+                                        .
+                                      </span>
+                                      <div className='prose prose-sm max-w-none'>
+                                        <Markdown
+                                          remarkPlugins={[remarkMath]}
+                                          rehypePlugins={[rehypeKatex]}
+                                        >
+                                          {quiz.question}
+                                        </Markdown>
+                                      </div>
+                                    </div>
+                                  </div>
                                   {quiz.questionType === 'choice' &&
                                     quiz.options ? (
                                     <div className='space-y-2'>
@@ -1626,7 +1638,7 @@ const UnitPageContent = ({
                                             >
                                               <span
                                                 className={cx(
-                                                  'flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold',
+                                                  'flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold',
                                                   isCorrect
                                                     ? 'bg-green-500 text-white'
                                                     : 'bg-black/5',
@@ -1636,7 +1648,7 @@ const UnitPageContent = ({
                                                   65 + optIndex,
                                                 )}
                                               </span>
-                                              <span
+                                              <div
                                                 className={cx(
                                                   'text-sm',
                                                   isCorrect
@@ -1644,8 +1656,13 @@ const UnitPageContent = ({
                                                     : 'text-[#1a1a1a]',
                                                 )}
                                               >
-                                                {option}
-                                              </span>
+                                                <Markdown
+                                                  remarkPlugins={[remarkMath]}
+                                                  rehypePlugins={[rehypeKatex]}
+                                                >
+                                                  {option}
+                                                </Markdown>
+                                              </div>
                                             </div>
                                           );
                                         },
@@ -1656,9 +1673,14 @@ const UnitPageContent = ({
                                       <p className='mb-1 text-xs font-medium text-black/40'>
                                         Answer:
                                       </p>
-                                      <p className='text-sm text-[#1a1a1a]'>
-                                        {displayAnswer}
-                                      </p>
+                                      <div className='text-sm text-[#1a1a1a]'>
+                                        <Markdown
+                                          remarkPlugins={[remarkMath]}
+                                          rehypePlugins={[rehypeKatex]}
+                                        >
+                                          {displayAnswer}
+                                        </Markdown>
+                                      </div>
                                     </div>
                                   )}
                                 </div>
