@@ -619,6 +619,35 @@ export const splitModuleRawTextIntoUnits = async (moduleId: string) => {
   }
 };
 
+export const addModule = async (
+  courseId: string,
+  title: string,
+  rawText: string,
+) => {
+  try {
+    const db = getDb();
+    const existingModules = await db
+      .select({ id: modules.id })
+      .from(modules)
+      .where(eq(modules.courseId, courseId));
+
+    const newModuleId = uuidv4();
+    await db.insert(modules).values({
+      id: newModuleId,
+      courseId,
+      title,
+      rawText,
+      order: existingModules.length,
+      updatedAt: new Date().toISOString(),
+    });
+
+    return true;
+  } catch (e) {
+    logError(e, 'Error adding module');
+    return false;
+  }
+};
+
 export const updateModuleRawText = async (
   moduleId: string,
   rawText: string,

@@ -6,6 +6,8 @@ import {
   Edit3,
   FileText,
   MoreVertical,
+  Play,
+  Plus,
   Sparkles,
   Send,
   Trash2,
@@ -50,6 +52,8 @@ export const CourseSidebar = ({
   isDeletingCourse = false,
   isEnrolled,
   onEnroll,
+  isAddingModule = false,
+  onOpenAddModuleModal,
 }: SidebarProps) => {
   const [isAdminMenuOpen, setIsAdminMenuOpen] = useState(false);
   const deleteButton =
@@ -267,6 +271,17 @@ export const CourseSidebar = ({
                     {isGeneratingUnits
                       ? 'Generating Units...'
                       : 'Generate Units'}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setIsAdminMenuOpen(false);
+                      onOpenAddModuleModal?.();
+                    }}
+                    disabled={isAddingModule}
+                    className='flex w-full items-center gap-2 px-4 py-3 text-left text-sm font-medium text-[#1a1a1a] hover:bg-black/5 disabled:opacity-50'
+                  >
+                    <Plus size={16} />
+                    {isAddingModule ? 'Adding Module...' : 'Add Module'}
                   </button>
                   {course.status !== 'published' && onPublish ? (
                     <button

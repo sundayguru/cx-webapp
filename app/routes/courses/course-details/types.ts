@@ -68,8 +68,10 @@ export type SidebarProps = {
   onPublish?: () => void;
   onUnpublish?: () => void;
   isDeletingCourse?: boolean;
+  isAddingModule?: boolean;
   isEnrolled?: boolean;
   onEnroll?: () => void;
+  onOpenAddModuleModal?: () => void;
 };
 
 export type CourseContentProps = {

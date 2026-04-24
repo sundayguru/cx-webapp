@@ -63,6 +63,10 @@ export default [
       'routes/api/courses/$id.delete-module.tsx',
     ),
     route(
+      'api/courses/:id/add-module',
+      'routes/api/courses/$id.add-module.tsx',
+    ),
+    route(
       'api/courses/:id/tag-raw-text',
       'routes/api/courses/tag-raw-text.tsx',
     ),

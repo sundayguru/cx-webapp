@@ -142,6 +142,7 @@ export default function CourseDetailsPage({
   const curriculumDeleteFetcher = useFetcher();
   const publishFetcher = useFetcher();
   const deleteFetcher = useFetcher();
+  const addModuleFetcher = useFetcher();
 
   const [isPdfModalOpen, setIsPdfModalOpen] = useState(false);
   const [isPlaylistOpen, setIsPlaylistOpen] = useState(false);
@@ -164,6 +165,7 @@ export default function CourseDetailsPage({
     useState(false);
   const [isUnitRawTextModalOpen, setIsUnitRawTextModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isAddModuleModalOpen, setIsAddModuleModalOpen] = useState(false);
   const [pendingCurriculumDelete, setPendingCurriculumDelete] =
     useState<PendingCurriculumDelete | null>(null);
   const [editingModuleId, setEditingModuleId] = useState<string | null>(null);
@@ -231,6 +233,7 @@ export default function CourseDetailsPage({
   const isDeletingCurriculumItem = curriculumDeleteFetcher.state !== 'idle';
   const isPublishingCourse = publishFetcher.state !== 'idle';
   const isDeletingCourse = deleteFetcher.state !== 'idle';
+  const isAddingModule = addModuleFetcher.state !== 'idle';
   const isAdminActionProcessing =
     isExtractingRawText ||
     isHeuristicTaggingRawText ||
@@ -243,7 +246,8 @@ export default function CourseDetailsPage({
     isGenerating ||
     isGeneratingUnits ||
     isPublishingCourse ||
-    isDeletingCourse;
+    isDeletingCourse ||
+    isAddingModule;
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
     setSelectedProvider(provider);
@@ -303,6 +307,16 @@ export default function CourseDetailsPage({
       {
         method: 'post',
         action: `/api/courses/${data?.course.id}/delete`,
+      },
+    );
+  };
+
+  const handleConfirmAddModule = (title: string, rawText: string) => {
+    addModuleFetcher.submit(
+      { title, rawText },
+      {
+        method: 'post',
+        action: `/api/courses/${data?.course.id}/add-module`,
       },
     );
   };
@@ -513,8 +527,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      curriculumFetcher.reset();
     }
-  }, [curriculumFetcher, showToast]);
+  }, [showToast, curriculumFetcher.state, curriculumFetcher.data]);
 
   useEffect(() => {
     if (unitGenerationFetcher.state === 'idle' && unitGenerationFetcher.data) {
@@ -543,8 +558,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      unitGenerationFetcher.reset();
     }
-  }, [showToast, unitGenerationFetcher]);
+  }, [showToast, unitGenerationFetcher.state, unitGenerationFetcher.data]);
 
   useEffect(() => {
     if (rawTextFetcher.state === 'idle' && rawTextFetcher.data) {
@@ -572,8 +588,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      rawTextFetcher.reset();
     }
-  }, [rawTextFetcher, showToast]);
+  }, [showToast, rawTextFetcher.state, rawTextFetcher.data]);
 
   useEffect(() => {
     if (rawTextUpdateFetcher.state === 'idle' && rawTextUpdateFetcher.data) {
@@ -601,8 +618,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      rawTextUpdateFetcher.reset();
     }
-  }, [rawTextUpdateFetcher, showToast]);
+  }, [showToast, rawTextUpdateFetcher.state, rawTextUpdateFetcher.data]);
 
   useEffect(() => {
     if (
@@ -632,6 +650,7 @@ export default function CourseDetailsPage({
         message: result.error,
       });
     }
+    curriculumDeleteFetcher.reset();
   }, [curriculumDeleteFetcher.data, curriculumDeleteFetcher.state, showToast]);
 
   useEffect(() => {
@@ -666,8 +685,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      heuristicTagRawTextFetcher.reset();
     }
-  }, [heuristicTagRawTextFetcher, showToast]);
+  }, [showToast, heuristicTagRawTextFetcher.state, heuristicTagRawTextFetcher.data]);
 
   useEffect(() => {
     if (tagModuleUnitsFetcher.state === 'idle' && tagModuleUnitsFetcher.data) {
@@ -696,8 +716,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      tagModuleUnitsFetcher.reset();
     }
-  }, [showToast, tagModuleUnitsFetcher]);
+  }, [showToast, tagModuleUnitsFetcher.state, tagModuleUnitsFetcher.data]);
 
   useEffect(() => {
     if (tagRawTextFetcher.state === 'idle' && tagRawTextFetcher.data) {
@@ -725,8 +746,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      tagRawTextFetcher.reset();
     }
-  }, [showToast, tagRawTextFetcher]);
+  }, [showToast, tagRawTextFetcher.state, tagRawTextFetcher.data]);
 
   useEffect(() => {
     if (splitRawTextFetcher.state === 'idle' && splitRawTextFetcher.data) {
@@ -754,8 +776,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      splitRawTextFetcher.reset();
     }
-  }, [showToast, splitRawTextFetcher]);
+  }, [showToast, splitRawTextFetcher.state, splitRawTextFetcher.data]);
 
   const handledSplitModuleRawTextResult = useRef<string | null>(null);
 
@@ -791,8 +814,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      splitModuleRawTextFetcher.reset();
     }
-  }, [showToast, splitModuleRawTextFetcher]);
+  }, [showToast, splitModuleRawTextFetcher.state, splitModuleRawTextFetcher.data]);
 
   const handledSplitAllModuleRawTextResult = useRef<string | null>(null);
 
@@ -829,8 +853,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      splitAllModuleRawTextFetcher.reset();
     }
-  }, [showToast, splitAllModuleRawTextFetcher]);
+  }, [showToast, splitAllModuleRawTextFetcher.state, splitAllModuleRawTextFetcher.data]);
 
   const handledCourseWorkflowResult = useRef<string | null>(null);
 
@@ -859,8 +884,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      courseWorkflowFetcher.reset();
     }
-  }, [courseWorkflowFetcher, showToast]);
+  }, [showToast, courseWorkflowFetcher.state, courseWorkflowFetcher.data]);
 
   const handledUnitAudioWorkflowResult = useRef<string | null>(null);
   const handledWorkflowAudioVoicesResult = useRef<string | null>(null);
@@ -957,8 +983,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      unitAudioWorkflowFetcher.reset();
     }
-  }, [showToast, unitAudioWorkflowFetcher]);
+  }, [showToast, unitAudioWorkflowFetcher.state, unitAudioWorkflowFetcher.data]);
 
   const handledModuleRawTextUpdateResult = useRef<string | null>(null);
 
@@ -994,8 +1021,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      moduleRawTextUpdateFetcher.reset();
     }
-  }, [showToast, moduleRawTextUpdateFetcher]);
+  }, [showToast, moduleRawTextUpdateFetcher.state, moduleRawTextUpdateFetcher.data]);
 
   const handledUnitRawTextUpdateResult = useRef<string | null>(null);
 
@@ -1031,8 +1059,9 @@ export default function CourseDetailsPage({
           message: result.error,
         });
       }
+      unitRawTextUpdateFetcher.reset();
     }
-  }, [showToast, unitRawTextUpdateFetcher]);
+  }, [showToast, unitRawTextUpdateFetcher.state, unitRawTextUpdateFetcher.data]);
 
   const handledEnrollResult = useRef<string | null>(null);
   useEffect(() => {
@@ -1051,8 +1080,9 @@ export default function CourseDetailsPage({
         handledEnrollResult.current = resultKey;
         showToast({ tone: 'error', message: result.error });
       }
+      enrollFetcher.reset();
     }
-  }, [showToast, enrollFetcher]);
+  }, [showToast, enrollFetcher.state, enrollFetcher.data]);
 
   const handledPublishResult = useRef<string | null>(null);
   useEffect(() => {
@@ -1099,8 +1129,30 @@ export default function CourseDetailsPage({
         handledDeleteResult.current = resultKey;
         showToast({ tone: 'error', message: result.error });
       }
+      deleteFetcher.reset();
     }
-  }, [deleteFetcher, showToast]);
+  }, [showToast, deleteFetcher.state, deleteFetcher.data]);
+
+  const handledAddModuleResult = useRef<string | null>(null);
+  useEffect(() => {
+    if (addModuleFetcher.state === 'idle' && addModuleFetcher.data) {
+      const result = addModuleFetcher.data as {
+        success?: boolean;
+        error?: string;
+      };
+      const resultKey = JSON.stringify(result);
+
+      if (result.success && handledAddModuleResult.current !== resultKey) {
+        handledAddModuleResult.current = resultKey;
+        showToast({ tone: 'success', message: 'Module added successfully!' });
+        window.location.reload();
+      } else if (result.error && handledAddModuleResult.current !== resultKey) {
+        handledAddModuleResult.current = resultKey;
+        showToast({ tone: 'error', message: result.error });
+      }
+      addModuleFetcher.reset();
+    }
+  }, [showToast, addModuleFetcher.state, addModuleFetcher.data]);
 
   const handleEnroll = () => {
     enrollFetcher.submit(
@@ -1224,6 +1276,8 @@ export default function CourseDetailsPage({
           onPublish={handlePublish}
           onUnpublish={handleUnpublish}
           isDeletingCourse={isDeletingCourse}
+          isAddingModule={isAddingModule}
+          onOpenAddModuleModal={() => setIsAddModuleModalOpen(true)}
         />
       </div>
 
@@ -1384,6 +1438,13 @@ export default function CourseDetailsPage({
         onCloseUnitRawTextModal={() => setIsUnitRawTextModalOpen(false)}
         onUnitRawTextChange={setEditableUnitRawText}
         onSaveUnitRawText={handleUpdateUnitRawText}
+        isAddModuleModalOpen={isAddModuleModalOpen}
+        isAddingModule={isAddingModule}
+        onCloseAddModuleModal={() => setIsAddModuleModalOpen(false)}
+        onConfirmAddModule={(title, rawText) => {
+          setIsAddModuleModalOpen(false);
+          handleConfirmAddModule(title, rawText);
+        }}
       />
 
       <CoursePlaylist

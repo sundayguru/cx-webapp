@@ -11,6 +11,121 @@ import {
 } from '~/utils/google-tts';
 import { WarningModal } from '~/components/WarningModal';
 import type { CourseModuleWithUnits } from './types';
+import { useState } from 'react';
+
+type AddModuleModalProps = {
+  isOpen: boolean;
+  isAdding: boolean;
+  onClose: () => void;
+  onConfirm: (title: string, rawText: string) => void;
+};
+
+const AddModuleModal = ({
+  isOpen,
+  isAdding,
+  onClose,
+  onConfirm,
+}: AddModuleModalProps) => {
+  const [title, setTitle] = useState('');
+  const [rawText, setRawText] = useState('');
+
+  return (
+    <AnimatePresence>
+      {isOpen ? (
+        <div className='fixed inset-0 z-[106] flex items-center justify-center p-4 md:p-8'>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => {
+              if (!isAdding) {
+                onClose();
+              }
+            }}
+            className='absolute inset-0 bg-black/70 backdrop-blur-sm'
+          />
+          <motion.div
+            initial={{ opacity: 0, scale: 0.96, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.96, y: 16 }}
+            className='relative w-full max-w-2xl rounded-[32px] bg-white p-8 shadow-2xl'
+          >
+            <div className='mb-6 flex items-center justify-between'>
+              <div>
+                <h3 className='font-serif text-2xl text-[#1a1a1a]'>
+                  Add New Module
+                </h3>
+                <p className='mt-2 text-sm text-black/55'>
+                  Enter a title and the raw text content for the new module.
+                </p>
+              </div>
+              <button
+                onClick={onClose}
+                disabled={isAdding}
+                className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10 disabled:opacity-50'
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className='space-y-5'>
+              <div>
+                <label
+                  htmlFor='add-module-title'
+                  className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                >
+                  Module Title
+                </label>
+                <input
+                  id='add-module-title'
+                  type='text'
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder='e.g., Introduction to React'
+                  className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                />
+              </div>
+
+              <div>
+                <label
+                  htmlFor='add-module-text'
+                  className='mb-2 block text-xs font-bold tracking-widest text-black/50 uppercase'
+                >
+                  Raw Text Content
+                </label>
+                <textarea
+                  id='add-module-text'
+                  rows={8}
+                  value={rawText}
+                  onChange={(e) => setRawText(e.target.value)}
+                  placeholder='Paste the content for this module here...'
+                  className='w-full rounded-xl border border-black/10 bg-white px-4 py-3 text-sm font-medium text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                />
+              </div>
+            </div>
+
+            <div className='mt-8 flex items-center justify-end gap-3'>
+              <button
+                onClick={onClose}
+                disabled={isAdding}
+                className='rounded-2xl border border-black/10 px-5 py-3 font-medium text-black/60 transition-all hover:bg-black/5 disabled:opacity-50'
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => onConfirm(title, rawText)}
+                disabled={isAdding || !title.trim() || !rawText.trim()}
+                className='rounded-2xl bg-[#5A5A40] px-5 py-3 font-bold text-white transition-all hover:bg-[#4a4a35] disabled:opacity-50'
+              >
+                {isAdding ? 'Adding...' : 'Add Module'}
+              </button>
+            </div>
+          </motion.div>
+        </div>
+      ) : null}
+    </AnimatePresence>
+  );
+};
 
 type PdfModalProps = {
   isOpen: boolean;
@@ -1159,6 +1274,7 @@ type CourseModalsProps = {
   isRawTextModalOpen: boolean;
   isModuleRawTextModalOpen: boolean;
   isUnitRawTextModalOpen: boolean;
+  isAddModuleModalOpen: boolean;
   isGeneratingUnits: boolean;
   isGenerating: boolean;
   isRunningCourseWorkflow: boolean;
@@ -1168,6 +1284,7 @@ type CourseModalsProps = {
   isUpdatingRawText: boolean;
   isUpdatingModuleRawText: boolean;
   isUpdatingUnitRawText: boolean;
+  isAddingModule: boolean;
   selectedProvider: CurriculumAiProvider;
   selectedModel: string;
   moduleWordStyle: string;
@@ -1220,8 +1337,10 @@ type CourseModalsProps = {
   onModuleRawTextChange: (value: string) => void;
   onSaveModuleRawText: () => void;
   onCloseUnitRawTextModal: () => void;
-  onUnitRawTextChange: (value: string) => void;
+  onUnitRawTextChange: (rawText: string) => void;
   onSaveUnitRawText: () => void;
+  onCloseAddModuleModal: () => void;
+  onConfirmAddModule: (title: string, rawText: string) => void;
 };
 
 export const CourseModals = ({
@@ -1241,6 +1360,7 @@ export const CourseModals = ({
   isRawTextModalOpen,
   isModuleRawTextModalOpen,
   isUnitRawTextModalOpen,
+  isAddModuleModalOpen,
   isGeneratingUnits,
   isGenerating,
   isRunningCourseWorkflow,
@@ -1250,6 +1370,7 @@ export const CourseModals = ({
   isUpdatingRawText,
   isUpdatingModuleRawText,
   isUpdatingUnitRawText,
+  isAddingModule,
   selectedProvider,
   selectedModel,
   moduleWordStyle,
@@ -1304,6 +1425,8 @@ export const CourseModals = ({
   onCloseUnitRawTextModal,
   onUnitRawTextChange,
   onSaveUnitRawText,
+  onCloseAddModuleModal,
+  onConfirmAddModule,
 }: CourseModalsProps) => {
   return (
     <>
@@ -1456,6 +1579,12 @@ export const CourseModals = ({
         onClose={onCloseUnitRawTextModal}
         onRawTextChange={onUnitRawTextChange}
         onSave={onSaveUnitRawText}
+      />
+      <AddModuleModal
+        isOpen={isAddModuleModalOpen}
+        isAdding={isAddingModule}
+        onClose={onCloseAddModuleModal}
+        onConfirm={onConfirmAddModule}
       />
     </>
   );
