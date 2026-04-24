@@ -238,6 +238,7 @@ type CourseFilters = {
   category?: string;
   createdBy?: string;
   publishedOnly?: boolean;
+  status?: string;
 };
 
 export const getCourses = async (filters?: CourseFilters, isAdmin = false) => {
@@ -251,6 +252,10 @@ export const getCourses = async (filters?: CourseFilters, isAdmin = false) => {
 
     if (filters?.publishedOnly && !isAdmin) {
       conditions.push(eq(courses.status, 'published'));
+    }
+
+    if (filters?.status && isAdmin) {
+      conditions.push(eq(courses.status, filters.status));
     }
 
     if (filters?.search) {

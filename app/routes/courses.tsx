@@ -26,6 +26,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
   const category = url.searchParams.get('category') || undefined;
   const schoolId = url.searchParams.get('schoolId') || undefined;
   const authorId = url.searchParams.get('authorId') || undefined;
+  const status = url.searchParams.get('status') || undefined;
   const mine = url.searchParams.get('mine') === 'true';
 
   const filters = {
@@ -36,6 +37,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     authorId,
     createdBy: mine && user ? user.id : undefined,
     publishedOnly: !mine || !user,
+    status: user?.isAdmin ? status : undefined,
   };
 
   const courses = await getCourses(filters, user?.isAdmin);
@@ -50,6 +52,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
       category: category || '',
       schoolId: schoolId || '',
       authorId: authorId || '',
+      status: status || '',
       mine,
     },
     metadata,
@@ -105,6 +108,7 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
     filters.category ||
     filters.schoolId ||
     filters.authorId ||
+    filters.status ||
     filters.mine;
 
   return (
@@ -137,11 +141,10 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
 
             <button
               onClick={() => setShowFilters(!showFilters)}
-              className={`flex h-12 w-12 items-center justify-center rounded-[20px] border transition-all ${
-                showFilters
+              className={`flex h-12 w-12 items-center justify-center rounded-[20px] border transition-all ${showFilters
                   ? 'border-[#5A5A40] bg-[#5A5A40] text-white'
                   : 'border-black/5 bg-white text-black/60 shadow-sm hover:border-black/10'
-              }`}
+                }`}
             >
               <Filter size={18} />
             </button>
@@ -257,6 +260,26 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
                     <X size={20} />
                   </Link>
                 </div>
+
+                {user?.isAdmin && (
+                  <div className='space-y-2 md:col-start-1'>
+                    <label className='block px-1 text-[10px] font-bold tracking-[0.2em] text-black/30 uppercase'>
+                      Status
+                    </label>
+                    <select
+                      name='status'
+                      defaultValue={filters.status}
+                      onChange={handleFilterChange}
+                      className='w-full rounded-xl border border-black/5 bg-black/[0.02] px-4 py-3 text-sm font-medium outline-none focus:ring-2 focus:ring-[#5A5A40]'
+                    >
+                      <option value=''>All Statuses</option>
+                      <option value='published'>Published</option>
+                      <option value='pending'>Pending</option>
+                      <option value='processing'>Processing</option>
+                      <option value='failed'>Failed</option>
+                    </select>
+                  </div>
+                )}
               </form>
 
               {user && (
@@ -324,6 +347,13 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
             <div className='flex items-center gap-2 rounded-full border border-black/5 bg-black/[0.02] px-4 py-1.5 text-xs font-bold text-black/60'>
               <UserCircle size={12} />
               {metadata.authors.find((a) => a.id === filters.authorId)?.name}
+            </div>
+          )}
+          {filters.status && (
+            <div
+              className={`rounded-full border px-4 py-1.5 text-xs font-bold uppercase ${getStatusColor(filters.status)}`}
+            >
+              Status: {filters.status}
             </div>
           )}
         </div>
