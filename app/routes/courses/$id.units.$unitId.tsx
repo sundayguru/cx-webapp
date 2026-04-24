@@ -60,6 +60,7 @@ import {
 import { getChatHistoryByUnitId } from '~/db/chat-history';
 import type { SelectChatMessage } from '~/db/schemas';
 import { getYouTubeEmbedUrl } from '~/utils/video';
+import * as analytics from '~/utils/analytics';
 
 type CourseModuleWithUnits = SelectModule & {
   units: SelectUnit[];
@@ -1067,6 +1068,7 @@ const UnitPageContent = ({
                   onClick={() => {
                     setMode('audio');
                     audioRef.current?.load();
+                    analytics.trackListenWatch(currentUnit.title, 'listen');
                   }}
                   className={cx(
                     'flex shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
@@ -1081,7 +1083,10 @@ const UnitPageContent = ({
                   </span>
                 </button>
                 <button
-                  onClick={() => setMode('video')}
+                  onClick={() => {
+                    setMode('video');
+                    analytics.trackListenWatch(currentUnit.title, 'watch');
+                  }}
                   className={cx(
                     'flex shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
                     mode === 'video'
@@ -1095,7 +1100,10 @@ const UnitPageContent = ({
                   </span>
                 </button>
                 <button
-                  onClick={() => setMode('quiz')}
+                  onClick={() => {
+                    setMode('quiz');
+                    analytics.trackQuizStart(currentUnit.title);
+                  }}
                   className={cx(
                     'flex shrink-0 items-center justify-center rounded-xl px-3 py-2 text-sm font-medium transition-all md:px-4',
                     mode === 'quiz'
@@ -1170,6 +1178,7 @@ const UnitPageContent = ({
                       onClick={() => {
                         setShowMoreMenu(false);
                         setShowChat((visible) => !visible);
+                        analytics.trackAskAI(currentUnit.title);
                       }}
                       className='flex w-full items-center gap-2 px-4 py-2 text-left text-sm text-[#1a1a1a] hover:bg-black/5'
                     >

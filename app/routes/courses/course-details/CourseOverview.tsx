@@ -20,6 +20,7 @@ import type { SelectSchool } from '~/db/schemas/schools';
 import type { CourseProgressStats } from '~/db/quizzes';
 import { CourseContributorBadge } from '~/components/CourseContributorBadge';
 import type { CourseContributor } from '~/types/course';
+import * as analytics from '~/utils/analytics';
 
 type CourseOverviewProps = {
   course: SelectCourse;
@@ -170,7 +171,10 @@ export const CourseOverview = ({
 
         {hasPlaylist && (
           <button
-            onClick={onOpenPlaylist}
+            onClick={() => {
+              analytics.trackListenWatch(course.title, 'watch'); // General 'watch' action for course player
+              onOpenPlaylist();
+            }}
             disabled={!isEnrolled}
             className='cursor-pointer rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a] disabled:opacity-50 disabled:cursor-not-allowed'
           >

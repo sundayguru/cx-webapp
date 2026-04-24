@@ -12,7 +12,11 @@ import type { Route } from './+types/root';
 import './app.css';
 import { CurrentUserProvider } from './providers/CurrentUserProvider';
 import { userDataContext } from './contexts.server/userDataContext.server';
+import { cloudflareContext } from './contexts.server/cloudflareContext.server';
 import { ToastProvider } from './components/ToastViewport';
+import { useLocation } from 'react-router';
+import { useEffect } from 'react';
+import * as analytics from './utils/analytics';
 
 export const links: Route.LinksFunction = () => [
   { rel: 'preconnect', href: 'https://fonts.googleapis.com' },
@@ -53,9 +57,38 @@ export const Layout = ({ children }: { children: React.ReactNode }) => {
 };
 
 export default function App({ loaderData }: Route.ComponentProps) {
+  const location = useLocation();
+
+  useEffect(() => {
+    if (loaderData.gaId) {
+      analytics.pageview(location.pathname + location.search);
+    }
+  }, [location, loaderData.gaId]);
+
   return (
     <ToastProvider>
       <CurrentUserProvider user={loaderData.user}>
+        {loaderData.gaId && (
+          <>
+            <script
+              async
+              src={`https://www.googletagmanager.com/gtag/js?id=${loaderData.gaId}`}
+            />
+            <script
+              dangerouslySetInnerHTML={{
+                __html: `
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${loaderData.gaId}', {
+                  page_path: window.location.pathname,
+                });
+                window.GA_TRACKING_ID = '${loaderData.gaId}';
+              `,
+              }}
+            />
+          </>
+        )}
         <Outlet />
       </CurrentUserProvider>
     </ToastProvider>
@@ -63,8 +96,10 @@ export default function App({ loaderData }: Route.ComponentProps) {
 }
 
 export const loader = ({ context }: Route.LoaderArgs) => {
+  const cf = context.get(cloudflareContext);
   return {
     user: context.get(userDataContext),
+    gaId: (cf.env as any).GA_TRACKING_ID || 'G-XXXXXXXXXX', // Fallback to placeholder
   };
 };
 

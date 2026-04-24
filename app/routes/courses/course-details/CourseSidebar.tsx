@@ -13,6 +13,7 @@ import {
   XCircle,
 } from 'lucide-react';
 import type { SidebarProps } from './types';
+import * as analytics from '~/utils/analytics';
 
 export const CourseSidebar = ({
   course,
@@ -90,7 +91,10 @@ export const CourseSidebar = ({
           <div className='space-y-3'>
             {!isEnrolled && course.status === 'published' && (
               <button
-                onClick={onEnroll}
+                onClick={() => {
+                  analytics.trackEnrollNow(course.title);
+                  onEnroll?.();
+                }}
                 className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'
               >
                 Enroll Now
@@ -310,7 +314,10 @@ export const CourseSidebar = ({
           <div className='space-y-3'>
             {!isEnrolled && course.status === 'published' && (
               <button
-                onClick={onEnroll}
+                onClick={() => {
+                  analytics.trackEnrollNow(course.title);
+                  onEnroll?.();
+                }}
                 className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'
               >
                 Enroll Now

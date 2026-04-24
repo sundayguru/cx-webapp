@@ -7,6 +7,7 @@ import Markdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import * as analytics from '~/utils/analytics';
 
 type QuizTakerViewProps = {
   quizzes: SelectQuiz[];
@@ -73,6 +74,12 @@ export const QuizTakerView = ({
   }, [timeRemaining, timerEnabled]);
 
   useEffect(() => {
+    if (currentIndex === 0) {
+      analytics.trackQuizStart(quizzes[0]?.question?.substring(0, 50) || 'Unknown Quiz');
+    }
+  }, [currentIndex, quizzes]);
+
+  useEffect(() => {
     if (!timerEnabled || timeRemaining > 0) {
       return;
     }
@@ -103,6 +110,10 @@ export const QuizTakerView = ({
     setShowAnswerWarning(false);
 
     if (isLastQuestion) {
+      analytics.trackQuizFinish(
+        quizzes[0]?.question?.substring(0, 50) || 'Unknown Quiz',
+        0, // We don't have the final score here, maybe we should track it elsewhere if we have it
+      );
       onFinish();
       return;
     }
