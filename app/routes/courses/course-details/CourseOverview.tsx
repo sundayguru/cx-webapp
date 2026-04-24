@@ -11,6 +11,8 @@ import {
   Users,
   Zap,
   UserCircle2,
+  Music,
+  Video,
 } from 'lucide-react';
 import type { SelectAuthor } from '~/db/schemas/authors';
 import type { SelectCourse } from '~/db/schemas/courses';
@@ -33,6 +35,8 @@ type CourseOverviewProps = {
   progressStats?: CourseProgressStats | null;
   learnerCount?: number;
   isEnrolled?: boolean;
+  audioCount?: number;
+  videoCount?: number;
 };
 
 export const CourseOverview = ({
@@ -49,6 +53,8 @@ export const CourseOverview = ({
   progressStats,
   isEnrolled = true,
   learnerCount = 0,
+  audioCount = 0,
+  videoCount = 0,
 }: CourseOverviewProps) => {
   const courseAuthors = authors.length > 0 ? authors : author ? [author] : [];
 
@@ -101,7 +107,7 @@ export const CourseOverview = ({
         ) : null}
       </div>
 
-      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4'>
+      <div className='grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3'>
         <div className='rounded-[24px] border border-black/5 bg-[#f7f6ef] p-5'>
           <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#5A5A40] shadow-sm'>
             <Users size={20} />
@@ -138,11 +144,35 @@ export const CourseOverview = ({
           </p>
         </div>
 
+        <div className='rounded-[24px] border border-black/5 bg-[#f7f6ef] p-5'>
+          <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#5A5A40] shadow-sm'>
+            <Music size={20} />
+          </div>
+          <p className='text-xs font-bold tracking-[0.18em] text-black/35 uppercase'>
+            Audio
+          </p>
+          <p className='mt-2 text-lg font-semibold text-[#1a1a1a]'>
+            {audioCount}
+          </p>
+        </div>
+
+        <div className='rounded-[24px] border border-black/5 bg-[#f7f6ef] p-5'>
+          <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white text-[#5A5A40] shadow-sm'>
+            <Video size={20} />
+          </div>
+          <p className='text-xs font-bold tracking-[0.18em] text-black/35 uppercase'>
+            Video
+          </p>
+          <p className='mt-2 text-lg font-semibold text-[#1a1a1a]'>
+            {videoCount}
+          </p>
+        </div>
+
         {hasPlaylist && (
           <button
             onClick={onOpenPlaylist}
             disabled={!isEnrolled}
-            className='cursor-pointer rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a]'
+            className='cursor-pointer rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a] disabled:opacity-50 disabled:cursor-not-allowed'
           >
             <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
               <Play size={20} />
@@ -255,16 +285,14 @@ type StatPillProps = {
 
 const StatPill = ({ icon, label, value, highlight }: StatPillProps) => (
   <div
-    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${
-      highlight
+    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${highlight
         ? 'border border-green-200 bg-green-50'
         : 'border border-black/5 bg-[#f7f6ef]'
-    }`}
+      }`}
   >
     <div
-      className={`flex shrink-0 ${
-        highlight ? 'text-green-600' : 'text-[#5A5A40]'
-      }`}
+      className={`flex shrink-0 ${highlight ? 'text-green-600' : 'text-[#5A5A40]'
+        }`}
     >
       {icon}
     </div>

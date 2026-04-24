@@ -91,6 +91,10 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   });
   const communityUsers = Array.from(uniqueUsersMap.values()).slice(0, 5);
 
+  const allUnits = data?.modules.flatMap((m) => m.units) || [];
+  const audioCount = allUnits.filter((u) => !!u.audioUrl).length;
+  const videoCount = allUnits.filter((u) => !!u.videoUrl).length;
+
   return {
     data,
     user,
@@ -98,6 +102,8 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     isEnrolled,
     enrollmentCount,
     communityUsers,
+    audioCount,
+    videoCount,
   };
 };
 
@@ -111,6 +117,8 @@ export default function CourseDetailsPage({
     isEnrolled,
     enrollmentCount,
     communityUsers,
+    audioCount,
+    videoCount,
   } = loaderData;
   const { showToast } = useToast();
   const curriculumFetcher = useFetcher();
@@ -1160,6 +1168,8 @@ export default function CourseDetailsPage({
           progressStats={progressStats}
           isEnrolled={isEnrolled}
           learnerCount={enrollmentCount}
+          audioCount={audioCount}
+          videoCount={videoCount}
         />
 
         <CourseSidebar
