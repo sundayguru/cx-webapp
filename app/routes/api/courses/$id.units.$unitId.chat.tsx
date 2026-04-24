@@ -103,8 +103,11 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     const errorMessage =
       e instanceof Error ? e.message : 'AI generation failed';
     console.error('Chat AI error:', errorMessage);
-    return data({ error: errorMessage }, { status: 500 });
+    return data({ error: "We are experience high traffic at the moment please try again" }, { status: 400 });
   }
+
+  // Remove thinking process tags if present
+  responseText = responseText.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
 
   await createChatMessage({
     id: crypto.randomUUID(),

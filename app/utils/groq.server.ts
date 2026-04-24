@@ -19,7 +19,7 @@ import {
   parseRawTextTaggingResponse,
   type RawTextTaggingResponse,
 } from './curriculum-generation.server';
-import { GROQ_MODELS } from './constants';
+import { GROQ_AUDIO_MODELS } from './constants';
 
 export type LlmGenerationRequest = {
   model: string;
@@ -287,7 +287,7 @@ export async function transcribeAudioGroqFromUrl(
   const transcription = await client.audio.transcriptions.create({
     // @ts-ignore - SDK accepts File
     file,
-    model: GROQ_MODELS.WHISPER_LARGE_V3,
+    model: GROQ_AUDIO_MODELS.WHISPER_LARGE_V3,
     response_format: 'verbose_json',
     timestamp_granularities: ['word'],
   } as any);

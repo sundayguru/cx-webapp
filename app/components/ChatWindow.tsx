@@ -73,8 +73,19 @@ export const ChatWindow = ({
         error?: string;
       };
 
+      console.log("result", result)
+
       if (result.message) {
         setMessages((prev) => [...prev, result.message as ChatMessage]);
+      } else if (result.error) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: 'assistant',
+            content:
+              'We are experience high traffic at the moment please try again',
+          },
+        ]);
       }
       chatFetcher.reset();
     }
