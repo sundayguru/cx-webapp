@@ -3,7 +3,7 @@ import { Link, type LoaderFunctionArgs, useFetcher } from 'react-router';
 import { motion } from 'motion/react';
 import { useEffect, useRef, useState } from 'react';
 import { getCourseById } from '~/db/courses';
-import { getCourseProgressStats } from '~/db/quizzes';
+import { getCourseProgressStats, getQuizCountByUnitIds } from '~/db/quizzes';
 import { getEnrollmentCount, isUserEnrolled } from '~/db/enrollments';
 import { getUserFromRequest } from '~/utils/session.server';
 import { getAllCommunityPostsForCourse } from '~/db/community';
@@ -104,6 +104,7 @@ export const loader = async ({ request, params }: LoaderFunctionArgs) => {
     communityUsers,
     audioCount,
     videoCount,
+    quizCount: await getQuizCountByUnitIds(allUnitIds),
   };
 };
 
@@ -119,6 +120,7 @@ export default function CourseDetailsPage({
     communityUsers,
     audioCount,
     videoCount,
+    quizCount,
   } = loaderData;
   const { showToast } = useToast();
   const curriculumFetcher = useFetcher();
@@ -1252,6 +1254,7 @@ export default function CourseDetailsPage({
               moduleTitle,
             })
           }
+          quizCount={quizCount || 0}
         />
       </div>
 

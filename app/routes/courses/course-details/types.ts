@@ -7,6 +7,7 @@ import type { CourseContributor } from '~/types/course';
 import type { User } from '~/types';
 import type { CurriculumAiProvider } from '~/utils/curriculum-options';
 
+
 export type CourseModuleWithUnits = SelectModule & {
   units: SelectUnit[];
 };
@@ -95,4 +96,5 @@ export type CourseContentProps = {
     unitTitle: string,
     moduleTitle: string,
   ) => void;
+  quizCount: number;
 };

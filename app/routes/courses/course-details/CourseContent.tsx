@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { Lock, MessageSquare, MoreVertical, Play, Trash2 } from 'lucide-react';
+import { HelpCircle, Lock, MessageSquare, MoreVertical, Play, Sparkles, Trash2 } from 'lucide-react';
 import type { CourseContentProps } from './types';
 
 export const CourseContent = ({
@@ -15,6 +15,7 @@ export const CourseContent = ({
   onOpenUnitRawTextModal,
   onRequestDeleteModule,
   onRequestDeleteUnit,
+  quizCount,
 }: CourseContentProps) => {
   const [openMenuModuleId, setOpenMenuModuleId] = useState<string | null>(null);
   const [openMenuUnitId, setOpenMenuUnitId] = useState<string | null>(null);
@@ -40,9 +41,19 @@ export const CourseContent = ({
               Course Curriculum
             </h2>
           </div>
-          <p className='text-sm text-black/45'>
-            {modules.length} module{modules.length === 1 ? '' : 's'}
-          </p>
+          <div className='flex items-center gap-4'>
+            <div className='flex items-center gap-4 border-r border-black/10 pr-4'>
+              <div className='flex items-center gap-1.5'>
+                <HelpCircle size={14} className='text-black/35' />
+                <span className='text-sm font-medium text-black/65'>
+                  {quizCount} Quiz{quizCount === 1 ? '' : 'zes'}
+                </span>
+              </div>
+            </div>
+            <p className='text-sm font-medium text-black/45'>
+              {modules.length} module{modules.length === 1 ? '' : 's'}
+            </p>
+          </div>
         </div>
 
         <div className='space-y-4'>

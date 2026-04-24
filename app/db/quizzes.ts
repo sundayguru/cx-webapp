@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from 'drizzle-orm';
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm';
 import { getDb } from './connection';
 import {
   courses,
@@ -354,4 +354,21 @@ export const getCourseProgressStats = async (
     averageScore,
     totalTimeSpent,
   };
+};
+
+export const getQuizCountByUnitIds = async (unitIds: string[]): Promise<number> => {
+  if (unitIds.length === 0) {
+    return 0;
+  }
+  try {
+    const db = getDb();
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(quizzes)
+      .where(inArray(quizzes.unitId, unitIds));
+    return result[0]?.count ?? 0;
+  } catch (e) {
+    logError(e, 'Error getting quiz count');
+    return 0;
+  }
 };
