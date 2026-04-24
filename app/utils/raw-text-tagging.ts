@@ -212,7 +212,7 @@ export const buildModuleUnitMarkers = (
   moduleIndex: number = 0,
 ): RawTextTagMarker[] => {
   const markers: RawTextTagMarker[] = [];
-  for (let unitNumber = 2; unitNumber < 10; unitNumber++) {
+  for (let unitNumber = 2; unitNumber < 15; unitNumber++) {
     const marker = getUnitMarkerPosition(rawText, unitNumber, moduleIndex);
     if (marker) {
       markers.push(marker);
