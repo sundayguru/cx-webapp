@@ -6,6 +6,9 @@ import { getQuizzesByUnitId, getQuizSessionsByUnitAndUser } from '~/db/quizzes';
 import { getUserFromRequest } from '~/utils/session.server';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import type { SelectModule } from '~/db/schemas/modules';
 import type { SelectUnit } from '~/db/schemas/units';
 import type { SelectQuiz } from '~/db/schemas/quizzes';
@@ -254,10 +257,10 @@ const UnitPageContent = ({
   const completedSessionSyncRef = useRef<string | null>(null);
   const currentQuizSessionId =
     startQuizSessionFetcher.state === 'idle' &&
-    (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
-      ?.sessionId
+      (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
+        ?.sessionId
       ? (startQuizSessionFetcher.data as { sessionId: string } | undefined)
-          ?.sessionId
+        ?.sessionId
       : null;
 
   const isInstructor = user?.isAdmin === true;
@@ -277,20 +280,20 @@ const UnitPageContent = ({
     useState(quizPerformance);
   const googleVoiceResult = googleVoicesFetcher.data as
     | {
-        success?: boolean;
-        error?: string;
-        voices?: GoogleTtsVoiceListItem[];
-      }
+      success?: boolean;
+      error?: string;
+      voices?: GoogleTtsVoiceListItem[];
+    }
     | undefined;
   const googleVoices = googleVoiceResult?.voices ?? [];
   const selectableGoogleVoices =
     audioSsmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
       ? googleVoices
       : googleVoices.filter(
-          (voice) =>
-            voice.ssmlGender === audioSsmlGender ||
-            voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
-        );
+        (voice) =>
+          voice.ssmlGender === audioSsmlGender ||
+          voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
+      );
   const isLoadingGoogleVoices = googleVoicesFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
@@ -512,7 +515,6 @@ const UnitPageContent = ({
     audioLanguageCode,
     course?.course.id,
     currentUnit.id,
-    googleVoicesFetcher,
     showGenerateAudioModal,
   ]);
 
@@ -848,9 +850,9 @@ const UnitPageContent = ({
             attempts === 0
               ? 6
               : 1 +
-                  Math.max(0, 1 - accuracy) * 4 +
-                  incorrectCount * 1.5 +
-                  (answer.isCorrect ? 0 : 1.5),
+              Math.max(0, 1 - accuracy) * 4 +
+              incorrectCount * 1.5 +
+              (answer.isCorrect ? 0 : 1.5),
           ),
         };
       });
@@ -1323,7 +1325,10 @@ const UnitPageContent = ({
                       className='rounded-[32px] border border-black/5 bg-white p-8 shadow-sm'
                     >
                       <div className='lesson-markdown'>
-                        <Markdown>
+                        <Markdown
+                          remarkPlugins={[remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                        >
                           {currentUnit.content ?? 'No content yet.'}
                         </Markdown>
                       </div>
@@ -1603,7 +1608,7 @@ const UnitPageContent = ({
                                     . {quiz.question}
                                   </p>
                                   {quiz.questionType === 'choice' &&
-                                  quiz.options ? (
+                                    quiz.options ? (
                                     <div className='space-y-2'>
                                       {JSON.parse(quiz.options).map(
                                         (option: string, optIndex: number) => {

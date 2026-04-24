@@ -28,8 +28,13 @@ export const buildCurriculumPrompt = (text: string) => `
   - description: string
   - units: an array of objects with:
     - title: string
-    - content: string (the extract or the course content exactly as presented in text formated with a markdown)
+    - content: string (the extract or the course content exactly as presented in text formatted with markdown)
     - summary: string (a short summary or key points for this unit)
+
+  Important rules for units:
+  - If the content contains mathematical symbols, notations, or formulas, use LaTeX syntax compatible with KaTeX:
+    - Use single dollar signs ($...$) for inline math.
+    - Use double dollar signs ($$...$$) on new lines for block math.
 
   Format:
   {
@@ -71,6 +76,9 @@ export const buildModuleUnitsPrompt = (text: string) => `
   - Extract the full context for that unit from the raw text that belongs to it.
   - Preserve important explanations, concepts, examples, steps, definitions, and supporting details.
   - Write the content as well-structured markdown using headings, subheadings, short paragraphs, lists, and emphasis where useful.
+  - If the content contains mathematical symbols, notations, or formulas, use LaTeX syntax compatible with KaTeX:
+    - Use single dollar signs ($...$) for inline math.
+    - Use double dollar signs ($$...$$) on new lines for block math.
   - The markdown should feel like a complete lesson section, not a note or abstract.
   - Only reorganize for clarity; do not invent facts that are not supported by the raw text.
   - Do not include the unit title in the content
@@ -112,6 +120,9 @@ export const buildModuleUnitPrompt = (text: string) => `
   - Extract the full context for that unit from the raw text that belongs to it.
   - Preserve important explanations, concepts, examples, steps, definitions, and supporting details.
   - Write the content as well-structured markdown using headings, subheadings, short paragraphs, lists, and emphasis where useful.
+  - If the content contains mathematical symbols, notations, or formulas, use LaTeX syntax compatible with KaTeX:
+    - Use single dollar signs ($...$) for inline math.
+    - Use double dollar signs ($$...$$) on new lines for block math.
   - The markdown should feel like a complete lesson section, not a note or abstract.
   - Only reorganize for clarity; do not invent facts that are not supported by the raw text.
 
@@ -241,7 +252,7 @@ Respond ONLY with a JSON object:
     {
       "question": "Question text",
       "questionType": "openText" or "choice",
-      "options": ["Option A", "Option B", "Option C"] // only for choice type
+      "options": ["Option A", "Option B", "Option C"], // only for choice type
       "answer": "The correct answer to the question"
     }
   ]
@@ -255,6 +266,7 @@ Rules:
 - answer must contain the valid response to the question or the option value to the correct option for the question
 - open text question answer should not be more than 3 words
 - Ensure to include 80% of choice questions
+- If the questions, options, or answers contain mathematical symbols, notations, or formulas, use LaTeX syntax compatible with KaTeX ($ for inline, $$ for block).
 
 TEXT TO ANALYZE:
 ${rawText.slice(0, 40000)}

@@ -2,6 +2,9 @@ import { useFetcher } from 'react-router';
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import Markdown from 'react-markdown';
+import remarkMath from 'remark-math';
+import rehypeKatex from 'rehype-katex';
+import 'katex/dist/katex.min.css';
 import {
   Send,
   X,
@@ -140,11 +143,10 @@ export const ChatWindow = ({
               )}
               <button
                 onClick={() => setShowSettings(!showSettings)}
-                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-                  showSettings
-                    ? 'bg-[#5A5A40] text-white'
-                    : 'text-black/40 hover:bg-black/5 hover:text-black/60'
-                }`}
+                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${showSettings
+                  ? 'bg-[#5A5A40] text-white'
+                  : 'text-black/40 hover:bg-black/5 hover:text-black/60'
+                  }`}
                 title='Settings'
               >
                 <Settings2 size={16} />
@@ -226,19 +228,20 @@ export const ChatWindow = ({
                 {messages.map((message, index) => (
                   <div
                     key={index}
-                    className={`flex ${
-                      message.role === 'user' ? 'justify-end' : 'justify-start'
-                    }`}
+                    className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'
+                      }`}
                   >
                     <div
-                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${
-                        message.role === 'user'
-                          ? 'bg-[#5A5A40] text-white'
-                          : 'bg-[#f5f5f0] text-[#1a1a1a]'
-                      }`}
+                      className={`max-w-[85%] rounded-2xl px-4 py-3 ${message.role === 'user'
+                        ? 'bg-[#5A5A40] text-white'
+                        : 'bg-[#f5f5f0] text-[#1a1a1a]'
+                        }`}
                     >
                       {message.role === 'assistant' ? (
-                        <Markdown>{message.content}</Markdown>
+                        <Markdown
+                          remarkPlugins={[remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                        >{message.content}</Markdown>
                       ) : (
                         <p className='text-sm'>{message.content}</p>
                       )}
