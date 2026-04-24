@@ -30,6 +30,7 @@ type ChatWindowProps = {
   courseId: string;
   isOpen: boolean;
   onClose: () => void;
+  isAdmin: boolean;
   initialMessages?: ChatMessage[];
 };
 
@@ -38,6 +39,7 @@ export const ChatWindow = ({
   courseId,
   isOpen,
   onClose,
+  isAdmin,
   initialMessages = [],
 }: ChatWindowProps) => {
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
@@ -106,11 +108,21 @@ export const ChatWindow = ({
     setMessages((prev) => [...prev, userMessage]);
     setInput('');
 
+    let provider: CurriculumAiProvider = selectedProvider;
+    let model = selectedModel;
+
+    if (!isAdmin) {
+      const providers: CurriculumAiProvider[] = ['google', 'groq'];
+      provider = providers[Math.floor(Math.random() * providers.length)];
+      const models = CURRICULUM_MODEL_OPTIONS[provider];
+      model = models[Math.floor(Math.random() * models.length)].value;
+    }
+
     chatFetcher.submit(
       {
         message: userMessage.content,
-        provider: selectedProvider,
-        model: selectedModel,
+        provider,
+        model,
       },
       {
         method: 'post',
@@ -152,16 +164,19 @@ export const ChatWindow = ({
                   <Trash2 size={16} />
                 </button>
               )}
-              <button
-                onClick={() => setShowSettings(!showSettings)}
-                className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${showSettings
-                  ? 'bg-[#5A5A40] text-white'
-                  : 'text-black/40 hover:bg-black/5 hover:text-black/60'
+              {isAdmin && (
+                <button
+                  onClick={() => setShowSettings(!showSettings)}
+                  className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+                    showSettings
+                      ? 'bg-[#5A5A40] text-white'
+                      : 'text-black/40 hover:bg-black/5 hover:text-black/60'
                   }`}
-                title='Settings'
-              >
-                <Settings2 size={16} />
-              </button>
+                  title='Settings'
+                >
+                  <Settings2 size={16} />
+                </button>
+              )}
               <button
                 onClick={onClose}
                 className='flex h-8 w-8 items-center justify-center rounded-full text-black/40 transition-colors hover:bg-black/5 hover:text-black/60'

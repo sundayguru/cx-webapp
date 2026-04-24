@@ -1781,6 +1781,7 @@ const UnitPageContent = ({
               courseId={course?.course.id ?? ''}
               isOpen={showChat}
               onClose={() => setShowChat(false)}
+              isAdmin={isInstructor}
               initialMessages={chatHistory.map((message) => ({
                 content: message.content,
                 role: message.role as 'user' | 'assistant',
