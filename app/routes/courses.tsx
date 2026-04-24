@@ -120,7 +120,7 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
               Explore Courses
             </h1>
             <p className='font-serif text-lg text-black/40 italic'>
-              Curate and manage your collection of academic resources.
+              Curated collection of academic resources.
             </p>
           </div>
 
@@ -142,8 +142,8 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
             <button
               onClick={() => setShowFilters(!showFilters)}
               className={`flex h-12 w-12 items-center justify-center rounded-[20px] border transition-all ${showFilters
-                  ? 'border-[#5A5A40] bg-[#5A5A40] text-white'
-                  : 'border-black/5 bg-white text-black/60 shadow-sm hover:border-black/10'
+                ? 'border-[#5A5A40] bg-[#5A5A40] text-white'
+                : 'border-black/5 bg-white text-black/60 shadow-sm hover:border-black/10'
                 }`}
             >
               <Filter size={18} />

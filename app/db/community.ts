@@ -26,6 +26,28 @@ export const createCommunityPost = async (
   }
 };
 
+export const getCommunityPostById = async (postId: string) => {
+  try {
+    const db = getDb();
+    const result = await db
+      .select({
+        post: communityPosts,
+        user: users,
+        profile: profile,
+      })
+      .from(communityPosts)
+      .innerJoin(users, eq(users.id, communityPosts.userId))
+      .leftJoin(profile, eq(profile.userId, users.id))
+      .where(eq(communityPosts.id, postId))
+      .limit(1);
+
+    return result.length > 0 ? result[0] : null;
+  } catch (e) {
+    logError(e, 'Error getting community post by id');
+    return null;
+  }
+};
+
 export const getCommunityPostsByCourseId = async (courseId: string) => {
   try {
     const db = getDb();

@@ -16,11 +16,13 @@ import { isUserEnrolled } from '~/db/enrollments';
 import { getCourseById } from '~/db/courses';
 import {
   createCommunityPost,
+  getCommunityPostById,
   getAllCommunityPostsForCourse,
   toggleCommunityReaction,
   deleteCommunityPost,
   editCommunityPost,
 } from '~/db/community';
+import { createNotification } from '~/db/notifications';
 
 export const loader = async ({ request, params }: Route.LoaderArgs) => {
   const user = await getUserFromRequest(request);
@@ -93,12 +95,27 @@ export const action = async ({ request, params }: Route.ActionArgs) => {
       return data({ error: 'Content is required' }, { status: 400 });
     }
 
+    const parentIdStr = parentId || null;
+
     await createCommunityPost({
       courseId,
       userId: user.id,
       content: content.trim(),
-      parentId: parentId || null,
+      parentId: parentIdStr,
     });
+
+    // If this is a reply, notify the parent post author
+    if (parentIdStr) {
+      const parentPost = await getCommunityPostById(parentIdStr);
+      if (parentPost && parentPost.post.userId !== user.id) {
+        await createNotification({
+          userId: parentPost.post.userId,
+          title: 'New Reply',
+          message: `${user.name} replied to your post: "${parentPost.post.content.substring(0, 50)}${parentPost.post.content.length > 50 ? '...' : ''}"`,
+          actionUrl: `/courses/${courseId}/community`,
+        });
+      }
+    }
 
     return data({ success: true });
   }
