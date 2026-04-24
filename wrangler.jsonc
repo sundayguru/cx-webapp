@@ -40,10 +40,6 @@
     {
       "pattern": "coursexquiz.com",
       "custom_domain": true
-    },
-    {
-      "pattern": "www.coursexquiz.com",
-      "custom_domain": true
     }
   ],
   "vars": {
