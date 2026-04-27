@@ -337,6 +337,143 @@ export const getCourses = async (filters?: CourseFilters, isAdmin = false) => {
   }
 };
 
+export const getCoursesWithPagination = async (
+  filters?: CourseFilters,
+  isAdmin = false,
+  page = 1,
+  pageSize = 12,
+) => {
+  try {
+    const db = getDb();
+    const conditions: SQL[] = [];
+    const offset = (page - 1) * pageSize;
+
+    if (filters?.createdBy) {
+      conditions.push(eq(courses.createdBy, filters.createdBy));
+    }
+
+    if (filters?.publishedOnly && !isAdmin) {
+      conditions.push(eq(courses.status, 'published'));
+    }
+
+    if (filters?.status && isAdmin) {
+      conditions.push(eq(courses.status, filters.status));
+    }
+
+    if (filters?.search) {
+      conditions.push(
+        or(
+          like(courses.title, `%${filters.search}%`),
+          like(courses.code, `%${filters.search}%`),
+          like(courses.description, `%${filters.search}%`),
+        )!,
+      );
+    }
+
+    if (filters?.schoolId) {
+      conditions.push(eq(courses.schoolId, filters.schoolId));
+    }
+
+    if (filters?.authorId) {
+      const linkedCourses = await db
+        .selectDistinct({ courseId: courseAuthors.courseId })
+        .from(courseAuthors)
+        .where(eq(courseAuthors.authorId, filters.authorId));
+      const linkedCourseIds = linkedCourses.map((row) => row.courseId);
+
+      if (linkedCourseIds.length > 0) {
+        conditions.push(
+          or(
+            eq(courses.authorId, filters.authorId),
+            inArray(courses.id, linkedCourseIds),
+          )!,
+        );
+      } else {
+        conditions.push(eq(courses.authorId, filters.authorId));
+      }
+    }
+
+    if (filters?.level) {
+      conditions.push(eq(courses.level, filters.level));
+    }
+
+    if (filters?.category) {
+      conditions.push(eq(courses.category, filters.category));
+    }
+
+    const baseQuery = db
+      .select({
+        course: courses,
+        school: schools,
+        author: authors,
+        contributor: {
+          id: users.id,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          avatarUrl: profile.avatarUrl,
+        },
+      })
+      .from(courses)
+      .leftJoin(schools, eq(courses.schoolId, schools.id))
+      .leftJoin(authors, eq(courses.authorId, authors.id))
+      .innerJoin(users, eq(courses.createdBy, users.id))
+      .leftJoin(profile, eq(profile.userId, users.id));
+
+    if (conditions.length > 0) {
+      baseQuery.where(and(...conditions));
+    }
+
+    // Get total count
+    const totalResult = await db.select({ count: courses.id }).from(courses);
+    if (conditions.length > 0) {
+      await db
+        .select({ count: courses.id })
+        .from(courses)
+        .where(and(...conditions));
+    }
+
+    const countQuery = db.select({ count: courses.id }).from(courses);
+    if (conditions.length > 0) {
+      countQuery.where(and(...conditions));
+    }
+    const totalRows = await countQuery;
+    const total = totalRows.length;
+
+    // Get paginated courses
+    const courseRows = await baseQuery
+      .orderBy(courses.createdAt)
+      .limit(pageSize)
+      .offset(offset);
+
+    const authorsMap = await getCourseAuthorsMap(
+      courseRows.map((row) => row.course.id),
+    );
+
+    const coursesData = courseRows.map((row) => ({
+      ...row,
+      authors:
+        authorsMap.get(row.course.id) ?? (row.author ? [row.author] : []),
+    }));
+
+    return {
+      courses: coursesData,
+      total,
+      page,
+      pageSize,
+      totalPages: Math.ceil(total / pageSize),
+    };
+  } catch (e) {
+    logError(e, 'Error getting courses with pagination');
+    return {
+      courses: [],
+      total: 0,
+      page: 1,
+      pageSize,
+      totalPages: 0,
+    };
+  }
+};
+
 // Kept for backward compatibility if needed, but redirects to getCourses
 export const getCoursesByUserId = (userId: string, filters?: CourseFilters) => {
   return getCourses({ ...filters, createdBy: userId });
