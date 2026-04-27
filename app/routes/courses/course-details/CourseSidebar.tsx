@@ -81,29 +81,22 @@ export const CourseSidebar = ({
             className='aspect-[4/3] w-full object-cover transition-transform duration-500 group-hover:scale-105'
             alt={course.title}
           />
-          <button
-            onClick={onOpenPdf}
-            className='absolute inset-0 flex items-center justify-center bg-black/35 opacity-0 transition-opacity group-hover:opacity-100'
-          >
-            <div className='flex h-16 w-16 items-center justify-center rounded-full bg-white/20 text-white backdrop-blur-md'>
-              <FileText size={24} />
-            </div>
-          </button>
         </div>
 
-        {isInstructor ? (
-          <div className='space-y-3'>
-            {!isEnrolled && course.status === 'published' && (
-              <button
-                onClick={() => {
-                  analytics.trackEnrollNow(course.title);
-                  onEnroll?.();
-                }}
-                className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'
-              >
-                Enroll Now
-              </button>
-            )}
+        <div className='space-y-3'>
+          {!isEnrolled && course.status === 'published' && (
+            <button
+              onClick={() => {
+                analytics.trackEnrollNow(course.title);
+                onEnroll?.();
+              }}
+              className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'
+            >
+              Enroll Now
+            </button>
+          )}
+
+          {isInstructor ? (
             <div className='relative'>
               <button
                 onClick={() => setIsAdminMenuOpen((open) => !open)}
@@ -324,30 +317,17 @@ export const CourseSidebar = ({
                 </div>
               ) : null}
             </div>
-          </div>
-        ) : (
-          <div className='space-y-3'>
-            {!isEnrolled && course.status === 'published' && (
-              <button
-                onClick={() => {
-                  analytics.trackEnrollNow(course.title);
-                  onEnroll?.();
-                }}
-                className='w-full rounded-2xl bg-[#5A5A40] py-4 text-lg font-bold text-white shadow-lg transition-all hover:bg-[#4a4a35]'
-              >
-                Enroll Now
-              </button>
-            )}
-            <button
-              onClick={onOpenPdf}
-              className='flex w-full items-center justify-center gap-2 rounded-2xl border border-[#5A5A40] py-4 text-lg font-bold text-[#5A5A40] transition-all hover:bg-[#5A5A40]/5'
-            >
-              <FileText size={20} />
-              Course Pdf
-            </button>
-            {deleteButton}
-          </div>
-        )}
+          ) : null}
+
+          <button
+            onClick={onOpenPdf}
+            className='flex w-full items-center justify-center gap-2 rounded-2xl border border-[#5A5A40] py-4 text-lg font-bold text-[#5A5A40] transition-all hover:bg-[#5A5A40]/5'
+          >
+            <FileText size={20} />
+            Course Pdf
+          </button>
+          {!isInstructor && deleteButton}
+        </div>
 
         <div className='mt-6 space-y-3 border-t border-black/5 pt-6'>
           <div className='flex items-center gap-3 text-sm text-black/50'>
