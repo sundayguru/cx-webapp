@@ -40,7 +40,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     status: user?.isAdmin ? status : undefined,
   };
 
-  const pageSize = 3;
+  const pageSize = 12;
   const result = await getCoursesWithPagination(
     filters,
     user?.isAdmin,
