@@ -90,9 +90,6 @@ export default function LandingPage() {
           </motion.div>
         </div>
 
-        {/* Abstract Background Elements */}
-        <div className='pointer-events-none absolute top-1/2 left-0 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#5A5A40]/5 blur-3xl' />
-        <div className='pointer-events-none absolute right-0 bottom-0 h-[500px] w-[500px] translate-x-1/4 rounded-full bg-[#5A5A40]/5 blur-3xl' />
       </section>
 
       {/* Feature Grid */}
@@ -155,9 +152,8 @@ export default function LandingPage() {
                 className='group rounded-[32px] border border-black/5 p-8 transition-all hover:border-[#5A5A40]/20 hover:bg-[#f5f5f0]/30'
               >
                 <div
-                  className={`${
-                    feature.color
-                  } mb-6 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110`}
+                  className={`${feature.color
+                    } mb-6 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110`}
                 >
                   <feature.icon size={28} />
                 </div>
@@ -252,9 +248,6 @@ export default function LandingPage() {
               <ChevronRight className='transition-transform group-hover:translate-x-1' />
             </Link>
           </div>
-          {/* Decorative background */}
-          <div className='pointer-events-none absolute top-0 right-0 h-96 w-96 rounded-full bg-[#5A5A40]/20 blur-3xl' />
-          <div className='pointer-events-none absolute bottom-0 left-0 h-96 w-96 rounded-full bg-[#5A5A40]/10 blur-3xl' />
         </div>
       </section>
 
