@@ -78,7 +78,6 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
   const [loadedCourses, setLoadedCourses] = useState(courses);
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1);
   const [totalPages, setTotalPages] = useState(pagination?.totalPages || 0);
-  const [isLoading, setIsLoading] = useState(false);
   const courseFetcher = useFetcher()
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
@@ -117,16 +116,15 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
   }, [courses, pagination]);
 
   const loadMore = useCallback(async () => {
-    if (isLoading || currentPage >= totalPages) { return; }
+    if (currentPage >= totalPages) { return; }
 
-    setIsLoading(true);
     const nextPage = currentPage + 1;
     const params = new URLSearchParams(window.location.search);
     params.set('page', String(nextPage));
 
     courseFetcher.load(`${window.location.pathname}?${params.toString()}`)
     setCurrentPage(nextPage)
-  }, [currentPage, totalPages, isLoading]);
+  }, [currentPage, totalPages]);
 
 
   useEffect(() => {
@@ -530,10 +528,10 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
         <div className='mt-16 flex justify-center'>
           <button
             onClick={loadMore}
-            disabled={isLoading}
+            disabled={courseFetcher.state !== 'idle'}
             className='flex items-center gap-2 rounded-full border border-[#5A5A40] bg-[#5A5A40] px-8 py-4 font-bold text-white shadow-xl shadow-[#5A5A40]/20 transition-all hover:-translate-y-1 hover:bg-[#4a4a35] active:scale-95 disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:-translate-y-0'
           >
-            {isLoading ? (
+            {courseFetcher.state !== 'idle' ? (
               <>
                 <div className='h-5 w-5 animate-spin rounded-full border-2 border-white/40 border-t-white' />
                 Loading...
