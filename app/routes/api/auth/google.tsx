@@ -6,6 +6,7 @@ import {
   getUserByEmail,
   createAccount,
 } from '~/db/auth';
+import { ensureProfileForUser } from '~/db/profile';
 import { generateSessionToken } from '~/utils/auth.server';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -104,6 +105,7 @@ export async function loader({ request }: Route.LoaderArgs) {
 
   if (existingAccount) {
     // User exists, log them in
+    await ensureProfileForUser(existingAccount.id);
     const sessionToken = await generateSessionToken(
       existingAccount.id,
       existingAccount.email,
@@ -131,6 +133,8 @@ export async function loader({ request }: Route.LoaderArgs) {
       scope: tokens.scope,
       id_token: tokens.id_token,
     });
+
+    await ensureProfileForUser(existingUser.id);
 
     const sessionToken = await generateSessionToken(
       existingUser.id,

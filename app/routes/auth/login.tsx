@@ -1,6 +1,7 @@
 import type { Route } from './+types/login';
 import { data, redirect, Form } from 'react-router';
 import { getUserByEmail, verifyUserPassword } from '~/db/auth';
+import { ensureProfileForUser } from '~/db/profile';
 import { generateSessionToken } from '~/utils/auth.server';
 import { motion } from 'motion/react';
 import { LogIn, GraduationCap } from 'lucide-react';
@@ -34,6 +35,8 @@ export const action = async ({ request }: Route.ActionArgs) => {
   if (!isValid) {
     return data({ error: 'Invalid email or password' }, { status: 401 });
   }
+
+  await ensureProfileForUser(user.id);
 
   const sessionToken = await generateSessionToken(user.id, user.email);
 

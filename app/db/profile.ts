@@ -4,6 +4,7 @@ import { profile, quizSessions } from './schemas';
 import type { InsertProfile } from './schemas';
 import { getUserEnrollmentsCount } from './enrollments';
 import { logError } from '../utils/logger';
+import { v4 as uuidv4 } from 'uuid';
 
 export const insertProfile = async (data: InsertProfile) => {
   try {
@@ -55,6 +56,28 @@ export const getAllProfiles = async () => {
     return await db.select().from(profile);
   } catch (e) {
     logError(e, 'Error getting all profiles');
+  }
+};
+
+export const ensureProfileForUser = async (userId: string) => {
+  try {
+    const existingProfile = await getProfileByUserId(userId);
+
+    if (existingProfile) {
+      return existingProfile;
+    }
+
+    await insertProfile({
+      id: uuidv4(),
+      userId,
+      bio: '',
+      isPrivate: false,
+    });
+
+    return await getProfileByUserId(userId);
+  } catch (e) {
+    logError(e, 'Error ensuring profile for user');
+    return null;
   }
 };
 

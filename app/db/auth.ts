@@ -18,7 +18,7 @@ import {
 } from '~/utils/auth.server';
 import { v4 as uuidv4 } from 'uuid';
 import { logError } from '~/utils/logger';
-import { insertProfile } from './profile';
+import { ensureProfileForUser, insertProfile } from './profile';
 
 // User operations
 export const createUser = async (
@@ -32,6 +32,7 @@ export const createUser = async (
     };
 
     await db.insert(users).values(userWithId);
+    await ensureProfileForUser(userWithId.id);
     return userWithId;
   } catch (e) {
     logError(e, 'Error creating user');
