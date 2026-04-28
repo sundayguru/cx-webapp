@@ -2,7 +2,7 @@ import { Link, redirect } from 'react-router';
 import type { Route } from './+types/profile';
 import { BookmarkedUnitCard } from '~/components/BookmarkedUnitCard';
 import { getBookmarkedUnitsByUser } from '~/db/bookmarks';
-import { getPublicProfile } from '~/db/profile';
+import { getProfileByUserId, getPublicProfile } from '~/db/profile';
 import { getUserEnrollments } from '~/db/enrollments';
 import { getCourses } from '~/db/courses';
 import { getUserFromRequest } from '~/utils/session.server';
@@ -26,6 +26,15 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const targetUserId = params.userId || currentUser.id;
   const isOwner = !params.userId || params.userId === currentUser.id;
+  const targetProfile = await getProfileByUserId(targetUserId);
+
+  if (!targetProfile) {
+    return redirect('/dashboard');
+  }
+
+  if (targetProfile.isPrivate && !isOwner) {
+    return redirect('/dashboard');
+  }
 
   const profile = await getPublicProfile(targetUserId);
   if (!profile) {

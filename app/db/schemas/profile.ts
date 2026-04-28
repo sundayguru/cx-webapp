@@ -1,5 +1,5 @@
 import { relations, sql } from 'drizzle-orm';
-import { sqliteTable, text } from 'drizzle-orm/sqlite-core';
+import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 import { users, type SelectUser } from './users';
 
 export const profile = sqliteTable('profile', {
@@ -9,6 +9,9 @@ export const profile = sqliteTable('profile', {
     .references(() => users.id),
   bio: text({ length: 255 }).notNull(),
   avatarUrl: text('avatar_url'),
+  isPrivate: integer('is_private', { mode: 'boolean' })
+    .notNull()
+    .default(false),
   createdAt: text('created_at')
     .notNull()
     .default(sql`(CURRENT_TIMESTAMP)`),

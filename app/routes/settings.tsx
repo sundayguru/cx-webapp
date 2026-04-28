@@ -20,7 +20,8 @@ import {
   verifyUserPassword,
   updateUserPassword,
 } from '~/db/auth';
-import { getProfileByUserId, updateProfile } from '~/db/profile';
+import { getProfileByUserId, insertProfile, updateProfile } from '~/db/profile';
+import { v4 as uuidv4 } from 'uuid';
 
 type LoaderData = {
   user: {
@@ -32,6 +33,7 @@ type LoaderData = {
   profile: {
     bio: string | null;
     avatarUrl: string | null;
+    isPrivate: boolean;
   };
 };
 
@@ -62,6 +64,7 @@ export const loader = async ({ request }: Route.LoaderArgs) => {
     profile: {
       bio: profile?.bio || null,
       avatarUrl: profile?.avatarUrl || null,
+      isPrivate: profile?.isPrivate || false,
     },
   };
 };
@@ -79,6 +82,7 @@ export const action = async ({ request }: Route.ActionArgs) => {
     const firstName = formData.get('firstName') as string;
     const lastName = formData.get('lastName') as string;
     const bio = formData.get('bio') as string;
+    const isPrivate = formData.get('isPrivate') === 'true';
 
     if (!firstName || !lastName) {
       return data(
@@ -94,7 +98,14 @@ export const action = async ({ request }: Route.ActionArgs) => {
 
     const profile = await getProfileByUserId(currentUser.id);
     if (profile) {
-      await updateProfile(profile.id, { bio });
+      await updateProfile(profile.id, { bio, isPrivate });
+    } else {
+      await insertProfile({
+        id: uuidv4(),
+        userId: currentUser.id,
+        bio,
+        isPrivate,
+      });
     }
 
     return data({ success: true, message: 'Profile updated successfully' });
@@ -156,6 +167,7 @@ export default function SettingsPage({ loaderData }: Route.ComponentProps) {
   const [firstName, setFirstName] = useState(user.firstName);
   const [lastName, setLastName] = useState(user.lastName);
   const [bio, setBio] = useState(profile.bio || '');
+  const [isPrivate, setIsPrivate] = useState(profile.isPrivate);
 
   const [selectedAvatarFile, setSelectedAvatarFile] = useState<File | null>(
     null,
@@ -344,6 +356,35 @@ export default function SettingsPage({ loaderData }: Route.ComponentProps) {
                   placeholder='Tell us a little about yourself...'
                   className='w-full resize-none rounded-xl border border-black/10 bg-white px-4 py-2.5 text-[#1a1a1a] transition-colors focus:border-[#5A5A40] focus:outline-none'
                 />
+              </div>
+
+              <div className='rounded-2xl border border-black/10 bg-[#faf9f4] p-4'>
+                <div className='flex items-start justify-between gap-4'>
+                  <div className='space-y-1'>
+                    <div className='flex items-center gap-2 text-[#1a1a1a]'>
+                      {isPrivate ? (
+                        <EyeOff size={18} className='text-[#5A5A40]' />
+                      ) : (
+                        <Eye size={18} className='text-[#5A5A40]' />
+                      )}
+                      <p className='font-medium'>Private profile</p>
+                    </div>
+                    <p className='text-sm text-black/55'>
+                      When enabled, only you can view your profile page.
+                    </p>
+                  </div>
+                  <label className='relative inline-flex cursor-pointer items-center'>
+                    <input
+                      type='checkbox'
+                      name='isPrivate'
+                      value='true'
+                      checked={isPrivate}
+                      onChange={(e) => setIsPrivate(e.target.checked)}
+                      className='peer sr-only'
+                    />
+                    <div className="h-6 w-11 rounded-full bg-black/10 transition peer-checked:bg-[#5A5A40] after:absolute after:top-[2px] after:left-[2px] after:h-5 after:w-5 after:rounded-full after:bg-white after:transition-all after:content-[''] peer-checked:after:translate-x-5" />
+                  </label>
+                </div>
               </div>
 
               {profileMessage && (

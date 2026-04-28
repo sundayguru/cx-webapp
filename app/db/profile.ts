@@ -64,6 +64,7 @@ export type PublicUserProfile = {
   email: string;
   bio: string | null;
   avatarUrl: string | null;
+  isPrivate: boolean;
   stats: {
     coursesEnrolled: number;
     quizzesTaken: number;
@@ -91,6 +92,7 @@ export const getPublicProfile = async (
         email: '',
         bio: '',
         avatarUrl: '',
+        isPrivate: false,
         stats: {
           coursesEnrolled: 0,
           quizzesTaken: 0,
@@ -126,6 +128,7 @@ export const getPublicProfile = async (
       email: userProfile.user.email,
       bio: userProfile.bio,
       avatarUrl: userProfile.avatarUrl,
+      isPrivate: userProfile.isPrivate,
       stats: {
         coursesEnrolled,
         quizzesTaken,

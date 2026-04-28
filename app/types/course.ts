@@ -3,4 +3,5 @@ export type CourseContributor = {
   firstName: string;
   lastName: string;
   avatarUrl: string | null;
+  isPrivate: boolean;
 };

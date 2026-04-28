@@ -1,0 +1,1 @@
+ALTER TABLE `profile` ADD `is_private` integer DEFAULT false NOT NULL;

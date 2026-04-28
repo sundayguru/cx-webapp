@@ -23,6 +23,15 @@ type CourseWithRelations = {
   contributor: CourseContributor;
 };
 
+const normalizeContributor = (
+  contributor: Omit<CourseContributor, 'isPrivate'> & {
+    isPrivate: boolean | null;
+  },
+): CourseContributor => ({
+  ...contributor,
+  isPrivate: contributor.isPrivate ?? false,
+});
+
 const getCourseAuthorsMap = async (courseIds: string[]) => {
   if (courseIds.length === 0) {
     return new Map<string, Array<typeof authors.$inferSelect>>();
@@ -157,6 +166,7 @@ export const getCourseById = async (id: string) => {
           firstName: users.firstName,
           lastName: users.lastName,
           avatarUrl: profile.avatarUrl,
+          isPrivate: profile.isPrivate,
         },
       })
       .from(courses)
@@ -207,6 +217,7 @@ export const getCourseById = async (id: string) => {
 
     return {
       ...courseData,
+      contributor: normalizeContributor(courseData.contributor),
       authors: courseAuthorsList,
       modules: modulesWithUnits,
     };
@@ -309,6 +320,7 @@ export const getCourses = async (filters?: CourseFilters, isAdmin = false) => {
           firstName: users.firstName,
           lastName: users.lastName,
           avatarUrl: profile.avatarUrl,
+          isPrivate: profile.isPrivate,
         },
       })
       .from(courses)
@@ -328,6 +340,7 @@ export const getCourses = async (filters?: CourseFilters, isAdmin = false) => {
 
     return courseRows.map((row) => ({
       ...row,
+      contributor: normalizeContributor(row.contributor),
       authors:
         authorsMap.get(row.course.id) ?? (row.author ? [row.author] : []),
     }));
@@ -411,6 +424,7 @@ export const getCoursesWithPagination = async (
           firstName: users.firstName,
           lastName: users.lastName,
           avatarUrl: profile.avatarUrl,
+          isPrivate: profile.isPrivate,
         },
       })
       .from(courses)
@@ -424,14 +438,6 @@ export const getCoursesWithPagination = async (
     }
 
     // Get total count
-    const totalResult = await db.select({ count: courses.id }).from(courses);
-    if (conditions.length > 0) {
-      await db
-        .select({ count: courses.id })
-        .from(courses)
-        .where(and(...conditions));
-    }
-
     const countQuery = db.select({ count: courses.id }).from(courses);
     if (conditions.length > 0) {
       countQuery.where(and(...conditions));
@@ -451,6 +457,7 @@ export const getCoursesWithPagination = async (
 
     const coursesData = courseRows.map((row) => ({
       ...row,
+      contributor: normalizeContributor(row.contributor),
       authors:
         authorsMap.get(row.course.id) ?? (row.author ? [row.author] : []),
     }));

@@ -17,16 +17,13 @@ export const CourseContributorBadge = ({
   variant = 'detail',
 }: CourseContributorBadgeProps) => {
   const contributorName = getContributorName(contributor);
+  const wrapperClassName =
+    variant === 'detail'
+      ? 'flex items-center gap-3 rounded-2xl bg-black/[0.02] px-4 py-3 transition-colors hover:bg-black/[0.04]'
+      : 'flex min-w-0 items-center gap-3 transition-colors hover:text-[#5A5A40]';
 
-  return (
-    <Link
-      to={`/profile/${contributor.id}`}
-      className={
-        variant === 'detail'
-          ? 'flex items-center gap-3 rounded-2xl bg-black/[0.02] px-4 py-3 transition-colors hover:bg-black/[0.04]'
-          : 'flex min-w-0 items-center gap-3 transition-colors hover:text-[#5A5A40]'
-      }
-    >
+  const content = (
+    <>
       {contributor.avatarUrl ? (
         <img
           src={contributor.avatarUrl}
@@ -54,6 +51,16 @@ export const CourseContributorBadge = ({
         </p>
         <p className='truncate font-medium text-[#1a1a1a]'>{contributorName}</p>
       </div>
+    </>
+  );
+
+  if (contributor.isPrivate) {
+    return <div className={wrapperClassName}>{content}</div>;
+  }
+
+  return (
+    <Link to={`/profile/${contributor.id}`} className={wrapperClassName}>
+      {content}
     </Link>
   );
 };
