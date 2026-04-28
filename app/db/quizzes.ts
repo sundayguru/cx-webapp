@@ -356,7 +356,9 @@ export const getCourseProgressStats = async (
   };
 };
 
-export const getQuizCountByUnitIds = async (unitIds: string[]): Promise<number> => {
+export const getQuizCountByUnitIds = async (
+  unitIds: string[],
+): Promise<number> => {
   if (unitIds.length === 0) {
     return 0;
   }

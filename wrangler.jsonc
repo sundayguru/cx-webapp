@@ -2,9 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "coursexquiz",
   "compatibility_date": "2025-04-04",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "main": "./workers/app.ts",
   "observability": {
     "enabled": true,
@@ -39,12 +37,12 @@
   "routes": [
     {
       "pattern": "coursexquiz.com",
-      "custom_domain": true
+      "custom_domain": true,
     },
     {
       "pattern": "www.coursexquiz.com",
-      "custom_domain": true
-    }
+      "custom_domain": true,
+    },
   ],
   "vars": {
     "BASE_URL": "https://coursexquiz.com",

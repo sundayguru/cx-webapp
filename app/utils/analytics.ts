@@ -1,5 +1,5 @@
-
-export const getGAId = () => typeof window !== 'undefined' ? (window as any).GA_TRACKING_ID : undefined;
+export const getGAId = () =>
+  typeof window !== 'undefined' ? (window as any).GA_TRACKING_ID : undefined;
 
 export const pageview = (url: string) => {
   const gaId = getGAId();
@@ -56,7 +56,10 @@ export const trackQuizFinish = (quizTitle: string, score: number) => {
   });
 };
 
-export const trackListenWatch = (unitTitle: string, type: 'listen' | 'watch') => {
+export const trackListenWatch = (
+  unitTitle: string,
+  type: 'listen' | 'watch',
+) => {
   event({
     action: `${type}_click`,
     category: 'engagement',

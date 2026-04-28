@@ -18,6 +18,7 @@ import { QuizResultsView } from '~/components/quiz/QuizResultsView';
 import { QuizTakerView } from '~/components/quiz/QuizTakerView';
 import { ChatWindow } from '~/components/ChatWindow';
 import { ConfirmModal } from '~/components/ConfirmModal';
+import { CoursePdfModal } from '~/components/CoursePdfModal';
 import {
   Bookmark,
   CheckCircle,
@@ -258,10 +259,10 @@ const UnitPageContent = ({
   const completedSessionSyncRef = useRef<string | null>(null);
   const currentQuizSessionId =
     startQuizSessionFetcher.state === 'idle' &&
-      (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
-        ?.sessionId
+    (startQuizSessionFetcher.data as { sessionId?: string } | undefined)
+      ?.sessionId
       ? (startQuizSessionFetcher.data as { sessionId: string } | undefined)
-        ?.sessionId
+          ?.sessionId
       : null;
 
   const isInstructor = user?.isAdmin === true;
@@ -281,20 +282,20 @@ const UnitPageContent = ({
     useState(quizPerformance);
   const googleVoiceResult = googleVoicesFetcher.data as
     | {
-      success?: boolean;
-      error?: string;
-      voices?: GoogleTtsVoiceListItem[];
-    }
+        success?: boolean;
+        error?: string;
+        voices?: GoogleTtsVoiceListItem[];
+      }
     | undefined;
   const googleVoices = googleVoiceResult?.voices ?? [];
   const selectableGoogleVoices =
     audioSsmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
       ? googleVoices
       : googleVoices.filter(
-        (voice) =>
-          voice.ssmlGender === audioSsmlGender ||
-          voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
-      );
+          (voice) =>
+            voice.ssmlGender === audioSsmlGender ||
+            voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
+        );
   const isLoadingGoogleVoices = googleVoicesFetcher.state !== 'idle';
 
   const handleProviderChange = (provider: CurriculumAiProvider) => {
@@ -851,9 +852,9 @@ const UnitPageContent = ({
             attempts === 0
               ? 6
               : 1 +
-              Math.max(0, 1 - accuracy) * 4 +
-              incorrectCount * 1.5 +
-              (answer.isCorrect ? 0 : 1.5),
+                  Math.max(0, 1 - accuracy) * 4 +
+                  incorrectCount * 1.5 +
+                  (answer.isCorrect ? 0 : 1.5),
           ),
         };
       });
@@ -1629,7 +1630,7 @@ const UnitPageContent = ({
                                     </div>
                                   </div>
                                   {quiz.questionType === 'choice' &&
-                                    quiz.options ? (
+                                  quiz.options ? (
                                     <div className='space-y-2'>
                                       {JSON.parse(quiz.options).map(
                                         (option: string, optIndex: number) => {
@@ -1791,54 +1792,13 @@ const UnitPageContent = ({
         </div>
       </div>
 
-      <AnimatePresence>
-        {showCourseMaterialModal && course?.course.contentKey ? (
-          <div className='fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8'>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setShowCourseMaterialModal(false)}
-              className='absolute inset-0 bg-black/80 backdrop-blur-sm'
-            />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.9, y: 20 }}
-              className='relative flex h-full w-full max-w-5xl flex-col overflow-hidden rounded-[40px] bg-white shadow-2xl'
-            >
-              <div className='flex items-center justify-between border-b border-black/5 bg-white p-6'>
-                <div className='flex items-center gap-4 text-[#5A5A40]'>
-                  <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]/10'>
-                    <FileText size={20} />
-                  </div>
-                  <div>
-                    <h3 className='leading-tight font-bold text-[#1a1a1a]'>
-                      Course Content
-                    </h3>
-                    <p className='text-xs font-bold tracking-widest text-black/40 uppercase'>
-                      {course.course.code}
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setShowCourseMaterialModal(false)}
-                  className='flex h-10 w-10 items-center justify-center rounded-full bg-black/5 transition-colors hover:bg-black/10'
-                >
-                  <X size={20} />
-                </button>
-              </div>
-              <div className='flex-1 bg-gray-100 p-4'>
-                <iframe
-                  src={`/api/course/serve/${course.course.contentKey}`}
-                  className='h-full w-full rounded-2xl border border-black/5 bg-white'
-                  title={course.course.title}
-                />
-              </div>
-            </motion.div>
-          </div>
-        ) : null}
-      </AnimatePresence>
+      <CoursePdfModal
+        isOpen={showCourseMaterialModal}
+        contentKey={course?.course.contentKey ?? null}
+        code={course?.course.code ?? ''}
+        title={course?.course.title ?? ''}
+        onClose={() => setShowCourseMaterialModal(false)}
+      />
 
       <AnimatePresence>
         {showSidebarDrawer ? (

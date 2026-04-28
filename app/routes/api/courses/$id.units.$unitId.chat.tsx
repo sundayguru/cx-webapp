@@ -103,7 +103,12 @@ export const action = async ({ params, request }: ActionFunctionArgs) => {
     const errorMessage =
       e instanceof Error ? e.message : 'AI generation failed';
     console.error('Chat AI error:', errorMessage);
-    return data({ error: "We are experience high traffic at the moment please try again" }, { status: 400 });
+    return data(
+      {
+        error: 'We are experience high traffic at the moment please try again',
+      },
+      { status: 400 },
+    );
   }
 
   // Remove thinking process tags if present

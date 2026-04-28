@@ -176,7 +176,7 @@ export const CourseOverview = ({
               onOpenPlaylist();
             }}
             disabled={!isEnrolled}
-            className='cursor-pointer rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a] disabled:opacity-50 disabled:cursor-not-allowed'
+            className='cursor-pointer rounded-[24px] border border-black/5 bg-[#1a1a1a] p-5 text-left text-white shadow-lg shadow-black/20 transition-all hover:bg-[#2a2a2a] disabled:cursor-not-allowed disabled:opacity-50'
           >
             <div className='mb-3 flex h-11 w-11 items-center justify-center rounded-2xl bg-white/15 text-white backdrop-blur-sm'>
               <Play size={20} />
@@ -289,14 +289,16 @@ type StatPillProps = {
 
 const StatPill = ({ icon, label, value, highlight }: StatPillProps) => (
   <div
-    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${highlight
+    className={`flex items-center gap-2 rounded-xl px-3 py-2 sm:rounded-2xl sm:p-5 ${
+      highlight
         ? 'border border-green-200 bg-green-50'
         : 'border border-black/5 bg-[#f7f6ef]'
-      }`}
+    }`}
   >
     <div
-      className={`flex shrink-0 ${highlight ? 'text-green-600' : 'text-[#5A5A40]'
-        }`}
+      className={`flex shrink-0 ${
+        highlight ? 'text-green-600' : 'text-[#5A5A40]'
+      }`}
     >
       {icon}
     </div>

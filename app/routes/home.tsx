@@ -89,7 +89,6 @@ export default function LandingPage() {
             </motion.div>
           </motion.div>
         </div>
-
       </section>
 
       {/* Feature Grid */}
@@ -152,8 +151,9 @@ export default function LandingPage() {
                 className='group rounded-[32px] border border-black/5 p-8 transition-all hover:border-[#5A5A40]/20 hover:bg-[#f5f5f0]/30'
               >
                 <div
-                  className={`${feature.color
-                    } mb-6 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110`}
+                  className={`${
+                    feature.color
+                  } mb-6 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110`}
                 >
                   <feature.icon size={28} />
                 </div>

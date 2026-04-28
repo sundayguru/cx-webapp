@@ -155,7 +155,9 @@ export const QuizResultsView = ({
                         remarkPlugins={[remarkMath]}
                         rehypePlugins={[rehypeKatex]}
                       >
-                        {userAnswer?.trim() ? userAnswer : 'No answer submitted'}
+                        {userAnswer?.trim()
+                          ? userAnswer
+                          : 'No answer submitted'}
                       </Markdown>
                     </div>
                   </div>

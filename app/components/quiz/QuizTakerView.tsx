@@ -75,7 +75,9 @@ export const QuizTakerView = ({
 
   useEffect(() => {
     if (currentIndex === 0) {
-      analytics.trackQuizStart(quizzes[0]?.question?.substring(0, 50) || 'Unknown Quiz');
+      analytics.trackQuizStart(
+        quizzes[0]?.question?.substring(0, 50) || 'Unknown Quiz',
+      );
     }
   }, [currentIndex, quizzes]);
 

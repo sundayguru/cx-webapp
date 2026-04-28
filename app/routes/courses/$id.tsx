@@ -24,17 +24,17 @@ import type { GoogleTtsVoiceListItem } from '~/utils/google-tts';
 
 type PendingCurriculumDelete =
   | {
-    type: 'module';
-    id: string;
-    title: string;
-    unitsCount: number;
-  }
+      type: 'module';
+      id: string;
+      title: string;
+      unitsCount: number;
+    }
   | {
-    type: 'unit';
-    id: string;
-    title: string;
-    moduleTitle: string;
-  };
+      type: 'unit';
+      id: string;
+      title: string;
+      moduleTitle: string;
+    };
 
 export const loader = async ({ request, params }: LoaderFunctionArgs) => {
   const user = await getUserFromRequest(request);
@@ -687,7 +687,11 @@ export default function CourseDetailsPage({
       }
       heuristicTagRawTextFetcher.reset();
     }
-  }, [showToast, heuristicTagRawTextFetcher.state, heuristicTagRawTextFetcher.data]);
+  }, [
+    showToast,
+    heuristicTagRawTextFetcher.state,
+    heuristicTagRawTextFetcher.data,
+  ]);
 
   useEffect(() => {
     if (tagModuleUnitsFetcher.state === 'idle' && tagModuleUnitsFetcher.data) {
@@ -816,7 +820,11 @@ export default function CourseDetailsPage({
       }
       splitModuleRawTextFetcher.reset();
     }
-  }, [showToast, splitModuleRawTextFetcher.state, splitModuleRawTextFetcher.data]);
+  }, [
+    showToast,
+    splitModuleRawTextFetcher.state,
+    splitModuleRawTextFetcher.data,
+  ]);
 
   const handledSplitAllModuleRawTextResult = useRef<string | null>(null);
 
@@ -855,7 +863,11 @@ export default function CourseDetailsPage({
       }
       splitAllModuleRawTextFetcher.reset();
     }
-  }, [showToast, splitAllModuleRawTextFetcher.state, splitAllModuleRawTextFetcher.data]);
+  }, [
+    showToast,
+    splitAllModuleRawTextFetcher.state,
+    splitAllModuleRawTextFetcher.data,
+  ]);
 
   const handledCourseWorkflowResult = useRef<string | null>(null);
 
@@ -892,20 +904,20 @@ export default function CourseDetailsPage({
   const handledWorkflowAudioVoicesResult = useRef<string | null>(null);
   const workflowAudioVoiceResult = workflowAudioVoicesFetcher.data as
     | {
-      success?: boolean;
-      error?: string;
-      voices?: GoogleTtsVoiceListItem[];
-    }
+        success?: boolean;
+        error?: string;
+        voices?: GoogleTtsVoiceListItem[];
+      }
     | undefined;
   const workflowAudioVoices = workflowAudioVoiceResult?.voices ?? [];
   const selectableWorkflowAudioVoices =
     workflowAudioSsmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED'
       ? workflowAudioVoices
       : workflowAudioVoices.filter(
-        (voice) =>
-          voice.ssmlGender === workflowAudioSsmlGender ||
-          voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
-      );
+          (voice) =>
+            voice.ssmlGender === workflowAudioSsmlGender ||
+            voice.ssmlGender === 'SSML_VOICE_GENDER_UNSPECIFIED',
+        );
 
   useEffect(() => {
     if (!isUnitAudioWorkflowModalOpen || !data?.course.id) {
@@ -985,7 +997,11 @@ export default function CourseDetailsPage({
       }
       unitAudioWorkflowFetcher.reset();
     }
-  }, [showToast, unitAudioWorkflowFetcher.state, unitAudioWorkflowFetcher.data]);
+  }, [
+    showToast,
+    unitAudioWorkflowFetcher.state,
+    unitAudioWorkflowFetcher.data,
+  ]);
 
   const handledModuleRawTextUpdateResult = useRef<string | null>(null);
 
@@ -1023,7 +1039,11 @@ export default function CourseDetailsPage({
       }
       moduleRawTextUpdateFetcher.reset();
     }
-  }, [showToast, moduleRawTextUpdateFetcher.state, moduleRawTextUpdateFetcher.data]);
+  }, [
+    showToast,
+    moduleRawTextUpdateFetcher.state,
+    moduleRawTextUpdateFetcher.data,
+  ]);
 
   const handledUnitRawTextUpdateResult = useRef<string | null>(null);
 
@@ -1061,7 +1081,11 @@ export default function CourseDetailsPage({
       }
       unitRawTextUpdateFetcher.reset();
     }
-  }, [showToast, unitRawTextUpdateFetcher.state, unitRawTextUpdateFetcher.data]);
+  }, [
+    showToast,
+    unitRawTextUpdateFetcher.state,
+    unitRawTextUpdateFetcher.data,
+  ]);
 
   const handledEnrollResult = useRef<string | null>(null);
   useEffect(() => {

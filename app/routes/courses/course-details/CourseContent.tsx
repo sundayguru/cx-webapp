@@ -1,6 +1,14 @@
 import { useState } from 'react';
 import { Link } from 'react-router';
-import { HelpCircle, Lock, MessageSquare, MoreVertical, Play, Sparkles, Trash2 } from 'lucide-react';
+import {
+  HelpCircle,
+  Lock,
+  MessageSquare,
+  MoreVertical,
+  Play,
+  Sparkles,
+  Trash2,
+} from 'lucide-react';
 import type { CourseContentProps } from './types';
 
 export const CourseContent = ({

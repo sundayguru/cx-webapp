@@ -78,7 +78,7 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
   const [loadedCourses, setLoadedCourses] = useState(courses);
   const [currentPage, setCurrentPage] = useState(pagination?.page || 1);
   const [totalPages, setTotalPages] = useState(pagination?.totalPages || 0);
-  const courseFetcher = useFetcher()
+  const courseFetcher = useFetcher();
 
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -116,24 +116,25 @@ export default function CoursesPage({ loaderData }: Route.ComponentProps) {
   }, [courses, pagination]);
 
   const loadMore = useCallback(async () => {
-    if (currentPage >= totalPages) { return; }
+    if (currentPage >= totalPages) {
+      return;
+    }
 
     const nextPage = currentPage + 1;
     const params = new URLSearchParams(window.location.search);
     params.set('page', String(nextPage));
 
-    courseFetcher.load(`${window.location.pathname}?${params.toString()}`)
-    setCurrentPage(nextPage)
+    courseFetcher.load(`${window.location.pathname}?${params.toString()}`);
+    setCurrentPage(nextPage);
   }, [currentPage, totalPages]);
-
 
   useEffect(() => {
     if (courseFetcher.data?.courses) {
       setLoadedCourses((prev) => {
-        return [...prev, ...courseFetcher.data?.courses]
-      })
+        return [...prev, ...courseFetcher.data?.courses];
+      });
     }
-  }, [courseFetcher.data])
+  }, [courseFetcher.data]);
 
   const getStatusColor = (status: string) => {
     switch (status) {
