@@ -14,13 +14,19 @@ import {
   BarChart3,
   BookOpen,
   Clock,
+  Flame,
   GraduationCap,
   Target,
   ArrowRight,
   FolderOpen,
 } from 'lucide-react';
 import type { SelectCourse } from '~/db/schemas';
-import { getUnitAccuracyHistory, type UnitAccuracyPoint } from '~/db/quizzes';
+import {
+  getQuizStreakData,
+  getUnitAccuracyHistory,
+  type QuizStreakData,
+  type UnitAccuracyPoint,
+} from '~/db/quizzes';
 
 type DashboardCourseOption = {
   id: string;
@@ -36,6 +42,7 @@ type LoaderData = {
   }[];
   bookmarkedUnits: BookmarkedUnit[];
   accuracyHistory: UnitAccuracyPoint[];
+  quizStreak: QuizStreakData;
   courseOptions: DashboardCourseOption[];
   selectedCourseId: string;
 };
@@ -60,6 +67,7 @@ export const loader = async ({ request }: { request: Request }) => {
       createdCourses: [],
       bookmarkedUnits: [],
       accuracyHistory: [],
+      quizStreak: { currentStreak: 0, activeDays: 0, days: [] },
       courseOptions: [],
       selectedCourseId: '',
     };
@@ -71,12 +79,14 @@ export const loader = async ({ request }: { request: Request }) => {
     createdCourses,
     bookmarkedUnits,
     accuracyHistory,
+    quizStreak,
   ] = await Promise.all([
     getUserStats(user.id),
     getUserEnrollments(user.id),
     getCourses({ createdBy: user.id }),
     getBookmarkedUnitsByUser(user.id),
     getUnitAccuracyHistory(user.id, selectedCourseId || undefined),
+    getQuizStreakData(user.id),
   ]);
 
   const courseOptionsMap = new Map<string, DashboardCourseOption>();
@@ -113,6 +123,7 @@ export const loader = async ({ request }: { request: Request }) => {
     createdCourses,
     bookmarkedUnits,
     accuracyHistory,
+    quizStreak,
     courseOptions,
     selectedCourseId,
   };
@@ -126,6 +137,7 @@ export default function DashboardPage() {
     createdCourses,
     bookmarkedUnits,
     accuracyHistory,
+    quizStreak,
     courseOptions,
     selectedCourseId,
   } = useLoaderData<LoaderData>();
@@ -240,6 +252,10 @@ export default function DashboardPage() {
       </div>
 
       <div className='mt-4 space-y-12 sm:px-0'>
+        <section>
+          <QuizStreakPanel quizStreak={quizStreak} />
+        </section>
+
         <section>
           <div className='rounded-2xl border border-black/5 bg-white p-6 shadow-sm'>
             <div className='mb-6 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between'>
@@ -475,6 +491,107 @@ type AccuracyChartProps = {
   accuracyHistory: UnitAccuracyPoint[];
   selectedCourseId: string;
 };
+
+type QuizStreakPanelProps = {
+  quizStreak: QuizStreakData;
+};
+
+const QuizStreakPanel = ({ quizStreak }: QuizStreakPanelProps) => (
+  <motion.div
+    initial={{ opacity: 0, y: 18 }}
+    animate={{ opacity: 1, y: 0 }}
+    className='overflow-hidden rounded-[32px] border border-[#f0c36b]/30 bg-[radial-gradient(circle_at_top_left,_rgba(255,209,102,0.3),_transparent_35%),linear-gradient(135deg,_#fff8e8,_#fff1cc)] p-6 shadow-sm'
+  >
+    <div className='flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between'>
+      <div>
+        <div className='inline-flex items-center gap-2 rounded-full bg-white/70 px-3 py-1 text-[10px] font-bold tracking-[0.2em] text-[#b45309] uppercase'>
+          <Flame size={14} />
+          Daily Quiz Streak
+        </div>
+        <div className='mt-4 flex items-end gap-3'>
+          <p className='font-serif text-5xl text-[#7c2d12]'>
+            {quizStreak.currentStreak}
+          </p>
+          <p className='pb-2 text-sm font-medium text-[#9a3412]'>
+            day{quizStreak.currentStreak === 1 ? '' : 's'} in a row
+          </p>
+        </div>
+        <p className='mt-3 max-w-xl text-sm leading-6 text-[#7c2d12]/75'>
+          Complete at least one quiz session each day to keep your fire alive.
+        </p>
+      </div>
+
+      <div className='grid grid-cols-2 gap-3 sm:min-w-72'>
+        <div className='rounded-2xl border border-white/60 bg-white/75 p-4'>
+          <p className='text-[10px] font-bold tracking-[0.18em] text-[#b45309]/70 uppercase'>
+            Active Days
+          </p>
+          <p className='mt-2 text-2xl font-bold text-[#7c2d12]'>
+            {quizStreak.activeDays}/{quizStreak.days.length}
+          </p>
+        </div>
+        <div className='rounded-2xl border border-white/60 bg-white/75 p-4'>
+          <p className='text-[10px] font-bold tracking-[0.18em] text-[#b45309]/70 uppercase'>
+            Today
+          </p>
+          <p className='mt-2 text-2xl font-bold text-[#7c2d12]'>
+            {quizStreak.days.find((day) => day.isToday)?.sessionCount ?? 0}
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div className='mt-8 rounded-[28px] border border-white/60 bg-white/65 p-4 sm:p-5'>
+      <div className='mb-4 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between'>
+        <h3 className='font-serif text-xl text-[#7c2d12]'>Past 14 Days</h3>
+        <p className='text-xs font-medium text-[#9a3412]/75'>
+          One flame per day with quiz activity
+        </p>
+      </div>
+
+      {quizStreak.days.length > 0 ? (
+        <div className='grid grid-cols-4 gap-3 sm:grid-cols-7 lg:grid-cols-14'>
+          {quizStreak.days.map((day) => (
+            <div
+              key={day.date}
+              className={`rounded-2xl border p-3 text-center transition-all ${
+                day.hasSession
+                  ? day.isInCurrentStreak
+                    ? 'border-orange-300 bg-orange-50 shadow-sm'
+                    : 'border-amber-200 bg-amber-50'
+                  : 'border-black/5 bg-white/70'
+              } ${day.isToday ? 'ring-2 ring-[#f59e0b]/30' : ''}`}
+              title={`${day.label}${day.hasSession ? ` • ${day.sessionCount} session${day.sessionCount === 1 ? '' : 's'}` : ' • No quiz sessions'}`}
+            >
+              <p className='text-[10px] font-bold tracking-[0.16em] text-black/35 uppercase'>
+                {day.shortLabel}
+              </p>
+              <div className='my-2 flex justify-center'>
+                <Flame
+                  size={22}
+                  className={
+                    day.hasSession
+                      ? day.isInCurrentStreak
+                        ? 'fill-[#f97316] text-[#ea580c]'
+                        : 'fill-[#fbbf24] text-[#f59e0b]'
+                      : 'text-black/15'
+                  }
+                />
+              </div>
+              <p className='text-xs font-medium text-[#1a1a1a]'>
+                {day.date.slice(-2)}
+              </p>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className='rounded-2xl border border-black/5 bg-[#f7f6ef] p-8 text-center text-black/50'>
+          No quiz sessions yet. Your streak will begin with your first quiz.
+        </div>
+      )}
+    </div>
+  </motion.div>
+);
 
 const AccuracyChart = ({
   accuracyHistory,

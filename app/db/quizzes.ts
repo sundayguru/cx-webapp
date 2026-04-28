@@ -232,6 +232,101 @@ export type UnitAccuracyPoint = {
   totalQuestions: number;
 };
 
+export type QuizStreakDay = {
+  date: string;
+  label: string;
+  shortLabel: string;
+  hasSession: boolean;
+  sessionCount: number;
+  isToday: boolean;
+  isInCurrentStreak: boolean;
+};
+
+export type QuizStreakData = {
+  currentStreak: number;
+  activeDays: number;
+  days: QuizStreakDay[];
+};
+
+const getDayKey = (date: Date) => date.toISOString().slice(0, 10);
+
+const formatStreakDayLabel = (date: Date) =>
+  date.toLocaleDateString('en-US', {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+  });
+
+const formatStreakShortLabel = (date: Date) =>
+  date.toLocaleDateString('en-US', {
+    weekday: 'short',
+  });
+
+export const getQuizStreakData = async (
+  userId: string,
+  daysToShow: number = 14,
+): Promise<QuizStreakData> => {
+  try {
+    const sessions = await getQuizSessionsByUser(userId);
+    const sessionsByDay = new Map<string, number>();
+
+    sessions.forEach((session) => {
+      const dayKey = session.startedAt.slice(0, 10);
+      sessionsByDay.set(dayKey, (sessionsByDay.get(dayKey) ?? 0) + 1);
+    });
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayKey = getDayKey(today);
+
+    let currentStreak = 0;
+    const streakDayKeys = new Set<string>();
+
+    for (let offset = 0; ; offset += 1) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - offset);
+      const dayKey = getDayKey(date);
+
+      if (!sessionsByDay.has(dayKey)) {
+        break;
+      }
+
+      currentStreak += 1;
+      streakDayKeys.add(dayKey);
+    }
+
+    const days = Array.from({ length: daysToShow }, (_, index) => {
+      const date = new Date(today);
+      date.setDate(today.getDate() - (daysToShow - 1 - index));
+      const dayKey = getDayKey(date);
+      const sessionCount = sessionsByDay.get(dayKey) ?? 0;
+
+      return {
+        date: dayKey,
+        label: formatStreakDayLabel(date),
+        shortLabel: formatStreakShortLabel(date),
+        hasSession: sessionCount > 0,
+        sessionCount,
+        isToday: dayKey === todayKey,
+        isInCurrentStreak: streakDayKeys.has(dayKey),
+      };
+    });
+
+    return {
+      currentStreak,
+      activeDays: days.filter((day) => day.hasSession).length,
+      days,
+    };
+  } catch (e) {
+    logError(e, 'Error getting quiz streak data');
+    return {
+      currentStreak: 0,
+      activeDays: 0,
+      days: [],
+    };
+  }
+};
+
 export const getUnitAccuracyHistory = async (
   userId: string,
   courseId?: string,

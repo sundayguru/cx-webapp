@@ -5,12 +5,14 @@ import { getBookmarkedUnitsByUser } from '~/db/bookmarks';
 import { getProfileByUserId, getPublicProfile } from '~/db/profile';
 import { getUserEnrollments } from '~/db/enrollments';
 import { getCourses } from '~/db/courses';
+import { getQuizStreakData } from '~/db/quizzes';
 import { getUserFromRequest } from '~/utils/session.server';
 import { motion } from 'motion/react';
 import {
   BookOpen,
   GraduationCap,
   Target,
+  Flame,
   Calendar,
   ChevronRight,
   Settings,
@@ -41,24 +43,33 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
     return redirect('/dashboard');
   }
 
-  const [enrolledCourses, createdCourses, bookmarkedUnits] = await Promise.all([
-    getUserEnrollments(targetUserId),
-    isOwner ? getCourses({ createdBy: targetUserId }) : [],
-    isOwner ? getBookmarkedUnitsByUser(targetUserId) : [],
-  ]);
+  const [enrolledCourses, createdCourses, bookmarkedUnits, quizStreak] =
+    await Promise.all([
+      getUserEnrollments(targetUserId),
+      isOwner ? getCourses({ createdBy: targetUserId }) : [],
+      isOwner ? getBookmarkedUnitsByUser(targetUserId) : [],
+      getQuizStreakData(targetUserId),
+    ]);
 
   return {
     profile,
     enrolledCourses: enrolledCourses.slice(0, 6),
     createdCourses: createdCourses.slice(0, 6),
     bookmarkedUnits: bookmarkedUnits.slice(0, 6),
+    quizStreak,
     isOwner,
   };
 };
 
 export default function ProfilePage({ loaderData }: Route.ComponentProps) {
-  const { profile, enrolledCourses, createdCourses, bookmarkedUnits, isOwner } =
-    loaderData;
+  const {
+    profile,
+    enrolledCourses,
+    createdCourses,
+    bookmarkedUnits,
+    quizStreak,
+    isOwner,
+  } = loaderData;
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'long',
@@ -94,6 +105,20 @@ export default function ProfilePage({ loaderData }: Route.ComponentProps) {
               <h1 className='font-serif text-4xl text-[#1a1a1a]'>
                 {profile.name || 'Anonymous User'}
               </h1>
+              <div className='inline-flex items-center gap-2 rounded-full border border-orange-200 bg-orange-50 px-3 py-1 text-sm font-semibold text-orange-700'>
+                <Flame
+                  size={16}
+                  className={
+                    quizStreak.currentStreak > 0
+                      ? 'fill-orange-500 text-orange-500'
+                      : 'text-orange-300'
+                  }
+                />
+                <span>
+                  {quizStreak.currentStreak} day
+                  {quizStreak.currentStreak === 1 ? '' : 's'}
+                </span>
+              </div>
               {isOwner && (
                 <Link
                   to='/settings'
