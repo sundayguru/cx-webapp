@@ -117,40 +117,6 @@ export const buildQuizPerformanceMap = (
   return stats;
 };
 
-export const getWeightedRandomizedQuizzes = <T extends { id: string }>(
-  quizzes: T[],
-  performanceMap: Record<string, QuizPerformanceStat>,
-): T[] => {
-  const pool = [...quizzes];
-  const ordered: T[] = [];
-
-  while (pool.length > 0) {
-    const totalWeight = pool.reduce((sum, quiz) => {
-      return sum + (performanceMap[quiz.id]?.priorityWeight ?? 1);
-    }, 0);
-
-    let cursor = Math.random() * totalWeight;
-    let pickedIndex = 0;
-
-    for (let index = 0; index < pool.length; index += 1) {
-      cursor -= performanceMap[pool[index].id]?.priorityWeight ?? 1;
-
-      if (cursor <= 0) {
-        pickedIndex = index;
-        break;
-      }
-    }
-
-    const [pickedQuiz] = pool.splice(pickedIndex, 1);
-
-    if (pickedQuiz) {
-      ordered.push(pickedQuiz);
-    }
-  }
-
-  return ordered;
-};
-
 export const getQuizSessionQuizzes = <
   T extends { id: string; questionType: string },
 >(
@@ -158,47 +124,70 @@ export const getQuizSessionQuizzes = <
   performanceMap: Record<string, QuizPerformanceStat>,
   sessionSize: number,
   maxOpenTextQuestions: number,
-  previousQuizIds: string[] = [],
 ): T[] => {
-  const buildSelection = () => {
-    const ordered = getWeightedRandomizedQuizzes(quizzes, performanceMap);
-    const selected: T[] = [];
-    let openTextCount = 0;
+  const selected: T[] = [];
+  const selectedIds = new Set<string>();
+  let openTextCount = 0;
 
-    ordered.forEach((quiz) => {
-      if (selected.length >= sessionSize) {
-        return;
+  const appendQuizzes = (pool: T[], limit = Number.POSITIVE_INFINITY) => {
+    for (const quiz of pool) {
+      if (
+        selected.length >= sessionSize ||
+        limit <= 0 ||
+        selectedIds.has(quiz.id)
+      ) {
+        break;
       }
 
       if (quiz.questionType === 'openText') {
         if (openTextCount >= maxOpenTextQuestions) {
-          return;
+          continue;
         }
 
         openTextCount += 1;
       }
 
       selected.push(quiz);
-    });
-
-    return selected;
+      selectedIds.add(quiz.id);
+      limit -= 1;
+    }
   };
 
-  const hasPreviousOrder = previousQuizIds.length > 1;
-  const previousOrderKey = previousQuizIds.join('|');
-  let selection = buildSelection();
-  let attempts = 0;
+  const attemptedQuizzes = quizzes
+    .filter((quiz) => (performanceMap[quiz.id]?.attempts ?? 0) > 0)
+    .sort((left, right) => {
+      const leftAttemptedAt = performanceMap[left.id]?.lastAttemptedAt;
+      const rightAttemptedAt = performanceMap[right.id]?.lastAttemptedAt;
 
-  while (
-    hasPreviousOrder &&
-    attempts < 6 &&
-    selection.map((quiz) => quiz.id).join('|') === previousOrderKey
-  ) {
-    selection = buildSelection();
-    attempts += 1;
+      if (leftAttemptedAt && rightAttemptedAt) {
+        return leftAttemptedAt.localeCompare(rightAttemptedAt);
+      }
+
+      if (leftAttemptedAt) {
+        return -1;
+      }
+
+      if (rightAttemptedAt) {
+        return 1;
+      }
+
+      return 0;
+    });
+
+  const unattemptedQuizzes = quizzes.filter(
+    (quiz) => (performanceMap[quiz.id]?.attempts ?? 0) === 0,
+  );
+
+  if (attemptedQuizzes.length === 0) {
+    appendQuizzes(unattemptedQuizzes, sessionSize);
+    return selected;
   }
 
-  return selection;
+  appendQuizzes(attemptedQuizzes, Math.min(5, sessionSize));
+  appendQuizzes(unattemptedQuizzes, sessionSize - selected.length);
+  appendQuizzes(attemptedQuizzes, sessionSize - selected.length);
+
+  return selected;
 };
 
 export const normalizeQuizAnswer = (answer: string | null) => {
