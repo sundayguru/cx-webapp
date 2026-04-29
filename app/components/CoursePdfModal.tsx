@@ -9,7 +9,7 @@ import {
   Plus,
   X,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -34,6 +34,14 @@ const SCALE_STEP = 0.2;
 
 const PdfReader = ({ pdfUrl, title }: PdfReaderProps) => {
   const pageContainerRef = useRef<HTMLDivElement>(null);
+  const scrollViewportRef = useRef<HTMLDivElement>(null);
+  const pointerStateRef = useRef<{
+    pointerId: number;
+    startX: number;
+    startY: number;
+    scrollLeft: number;
+    scrollTop: number;
+  } | null>(null);
   const [pdfModule, setPdfModule] = useState<ReactPdfModule | null>(null);
   const [numPages, setNumPages] = useState<number | null>(null);
   const [pageNumber, setPageNumber] = useState(1);
@@ -41,6 +49,8 @@ const PdfReader = ({ pdfUrl, title }: PdfReaderProps) => {
   const [pageWidth, setPageWidth] = useState<number | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const isClient = typeof window !== 'undefined';
+  const renderedPageWidth =
+    pageWidth !== null ? Math.round(pageWidth * scale) : undefined;
 
   useEffect(() => {
     let isMounted = true;
@@ -105,15 +115,74 @@ const PdfReader = ({ pdfUrl, title }: PdfReaderProps) => {
     setLoadError(error.message || 'Unable to load PDF.');
   };
 
+  const handlePointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (scale <= 1 || !scrollViewportRef.current) {
+      return;
+    }
+
+    pointerStateRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      scrollLeft: scrollViewportRef.current.scrollLeft,
+      scrollTop: scrollViewportRef.current.scrollTop,
+    };
+
+    scrollViewportRef.current.setPointerCapture(event.pointerId);
+  };
+
+  const handlePointerMove = (event: PointerEvent<HTMLDivElement>) => {
+    if (
+      scale <= 1 ||
+      !scrollViewportRef.current ||
+      !pointerStateRef.current ||
+      pointerStateRef.current.pointerId !== event.pointerId
+    ) {
+      return;
+    }
+
+    const deltaX = event.clientX - pointerStateRef.current.startX;
+    const deltaY = event.clientY - pointerStateRef.current.startY;
+
+    scrollViewportRef.current.scrollLeft =
+      pointerStateRef.current.scrollLeft - deltaX;
+    scrollViewportRef.current.scrollTop =
+      pointerStateRef.current.scrollTop - deltaY;
+  };
+
+  const handlePointerUp = (event: PointerEvent<HTMLDivElement>) => {
+    if (
+      !scrollViewportRef.current ||
+      !pointerStateRef.current ||
+      pointerStateRef.current.pointerId !== event.pointerId
+    ) {
+      return;
+    }
+
+    scrollViewportRef.current.releasePointerCapture(event.pointerId);
+    pointerStateRef.current = null;
+  };
+
   return (
     <>
-      <div className='flex-1 overflow-y-auto bg-[#efede5] p-3 md:p-5'>
+      <div
+        ref={scrollViewportRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={handlePointerUp}
+        onPointerCancel={handlePointerUp}
+        className={`flex-1 overflow-auto bg-[#efede5] p-3 md:p-5 ${
+          scale > 1 ? 'cursor-grab active:cursor-grabbing' : ''
+        }`}
+      >
         <div
           ref={pageContainerRef}
-          className='mx-auto flex min-h-full w-full max-w-4xl items-start justify-center'
+          className={`mx-auto flex min-h-full w-full items-start ${
+            scale > 1 ? 'justify-start' : 'justify-center'
+          }`}
         >
           {!isClient || !Document || !Page ? (
-            <div className='flex min-h-[60vh] w-full items-center justify-center rounded-[28px] border border-black/5 bg-white text-black/45 shadow-sm'>
+            <div className='flex min-h-[60vh] w-full max-w-4xl items-center justify-center rounded-[28px] border border-black/5 bg-white text-black/45 shadow-sm'>
               <div className='flex items-center gap-3'>
                 <Loader2 size={20} className='animate-spin' />
                 <span>Preparing reader...</span>
@@ -148,13 +217,13 @@ const PdfReader = ({ pdfUrl, title }: PdfReaderProps) => {
                   </div>
                 </div>
               }
-              className='w-full'
+              className='w-max min-w-full'
             >
-              <div className='overflow-hidden rounded-[28px] border border-black/5 bg-white shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)]'>
+              <div className='w-max max-w-none rounded-[28px] border border-black/5 bg-white shadow-[0_20px_60px_-30px_rgba(0,0,0,0.35)]'>
                 <Page
                   pageNumber={pageNumber}
-                  width={pageWidth ?? undefined}
-                  scale={scale}
+                  width={renderedPageWidth}
+                  scale={1}
                   renderAnnotationLayer
                   renderTextLayer
                   loading={
