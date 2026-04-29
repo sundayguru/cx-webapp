@@ -2,7 +2,10 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'motion/react';
 import { CheckCircle, ChevronRight, Clock, X } from 'lucide-react';
 import type { SelectQuiz } from '~/db/schemas/quizzes';
-import { getQuizDisplayAnswer } from '~/utils/quiz-session';
+import {
+  getQuizDisplayAnswer,
+  isQuizAnswerCorrect,
+} from '~/utils/quiz-session';
 import Markdown from 'react-markdown';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
@@ -56,6 +59,11 @@ export const QuizTakerView = ({
   const isLastQuestion = currentIndex === quizzes.length - 1;
   const isLearningMode = mode === 'learning';
   const hasAnswer = currentAnswer.trim().length > 0;
+  const isOpenTextQuestion = currentQuiz?.questionType === 'openText';
+  const isOpenTextCorrect =
+    isOpenTextQuestion &&
+    isRevealed &&
+    isQuizAnswerCorrect(currentQuiz, currentAnswer);
   const options = useMemo(
     () => parseQuizOptions(currentQuiz?.options ?? null),
     [currentQuiz?.options],
@@ -262,7 +270,14 @@ export const QuizTakerView = ({
                     onAnswer(event.target.value);
                   }}
                   placeholder='Write your answer here...'
-                  className='min-h-40 w-full rounded-[24px] border border-black/10 bg-[#faf9f4] px-5 py-4 text-base text-[#1a1a1a] transition outline-none focus:border-[#5A5A40]'
+                  className={[
+                    'min-h-40 w-full rounded-[24px] border px-5 py-4 text-base transition outline-none',
+                    isOpenTextQuestion && isRevealed
+                      ? isOpenTextCorrect
+                        ? 'border-green-300 bg-green-50 text-green-950 focus:border-green-500'
+                        : 'border-red-300 bg-red-50 text-red-950 focus:border-red-500'
+                      : 'border-black/10 bg-[#faf9f4] text-[#1a1a1a] focus:border-[#5A5A40]',
+                  ].join(' ')}
                 />
               )}
             </div>
@@ -270,6 +285,21 @@ export const QuizTakerView = ({
             {mode === 'exam' && showAnswerWarning ? (
               <div className='mt-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm font-medium text-amber-800'>
                 Answer this question before moving on.
+              </div>
+            ) : null}
+
+            {isLearningMode && isRevealed && isOpenTextQuestion ? (
+              <div
+                className={[
+                  'mt-4 rounded-2xl border px-4 py-3 text-sm font-medium',
+                  isOpenTextCorrect
+                    ? 'border-green-200 bg-green-50 text-green-800'
+                    : 'border-red-200 bg-red-50 text-red-800',
+                ].join(' ')}
+              >
+                {isOpenTextCorrect
+                  ? 'Correct answer.'
+                  : 'That answer is not correct yet.'}
               </div>
             ) : null}
 

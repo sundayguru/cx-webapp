@@ -125,6 +125,20 @@ export const getQuizSessionQuizzes = <
   sessionSize: number,
   maxOpenTextQuestions: number,
 ): T[] => {
+  const shuffleQuizzes = (items: T[]) => {
+    const shuffled = [...items];
+
+    for (let index = shuffled.length - 1; index > 0; index -= 1) {
+      const randomIndex = Math.floor(Math.random() * (index + 1));
+      const currentItem = shuffled[index];
+
+      shuffled[index] = shuffled[randomIndex];
+      shuffled[randomIndex] = currentItem;
+    }
+
+    return shuffled;
+  };
+
   const selected: T[] = [];
   const selectedIds = new Set<string>();
   let openTextCount = 0;
@@ -187,7 +201,7 @@ export const getQuizSessionQuizzes = <
   appendQuizzes(unattemptedQuizzes, sessionSize - selected.length);
   appendQuizzes(attemptedQuizzes, sessionSize - selected.length);
 
-  return selected;
+  return shuffleQuizzes(selected);
 };
 
 export const normalizeQuizAnswer = (answer: string | null) => {
