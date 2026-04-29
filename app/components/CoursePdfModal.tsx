@@ -17,13 +17,11 @@ type CoursePdfModalProps = {
   isOpen: boolean;
   contentKey: string | null;
   code: string;
-  title: string;
   onClose: () => void;
 };
 
 type PdfReaderProps = {
   pdfUrl: string;
-  title: string;
 };
 
 type ReactPdfModule = typeof import('react-pdf');
@@ -32,7 +30,7 @@ const MIN_SCALE = 0.8;
 const MAX_SCALE = 2;
 const SCALE_STEP = 0.2;
 
-const PdfReader = ({ pdfUrl, title }: PdfReaderProps) => {
+const PdfReader = ({ pdfUrl }: PdfReaderProps) => {
   const pageContainerRef = useRef<HTMLDivElement>(null);
   const scrollViewportRef = useRef<HTMLDivElement>(null);
   const pointerStateRef = useRef<{
@@ -229,7 +227,6 @@ const PdfReader = ({ pdfUrl, title }: PdfReaderProps) => {
                       Rendering page...
                     </div>
                   }
-                  title={title}
                 />
               </div>
             </Document>
@@ -319,7 +316,6 @@ export const CoursePdfModal = ({
   isOpen,
   contentKey,
   code,
-  title,
   onClose,
 }: CoursePdfModalProps) => {
   const pdfUrl = contentKey ? `/api/course/serve/${contentKey}` : null;
@@ -389,7 +385,7 @@ export const CoursePdfModal = ({
               </div>
             </div>
 
-            <PdfReader key={pdfUrl} pdfUrl={pdfUrl} title={title} />
+            <PdfReader key={pdfUrl} pdfUrl={pdfUrl} />
           </motion.div>
         </div>
       ) : null}

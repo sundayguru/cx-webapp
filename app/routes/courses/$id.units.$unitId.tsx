@@ -788,7 +788,6 @@ const UnitPageContent = ({
       quizPerformanceState,
       QUIZ_SESSION_SIZE,
       QUIZ_SESSION_OPEN_TEXT_LIMIT,
-      activeQuizzes.map((quiz) => quiz.id),
     );
 
     setActiveQuizzes(randomizedQuizzes);
@@ -880,7 +879,6 @@ const UnitPageContent = ({
       quizPerformanceState,
       QUIZ_SESSION_SIZE,
       QUIZ_SESSION_OPEN_TEXT_LIMIT,
-      activeQuizzes.map((quiz) => quiz.id),
     );
 
     setActiveQuizzes(randomizedQuizzes);
@@ -1796,7 +1794,6 @@ const UnitPageContent = ({
         isOpen={showCourseMaterialModal}
         contentKey={course?.course.contentKey ?? null}
         code={course?.course.code ?? ''}
-        title={course?.course.title ?? ''}
         onClose={() => setShowCourseMaterialModal(false)}
       />
 

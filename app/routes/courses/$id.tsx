@@ -1338,7 +1338,6 @@ export default function CourseDetailsPage({
 
       <CourseModals
         courseCode={course.code}
-        courseTitle={course.title}
         contentKey={course.contentKey}
         isPdfModalOpen={isPdfModalOpen}
         isGenerateCurriculumModalOpen={isGenerateCurriculumModalOpen}

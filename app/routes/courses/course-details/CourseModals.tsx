@@ -1166,7 +1166,6 @@ const ModuleRawTextModal = ({
 
 type CourseModalsProps = {
   courseCode: string;
-  courseTitle: string;
   contentKey: string | null;
   isPdfModalOpen: boolean;
   isGenerateCurriculumModalOpen: boolean;
@@ -1252,7 +1251,6 @@ type CourseModalsProps = {
 
 export const CourseModals = ({
   courseCode,
-  courseTitle,
   contentKey,
   isPdfModalOpen,
   isGenerateCurriculumModalOpen,
@@ -1341,7 +1339,6 @@ export const CourseModals = ({
         isOpen={isPdfModalOpen}
         contentKey={contentKey}
         code={courseCode}
-        title={courseTitle}
         onClose={onClosePdf}
       />
 
