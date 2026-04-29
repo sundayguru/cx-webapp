@@ -107,7 +107,7 @@ export default function LandingPage() {
             {[
               {
                 title: 'Instant Curriculum',
-                desc: 'Upload any PDF and get a structured course with modules and units in seconds.',
+                desc: 'Upload any PDF and get a structured course with modules and units.',
                 icon: BookOpen,
                 color: 'bg-blue-50 text-blue-600',
               },
@@ -151,9 +151,8 @@ export default function LandingPage() {
                 className='group rounded-[32px] border border-black/5 p-8 transition-all hover:border-[#5A5A40]/20 hover:bg-[#f5f5f0]/30'
               >
                 <div
-                  className={`${
-                    feature.color
-                  } mb-6 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110`}
+                  className={`${feature.color
+                    } mb-6 flex h-14 w-14 items-center justify-center rounded-2xl transition-transform group-hover:scale-110`}
                 >
                   <feature.icon size={28} />
                 </div>
@@ -258,9 +257,7 @@ export default function LandingPage() {
             <div className='flex h-10 w-10 items-center justify-center rounded-xl bg-[#5A5A40]'>
               <GraduationCap className='text-white' size={24} />
             </div>
-            <span className='font-serif text-xl font-bold text-[#1a1a1a]'>
-              CourseXQuiz
-            </span>
+            <img src="/logo.svg" className="w-30" alt="CourseX" />
           </div>
           <div className='flex gap-12 text-sm font-bold tracking-widest text-black/40 uppercase'>
             <Link
