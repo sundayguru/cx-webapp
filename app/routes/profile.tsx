@@ -28,13 +28,14 @@ export const loader = async ({ request, params }: Route.LoaderArgs) => {
 
   const targetUserId = params.userId || currentUser.id;
   const isOwner = !params.userId || params.userId === currentUser.id;
+  const canViewPrivateProfile = isOwner || currentUser.isAdmin;
   const targetProfile = await getProfileByUserId(targetUserId);
 
   if (!targetProfile) {
     return redirect('/dashboard');
   }
 
-  if (targetProfile.isPrivate && !isOwner) {
+  if (targetProfile.isPrivate && !canViewPrivateProfile) {
     return redirect('/dashboard');
   }
 

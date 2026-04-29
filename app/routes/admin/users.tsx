@@ -196,13 +196,23 @@ const UserRow = ({
   <tr key={user.id} className='transition-colors hover:bg-black/[0.02]'>
     <td className='px-6 py-4 font-medium text-[#1a1a1a]'>
       <div className='min-w-0'>
-        <p className='truncate'>
+        <Link
+          to={`/profile/${user.id}`}
+          className='truncate text-[#1a1a1a] transition-colors hover:text-[#5A5A40] hover:underline'
+        >
           {user.firstName} {user.lastName}
-        </p>
+        </Link>
         <p className='mt-1 text-xs text-black/40'>ID: {user.id.slice(0, 8)}</p>
       </div>
     </td>
-    <td className='px-6 py-4'>{user.email}</td>
+    <td className='px-6 py-4'>
+      <Link
+        to={`/profile/${user.id}`}
+        className='transition-colors hover:text-[#5A5A40] hover:underline'
+      >
+        {user.email}
+      </Link>
+    </td>
     <td className='px-6 py-4'>
       <div className='flex flex-wrap gap-2'>
         {user.isAdmin ? <StatusBadge tone='admin'>Admin</StatusBadge> : null}
