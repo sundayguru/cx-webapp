@@ -70,7 +70,7 @@ export const Header = () => {
               </div>
               <img
                 src='/logo.svg'
-                className='xs:block hidden w-30'
+                className='w-30'
                 alt='CourseX'
               />
             </Link>
@@ -85,11 +85,10 @@ export const Header = () => {
                 <Link
                   key={item.to}
                   to={item.to}
-                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                    active
+                  className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${active
                       ? 'bg-[#5A5A40]/10 text-[#5A5A40]'
                       : 'text-black/60 hover:bg-black/5 hover:text-black/80'
-                  }`}
+                    }`}
                 >
                   <Icon size={18} />
                   {item.label}
@@ -105,11 +104,10 @@ export const Header = () => {
                     <Link
                       key={item.to}
                       to={item.to}
-                      className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                        active
+                      className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition-colors ${active
                           ? 'bg-purple-100 text-purple-700'
                           : 'text-purple-600 hover:bg-purple-50 hover:text-purple-700'
-                      }`}
+                        }`}
                     >
                       <Icon size={18} />
                       {item.label}
@@ -182,11 +180,10 @@ export const Header = () => {
                   key={item.to}
                   to={item.to}
                   onClick={() => setShowMobileMenu(false)}
-                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-colors ${
-                    active
+                  className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-colors ${active
                       ? 'bg-[#5A5A40]/10 text-[#5A5A40]'
                       : 'text-black/60 hover:bg-black/5 hover:text-black/80'
-                  }`}
+                    }`}
                 >
                   <Icon size={20} />
                   {item.label}
@@ -206,11 +203,10 @@ export const Header = () => {
                       key={item.to}
                       to={item.to}
                       onClick={() => setShowMobileMenu(false)}
-                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-colors ${
-                        active
+                      className={`flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium transition-colors ${active
                           ? 'bg-purple-100 text-purple-700'
                           : 'text-purple-600 hover:bg-purple-50 hover:text-purple-700'
-                      }`}
+                        }`}
                     >
                       <Icon size={20} />
                       {item.label}
