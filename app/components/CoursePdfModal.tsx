@@ -171,15 +171,13 @@ const PdfReader = ({ pdfUrl, title }: PdfReaderProps) => {
         onPointerMove={handlePointerMove}
         onPointerUp={handlePointerUp}
         onPointerCancel={handlePointerUp}
-        className={`flex-1 overflow-auto bg-[#efede5] p-3 md:p-5 ${
-          scale > 1 ? 'cursor-grab active:cursor-grabbing' : ''
-        }`}
+        className={`flex-1 overflow-auto bg-[#efede5] p-3 md:p-5 ${scale > 1 ? 'cursor-grab active:cursor-grabbing' : ''
+          }`}
       >
         <div
           ref={pageContainerRef}
-          className={`mx-auto flex min-h-full w-full items-start ${
-            scale > 1 ? 'justify-start' : 'justify-center'
-          }`}
+          className={`mx-auto flex min-h-full w-full items-start ${scale > 1 ? 'justify-start' : 'justify-center'
+            }`}
         >
           {!isClient || !Document || !Page ? (
             <div className='flex min-h-[60vh] w-full max-w-4xl items-center justify-center rounded-[28px] border border-black/5 bg-white text-black/45 shadow-sm'>
@@ -240,60 +238,72 @@ const PdfReader = ({ pdfUrl, title }: PdfReaderProps) => {
       </div>
 
       <div className='border-t border-black/5 bg-white px-4 py-3'>
-        <div className='flex flex-wrap items-center justify-between gap-3'>
-          <div className='flex items-center gap-2'>
-            <button
-              onClick={() =>
-                setPageNumber((currentPage) => Math.max(1, currentPage - 1))
-              }
-              disabled={!canGoToPreviousPage}
-              className='flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a] transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40'
-            >
-              <ChevronLeft size={18} />
-            </button>
-            <div className='rounded-full border border-black/10 bg-white px-4 py-2 text-sm font-medium text-[#1a1a1a]'>
-              Page {pageNumber}
-              {numPages ? ` / ${numPages}` : ''}
+        <div className='grid grid-cols-2 gap-3 md:flex md:items-center md:justify-between'>
+          <div className='rounded-2xl border border-black/5 bg-[#faf9f4] p-2'>
+            <div className='mb-1 px-2 text-[10px] font-bold tracking-[0.16em] text-black/35 uppercase'>
+              Page
             </div>
-            <button
-              onClick={() =>
-                setPageNumber((currentPage) =>
-                  numPages ? Math.min(numPages, currentPage + 1) : currentPage,
-                )
-              }
-              disabled={!canGoToNextPage}
-              className='flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a] transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40'
-            >
-              <ChevronRight size={18} />
-            </button>
+            <div className='flex items-center justify-between gap-2'>
+              <button
+                onClick={() =>
+                  setPageNumber((currentPage) => Math.max(1, currentPage - 1))
+                }
+                disabled={!canGoToPreviousPage}
+                className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a] transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <ChevronLeft size={18} />
+              </button>
+              <div className='min-w-0 flex-1 rounded-full border border-black/10 bg-white px-3 py-2 text-center text-xs font-medium text-[#1a1a1a]'>
+                {pageNumber}
+                {numPages ? ` / ${numPages}` : ''}
+              </div>
+              <button
+                onClick={() =>
+                  setPageNumber((currentPage) =>
+                    numPages
+                      ? Math.min(numPages, currentPage + 1)
+                      : currentPage,
+                  )
+                }
+                disabled={!canGoToNextPage}
+                className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a] transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
           </div>
 
-          <div className='flex items-center gap-2'>
-            <button
-              onClick={() =>
-                setScale((currentScale) =>
-                  Math.max(MIN_SCALE, currentScale - SCALE_STEP),
-                )
-              }
-              disabled={scale <= MIN_SCALE}
-              className='flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a] transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40'
-            >
-              <Minus size={18} />
-            </button>
-            <div className='min-w-18 rounded-full border border-black/10 bg-white px-4 py-2 text-center text-sm font-medium text-[#1a1a1a]'>
-              {Math.round(scale * 100)}%
+          <div className='rounded-2xl border border-black/5 bg-[#faf9f4] p-2'>
+            <div className='mb-1 px-2 text-[10px] font-bold tracking-[0.16em] text-black/35 uppercase'>
+              Zoom
             </div>
-            <button
-              onClick={() =>
-                setScale((currentScale) =>
-                  Math.min(MAX_SCALE, currentScale + SCALE_STEP),
-                )
-              }
-              disabled={scale >= MAX_SCALE}
-              className='flex h-10 w-10 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a] transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40'
-            >
-              <Plus size={18} />
-            </button>
+            <div className='flex items-center justify-between gap-2'>
+              <button
+                onClick={() =>
+                  setScale((currentScale) =>
+                    Math.max(MIN_SCALE, currentScale - SCALE_STEP),
+                  )
+                }
+                disabled={scale <= MIN_SCALE}
+                className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a] transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Minus size={18} />
+              </button>
+              <div className='min-w-0 flex-1 rounded-full border border-black/10 bg-white px-3 py-2 text-center text-sm font-medium text-[#1a1a1a]'>
+                {Math.round(scale * 100)}%
+              </div>
+              <button
+                onClick={() =>
+                  setScale((currentScale) =>
+                    Math.min(MAX_SCALE, currentScale + SCALE_STEP),
+                  )
+                }
+                disabled={scale >= MAX_SCALE}
+                className='flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-black/10 bg-white text-[#1a1a1a] transition-colors hover:bg-black/5 disabled:cursor-not-allowed disabled:opacity-40'
+              >
+                <Plus size={18} />
+              </button>
+            </div>
           </div>
         </div>
         <p className='mt-3 text-center text-[11px] text-black/45 md:text-xs'>
