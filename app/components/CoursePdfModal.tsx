@@ -245,6 +245,21 @@ export const CoursePdfModal = ({
 }: CoursePdfModalProps) => {
   const pdfUrl = contentKey ? `/api/course/serve/${contentKey}` : null;
 
+  useEffect(() => {
+    if (!isOpen) {
+      return;
+    }
+
+    const { body } = document;
+    const previousOverflow = body.style.overflow;
+
+    body.style.overflow = 'hidden';
+
+    return () => {
+      body.style.overflow = previousOverflow;
+    };
+  }, [isOpen]);
+
   return (
     <AnimatePresence>
       {isOpen && pdfUrl ? (
